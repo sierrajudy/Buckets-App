@@ -133,16 +133,6 @@ export function startNewRound(room: Room): void {
   room.currentStep = 0;
 }
 
-/** Host-only: moves the room's shared "current hole" pointer, which drives
- * guests' auto-follow view and lets a reconnecting client resume at the
- * host's real position instead of always restarting at hole 1. */
-export function setCurrentStep(room: Room, stepIndex: number): boolean {
-  const results = orderedResults(room);
-  if (!Number.isInteger(stepIndex) || stepIndex < 0 || stepIndex >= results.length) return false;
-  room.currentStep = stepIndex;
-  return true;
-}
-
 export function removePlayer(room: Room, playerId: string): void {
   room.players = room.players.filter((p) => p.id !== playerId);
 }
@@ -157,31 +147,15 @@ function orderedResults(room: Room) {
   return order.map((holeNumber) => computeHoleResult(room.entries[holeNumber], names));
 }
 
-/** Recomputes results after a scoring mutation and auto-advances the room's
- * phase for outcomes that don't need host confirmation: a hole-in-one wins
- * instantly, and a tie moves straight to the putt-off (which already waits
- * on the host to resolve it). A clear win on the last hole waits for the
- * host to explicitly confirm via confirmFinishRound — see that function. */
+/** Recomputes results after a scoring mutation. A hole-in-one no longer
+ * ends the match on its own — the host still has to confirm it by moving
+ * on (see advanceCurrentStep) or finishing the round. The only automatic
+ * transition left is a tie on the final hole, which moves straight to the
+ * putt-off (itself still waiting on the host to resolve it). */
 export async function recomputeAndMaybeFinish(room: Room): Promise<void> {
   if (room.phase !== "playing") return;
   const names = playerNames(room);
   const results = orderedResults(room);
-
-  const holeInOnePlayer = findHoleInOneWinner(results);
-  if (holeInOnePlayer) {
-    const round = finalizeRound({
-      course: room.course,
-      players: names,
-      startingHole: room.startingHole,
-      holes: results,
-      holeInOnePlayer,
-      puttOffWinner: null,
-    });
-    room.finishedRound = round;
-    room.phase = "celebration";
-    await persistRound(round);
-    return;
-  }
 
   const allComplete = results.every((h) => names.every((n) => h.strokes[n] > 0));
   if (!allComplete) return;
@@ -193,9 +167,43 @@ export async function recomputeAndMaybeFinish(room: Room): Promise<void> {
   }
 }
 
+/** Host-only: moves the room's shared "current hole" pointer forward, which
+ * drives guests' auto-follow view and lets a reconnecting client resume at
+ * the host's real position instead of always restarting at hole 1.
+ *
+ * If the hole being left had a hole-in-one, this is also where the match
+ * actually ends — the host confirms it by advancing past it, rather than
+ * the round finishing the instant the ace is entered (which could fire
+ * before the other players even had a turn on that hole). */
+export async function advanceCurrentStep(room: Room, stepIndex: number): Promise<boolean> {
+  if (room.phase !== "playing") return false;
+  const names = playerNames(room);
+  const results = orderedResults(room);
+  if (!Number.isInteger(stepIndex) || stepIndex < 0 || stepIndex >= results.length) return false;
+
+  const justLeft = results[stepIndex - 1];
+  if (justLeft && justLeft.holeInOnePlayers.length > 0) {
+    const round = finalizeRound({
+      course: room.course,
+      players: names,
+      startingHole: room.startingHole,
+      holes: results,
+      holeInOnePlayer: justLeft.holeInOnePlayers[0],
+      puttOffWinner: null,
+    });
+    room.finishedRound = round;
+    room.phase = "celebration";
+    await persistRound(round);
+    return true;
+  }
+
+  room.currentStep = stepIndex;
+  return true;
+}
+
 /** Host-only explicit confirmation that locks in a completed round once
- * there's a clear winner (no tie, no hole-in-one — those finish on their
- * own). Returns false if the round isn't actually ready to finish yet. */
+ * there's a clear winner. Returns false if the round isn't actually ready
+ * to finish yet (a hole still missing scores, or a tie with no winner). */
 export async function confirmFinishRound(room: Room): Promise<boolean> {
   if (room.phase !== "playing") return false;
   const names = playerNames(room);
@@ -212,7 +220,7 @@ export async function confirmFinishRound(room: Room): Promise<boolean> {
     players: names,
     startingHole: room.startingHole,
     holes: results,
-    holeInOnePlayer: null,
+    holeInOnePlayer: findHoleInOneWinner(results),
     puttOffWinner: null,
   });
   room.finishedRound = round;

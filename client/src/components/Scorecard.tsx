@@ -15,25 +15,15 @@ function computeLeader(totals: Record<string, number>, players: { name: string }
   return leaders.length === 1 ? leaders[0].name : null;
 }
 
-/** Sideline commentary for the hole just finished: a shared bogey-or-worse
- * tie gets "Join me!", otherwise a lone double-bogey-or-worse gets called out
- * by name. Anything better than a bogey stays quiet. */
+/** Sideline commentary for the hole just finished: two or more players
+ * double-bogeying (2+ over par) gets "Join me!"; exactly one gets called
+ * out by name. Anything better than that stays quiet. */
 function computeHeckle(prevResult: HoleResult | undefined, players: { name: string }[]): string | null {
   if (!prevResult) return null;
-  const overPar = players.map((p) => ({ name: p.name, over: (prevResult.strokes[p.name] ?? 0) - prevResult.par }));
+  const doubleBogeyPlus = players.filter((p) => (prevResult.strokes[p.name] ?? 0) - prevResult.par >= 2);
 
-  const byOver = new Map<number, string[]>();
-  for (const { name, over } of overPar) {
-    if (over < 1) continue;
-    byOver.set(over, [...(byOver.get(over) ?? []), name]);
-  }
-  for (const names of byOver.values()) {
-    if (names.length >= 2) return "Join me!";
-  }
-
-  const doubleBogeyPlus = overPar.filter((p) => p.over >= 2).sort((a, b) => b.over - a.over);
-  if (doubleBogeyPlus.length > 0) return `${doubleBogeyPlus[0].name} Cut! Cut! Cut!`;
-
+  if (doubleBogeyPlus.length >= 2) return "Join me!";
+  if (doubleBogeyPlus.length === 1) return `${doubleBogeyPlus[0].name} Cut! Cut! Cut!`;
   return null;
 }
 
@@ -97,20 +87,29 @@ export function Scorecard() {
   const [heckleMessage, setHeckleMessage] = useState<string | null>(null);
   const [confirming, setConfirming] = useState(false);
   const prevStepIndex = useRef(stepIndex);
+  const resultsRef = useRef(results);
+  const playersRef = useRef(players);
+  resultsRef.current = results;
+  playersRef.current = players;
   const CART_DURATION_MS = 3200;
 
   // Only animate the cart on a forward move — the host advancing, a guest
   // stepping forward on their own, or jumping back to the host's hole.
-  // Going back never plays it.
+  // Going back never plays it. Depends on stepIndex ONLY: results/players
+  // change on every unrelated state broadcast (a stroke edit elsewhere,
+  // etc.), and including them here would re-run this effect mid-animation,
+  // canceling the pending setShowBallRoll(false) via the cleanup below
+  // without rescheduling it — leaving the cart stuck on screen forever.
   useEffect(() => {
     const prev = prevStepIndex.current;
     prevStepIndex.current = stepIndex;
     if (stepIndex <= prev) return;
-    setHeckleMessage(computeHeckle(results[stepIndex - 1], players));
+    setHeckleMessage(computeHeckle(resultsRef.current[stepIndex - 1], playersRef.current));
     setShowBallRoll(true);
     const t = setTimeout(() => setShowBallRoll(false), CART_DURATION_MS);
     return () => clearTimeout(t);
-  }, [stepIndex, results, players]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [stepIndex]);
 
   // Guests automatically follow the host forward; they can still browse
   // back on their own via the Back button until the host moves again.

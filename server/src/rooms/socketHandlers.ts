@@ -1,5 +1,6 @@
 import type { Server, Socket } from "socket.io";
 import {
+  advanceCurrentStep,
   canStart,
   confirmFinishRound,
   createRoom,
@@ -10,7 +11,6 @@ import {
   resolvePuttOff,
   serializeRoomState,
   setConfig,
-  setCurrentStep,
   setPlayerAvatar,
   startGame,
   startNewRound,
@@ -168,8 +168,10 @@ export function registerRoomHandlers(io: Server) {
 
     socket.on("hole:setCurrentStep", (payload: { stepIndex: number }) => {
       const room = data.roomCode ? getRoom(data.roomCode) : undefined;
-      if (!room || !isHost(room, data.playerId) || room.phase !== "playing") return;
-      if (setCurrentStep(room, Number(payload?.stepIndex))) broadcast(io, room);
+      if (!room || !isHost(room, data.playerId)) return;
+      advanceCurrentStep(room, Number(payload?.stepIndex)).then((ok) => {
+        if (ok) broadcast(io, room);
+      });
     });
 
     socket.on("puttoff:resolve", (payload: { winner: string }) => {
