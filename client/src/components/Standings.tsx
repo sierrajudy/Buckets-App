@@ -39,7 +39,12 @@ export function Standings({ onBack }: { onBack: () => void }) {
   }, []);
 
   const currentGamePlayers = buildCurrentGamePlayers(state);
-  const lastGame = myRounds && myRounds.length > 0 ? myRounds[0] : null;
+  // The round just finished is already persisted by the time this screen can
+  // show it, so it's also myRounds[0] — skip it here so "last round played"
+  // means the one before it, not a duplicate of "current round".
+  const justFinished = state?.phase === "celebration" && Boolean(state.finishedRound);
+  const lastGameIndex = justFinished ? 1 : 0;
+  const lastGame = myRounds && myRounds.length > lastGameIndex ? myRounds[lastGameIndex] : null;
 
   return (
     <div className="min-h-screen bg-neutral-50 dark:bg-neutral-950 p-4">
@@ -62,12 +67,11 @@ export function Standings({ onBack }: { onBack: () => void }) {
         )}
 
         <div>
-          <div className="text-sm font-semibold text-neutral-500 mb-2">Last Round Played</div>
-          <RoundSummaryTable
-            date={lastGame?.date ?? ""}
-            players={lastGame?.players ?? []}
-            emptyMessage="No completed rounds yet."
-          />
+          <div className="text-sm font-semibold text-neutral-500 mb-2 flex items-center gap-2">
+            Last Round Played
+            {!lastGame && <span className="text-xs font-normal text-neutral-400">Not enough data, play again</span>}
+          </div>
+          {lastGame && <RoundSummaryTable date={lastGame.date} players={lastGame.players} />}
         </div>
 
         <div>
