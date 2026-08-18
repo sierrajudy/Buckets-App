@@ -89,7 +89,7 @@ export function Home({
         {mode === "create" && (
           <p className="text-xs text-neutral-500 dark:text-neutral-400">
             You'll get a room code to share with the rest of your group, then set up the course and pick your
-            avatar. 2-3 players per round.
+            avatar. 2-4 players per round.
           </p>
         )}
 

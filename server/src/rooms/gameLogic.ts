@@ -22,8 +22,8 @@ function sumRecords(records: Record<string, number>[], players: string[]): Recor
 }
 
 /**
- * A tie for lowest score splits the hole-win pool evenly, which matches both
- * the 2-player tie rule and the 3-player "two tie" rule with one function.
+ * A tie for lowest score splits the hole-win pool evenly among however many
+ * players tied, which works the same way regardless of room size (2-4).
  */
 export function computeHoleResult(entry: HoleEntry, players: string[]): HoleResult {
   const strokes: Record<string, number> = {};

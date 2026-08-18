@@ -78,7 +78,7 @@ export function isNameTaken(room: Room, name: string): boolean {
 
 export function joinRoom(room: Room, name: string): Player | { error: string } {
   if (room.phase !== "lobby") return { error: "This round has already started." };
-  if (room.players.length >= 3) return { error: "Room is full (3 players max)." };
+  if (room.players.length >= 4) return { error: "Room is full (4 players max)." };
   const trimmed = name.trim();
   if (!trimmed) return { error: "Name is required." };
   if (isNameTaken(room, trimmed)) return { error: "That name is already taken in this room." };
@@ -110,7 +110,7 @@ export function canStart(room: Room): boolean {
   return (
     room.phase === "lobby" &&
     room.players.length >= 2 &&
-    room.players.length <= 3 &&
+    room.players.length <= 4 &&
     room.players.every((p) => p.avatar !== null)
   );
 }

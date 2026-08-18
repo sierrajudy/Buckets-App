@@ -92,7 +92,7 @@ export function registerRoomHandlers(io: Server) {
     socket.on("room:start", (_payload: unknown, ack?: Ack) => {
       const room = data.roomCode ? getRoom(data.roomCode) : undefined;
       if (!room || !isHost(room, data.playerId)) return ack?.({ ok: false, error: "Only the host can start." });
-      if (!canStart(room)) return ack?.({ ok: false, error: "Need 2-3 players, each with an avatar chosen." });
+      if (!canStart(room)) return ack?.({ ok: false, error: "Need 2-4 players, each with an avatar chosen." });
       startGame(room);
       broadcast(io, room);
       ack?.({ ok: true });

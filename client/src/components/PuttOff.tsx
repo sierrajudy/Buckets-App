@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useRoom } from "../store";
 import { AvatarIcon } from "./Avatars";
+import { joinNames } from "../lib/format";
 
 export function PuttOff() {
   const { state, isHost, resolvePuttOff } = useRoom();
@@ -19,7 +20,7 @@ export function PuttOff() {
         <div className="text-4xl">⛳</div>
         <h2 className="text-2xl font-extrabold text-white">It's a tie!</h2>
         <p className="text-neutral-400 text-sm">
-          {tiedPlayers.join(" and ")} are tied for the lead. Time for a putt-off — closest to the hole wins the
+          {joinNames(tiedPlayers)} are tied for the lead. Time for a putt-off — closest to the hole wins the
           match.
         </p>
 

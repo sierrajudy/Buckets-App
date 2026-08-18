@@ -17,7 +17,7 @@ export function Lobby({
   if (!state) return null;
 
   const takenAvatars = new Set(state.players.filter((p) => p.avatar).map((p) => p.avatar));
-  const canStart = state.players.length >= 2 && state.players.length <= 3 && state.players.every((p) => p.avatar);
+  const canStart = state.players.length >= 2 && state.players.length <= 4 && state.players.every((p) => p.avatar);
 
   async function handleStart() {
     setStarting(true);
@@ -97,7 +97,7 @@ export function Lobby({
 
         <div className="bg-white dark:bg-neutral-900 rounded-2xl border border-neutral-200 dark:border-neutral-800 p-4">
           <div className="text-sm font-semibold text-neutral-500 mb-3">
-            Players ({state.players.length}/3)
+            Players ({state.players.length}/4)
           </div>
           <div className="space-y-2">
             {state.players.map((p, i) => (

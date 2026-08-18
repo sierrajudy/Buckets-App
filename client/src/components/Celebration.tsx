@@ -1,6 +1,7 @@
 import { useMemo } from "react";
 import { useRoom } from "../store";
 import { AvatarIcon } from "./Avatars";
+import { joinNames } from "../lib/format";
 
 const CONFETTI_COLORS = ["#facc15", "#22c55e", "#3b82f6", "#ef4444", "#a855f7", "#f97316"];
 
@@ -111,7 +112,7 @@ export function Celebration({ onViewStandings }: { onViewStandings: () => void }
         >
           <div className="text-2xl mb-1">🍺</div>
           <div className="text-amber-200 font-semibold">
-            {round.losers.join(" and ")} {round.losers.length > 1 ? "are" : "is"} buying the beers
+            {joinNames(round.losers)} {round.losers.length > 1 ? "are" : "is"} buying the beers
           </div>
         </div>
 
