@@ -145,7 +145,10 @@ function orderedResults(room: Room) {
 }
 
 /** Recomputes results after a scoring mutation and auto-advances the room's
- * phase once the round is decided (hole-in-one, or all 9 holes complete). */
+ * phase for outcomes that don't need host confirmation: a hole-in-one wins
+ * instantly, and a tie moves straight to the putt-off (which already waits
+ * on the host to resolve it). A clear win on the last hole waits for the
+ * host to explicitly confirm via confirmFinishRound — see that function. */
 export async function recomputeAndMaybeFinish(room: Room): Promise<void> {
   if (room.phase !== "playing") return;
   const names = playerNames(room);
@@ -174,8 +177,22 @@ export async function recomputeAndMaybeFinish(room: Room): Promise<void> {
   const tied = findTiedLeaders(totals, names);
   if (tied.length > 1) {
     room.phase = "puttoff";
-    return;
   }
+}
+
+/** Host-only explicit confirmation that locks in a completed round once
+ * there's a clear winner (no tie, no hole-in-one — those finish on their
+ * own). Returns false if the round isn't actually ready to finish yet. */
+export async function confirmFinishRound(room: Room): Promise<boolean> {
+  if (room.phase !== "playing") return false;
+  const names = playerNames(room);
+  const results = orderedResults(room);
+
+  const allComplete = results.every((h) => names.every((n) => h.strokes[n] > 0));
+  if (!allComplete) return false;
+
+  const totals = computeRunningTotals(results, names);
+  if (findTiedLeaders(totals, names).length > 1) return false;
 
   const round = finalizeRound({
     course: room.course,
@@ -188,6 +205,7 @@ export async function recomputeAndMaybeFinish(room: Room): Promise<void> {
   room.finishedRound = round;
   room.phase = "celebration";
   await persistRound(round);
+  return true;
 }
 
 export async function resolvePuttOff(room: Room, winnerName: string): Promise<boolean> {

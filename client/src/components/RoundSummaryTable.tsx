@@ -1,4 +1,5 @@
 import type { RoundPlayerSummary } from "../types";
+import { PointsBar } from "./PointsBar";
 
 function formatDate(value: string): string {
   if (value === "now") return "Today";
@@ -21,6 +22,7 @@ export function RoundSummaryTable({
   }
 
   const sorted = [...players].sort((a, b) => b.total - a.total);
+  const maxTotal = Math.max(...players.map((p) => p.total), 1);
 
   return (
     <div className="rounded-xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 overflow-hidden">
@@ -48,7 +50,14 @@ export function RoundSummaryTable({
                   {p.name}
                   {p.won && <span className="ml-1.5 text-green-600">🏆</span>}
                 </td>
-                <td className="px-3 py-2.5 text-right font-bold">{p.total}</td>
+                <td className="px-3 py-2.5 text-right">
+                  <div className="flex items-center justify-end gap-2">
+                    <span className="w-14">
+                      <PointsBar value={p.total} max={maxTotal} color={p.won ? "bg-amber-500" : "bg-green-500"} />
+                    </span>
+                    <span className="font-bold w-6 text-right">{p.total}</span>
+                  </div>
+                </td>
                 <td className="px-3 py-2.5 text-right">{p.holesWon}</td>
                 <td className="px-3 py-2.5 text-right">{p.buckets}</td>
                 <td className="px-3 py-2.5 text-right">{p.pge}</td>

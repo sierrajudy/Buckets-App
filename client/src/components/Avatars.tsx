@@ -41,10 +41,10 @@ function Face({
         stroke="#0f172a"
         strokeWidth={height * 0.09}
       />
-      <circle cx={-width * 0.16} cy={0} r={height * 0.27} fill="#0f172a" />
-      <circle cx={width * 0.16} cy={0} r={height * 0.27} fill="#0f172a" />
-      <circle cx={-width * 0.1} cy={-height * 0.1} r={height * 0.08} fill="#fff" />
-      <circle cx={width * 0.22} cy={-height * 0.1} r={height * 0.08} fill="#fff" />
+      <circle className="avatar-pupil" cx={-width * 0.16} cy={0} r={height * 0.27} fill="#0f172a" />
+      <circle className="avatar-pupil" cx={width * 0.16} cy={0} r={height * 0.27} fill="#0f172a" />
+      <circle className="avatar-eye-highlight" cx={-width * 0.1} cy={-height * 0.1} r={height * 0.08} fill="#fff" />
+      <circle className="avatar-eye-highlight" cx={width * 0.22} cy={-height * 0.1} r={height * 0.08} fill="#fff" />
       {smile && (
         <path
           d={`M ${-width * 0.22} ${height * 0.62} Q 0 ${height * 0.95} ${width * 0.22} ${height * 0.62}`}
@@ -208,7 +208,7 @@ const AVATAR_COMPONENTS: Record<AvatarKey, () => React.JSX.Element> = {
 export function AvatarIcon({ avatar, className }: { avatar: AvatarKey | null; className?: string }) {
   if (!avatar) {
     return (
-      <span className={className}>
+      <span className={`inline-block ${className ?? ""}`}>
         <svg viewBox="0 0 120 120" width="100%" height="100%" role="img" aria-label="No avatar chosen">
           <circle cx="60" cy="60" r="46" fill="#e2e8f0" stroke="#94a3b8" strokeWidth="3" strokeDasharray="6 6" />
           <text x="60" y="76" textAnchor="middle" fontSize="42" fill="#94a3b8" fontWeight="700">
@@ -220,7 +220,7 @@ export function AvatarIcon({ avatar, className }: { avatar: AvatarKey | null; cl
   }
   const Cmp = AVATAR_COMPONENTS[avatar];
   return (
-    <span className={className}>
+    <span className={`inline-block ${className ?? ""}`}>
       <Cmp />
     </span>
   );

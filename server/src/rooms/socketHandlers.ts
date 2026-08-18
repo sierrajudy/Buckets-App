@@ -1,6 +1,7 @@
 import type { Server, Socket } from "socket.io";
 import {
   canStart,
+  confirmFinishRound,
   createRoom,
   getRoom,
   joinRoom,
@@ -154,6 +155,20 @@ export function registerRoomHandlers(io: Server) {
         ? entry.pgeWinners.filter((n) => n !== payload.targetName)
         : [...entry.pgeWinners, payload.targetName];
       recomputeAndMaybeFinish(room).then(() => broadcast(io, room));
+    });
+
+    socket.on("room:confirmFinish", () => {
+      const room = data.roomCode ? getRoom(data.roomCode) : undefined;
+      if (!room || !isHost(room, data.playerId)) return;
+      confirmFinishRound(room).then((ok) => {
+        if (ok) broadcast(io, room);
+      });
+    });
+
+    socket.on("hole:advance", () => {
+      const room = data.roomCode ? getRoom(data.roomCode) : undefined;
+      if (!room || !isHost(room, data.playerId)) return;
+      socket.to(room.code).emit("hole:advanced");
     });
 
     socket.on("puttoff:resolve", (payload: { winner: string }) => {

@@ -1,19 +1,136 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRoom } from "../store";
 import { AvatarIcon } from "./Avatars";
+import { GolfCart } from "./GolfCart";
+import type { AvatarKey } from "../types";
+
+function computeLeader(totals: Record<string, number>, players: { name: string }[]): string | null {
+  if (players.length < 2) return null;
+  const vals = players.map((p) => totals[p.name] ?? 0);
+  const max = Math.max(...vals);
+  const min = Math.min(...vals);
+  if (max === min) return null;
+  const leaders = players.filter((p) => (totals[p.name] ?? 0) === max);
+  return leaders.length === 1 ? leaders[0].name : null;
+}
+
+function StatusAvatar({
+  avatar,
+  className,
+  badge,
+}: {
+  avatar: AvatarKey | null;
+  className?: string;
+  badge?: string;
+}) {
+  return (
+    <span className="relative inline-block">
+      <AvatarIcon avatar={avatar} className={className} />
+      {badge && (
+        <span
+          className="absolute -top-1.5 -right-1.5 text-sm leading-none select-none"
+          style={{ animation: "badge-pop 0.4s ease-out" }}
+        >
+          {badge}
+        </span>
+      )}
+    </span>
+  );
+}
+
+function FlagIcon({ className }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" className={className} style={{ transformOrigin: "4px 22px" }}>
+      <line x1="4" y1="2" x2="4" y2="22" stroke="#64748b" strokeWidth="2" strokeLinecap="round" />
+      <path
+        d="M4 3 L19 7 L4 11 Z"
+        fill="#ef4444"
+        stroke="#0f172a"
+        strokeWidth="1"
+        style={{ animation: "flag-flutter 1.8s ease-in-out infinite" }}
+      />
+    </svg>
+  );
+}
 
 export function Scorecard() {
-  const { state, isHost, me, setStrokes, toggleBucket, setPgeEnabled, togglePgeWinner, leaveRoom } = useRoom();
+  const {
+    state,
+    isHost,
+    me,
+    setStrokes,
+    toggleBucket,
+    setPgeEnabled,
+    togglePgeWinner,
+    leaveRoom,
+    confirmFinishRound,
+    cartTrigger,
+    announceHoleAdvance,
+  } = useRoom();
   const [stepIndex, setStepIndex] = useState(0);
+  const [showBallRoll, setShowBallRoll] = useState(false);
+  const [confirming, setConfirming] = useState(false);
+  const prevStepIndex = useRef(stepIndex);
+  const prevCartTrigger = useRef(cartTrigger);
+  const CART_DURATION_MS = 3200;
+
+  useEffect(() => {
+    if (prevStepIndex.current === stepIndex) return;
+    prevStepIndex.current = stepIndex;
+    setShowBallRoll(true);
+    const t = setTimeout(() => setShowBallRoll(false), CART_DURATION_MS);
+    return () => clearTimeout(t);
+  }, [stepIndex]);
+
+  useEffect(() => {
+    if (prevCartTrigger.current === cartTrigger) return;
+    prevCartTrigger.current = cartTrigger;
+    setShowBallRoll(true);
+    const t = setTimeout(() => setShowBallRoll(false), CART_DURATION_MS);
+    return () => clearTimeout(t);
+  }, [cartTrigger]);
 
   if (!state) return null;
   const { results, players, totals } = state;
   const result = results[stepIndex];
   const isLastHole = stepIndex === results.length - 1;
   const holeComplete = players.every((p) => (result.strokes[p.name] ?? 0) > 0);
+  const leader = computeLeader(totals, players);
+  const tiedHole = result.holeWinners.length > 1;
+
+  function statusBadgeFor(name: string): string | undefined {
+    if (name === leader) return "👑";
+    return undefined;
+  }
 
   return (
-    <div className="min-h-screen bg-neutral-50 dark:bg-neutral-950 flex flex-col">
+    <div className="min-h-screen bg-neutral-50 dark:bg-neutral-950 flex flex-col overflow-hidden relative">
+      {showBallRoll && (
+        <div
+          className="fixed inset-0 z-40 overflow-hidden flex items-center justify-center"
+          style={{
+            background: "linear-gradient(to bottom, #bae6fd 0%, #bae6fd 55%, #4ade80 55%, #16a34a 100%)",
+          }}
+        >
+          <div className="absolute top-8 left-10 w-16 h-8 rounded-full bg-white/80" />
+          <div className="absolute top-16 left-28 w-20 h-9 rounded-full bg-white/70" />
+          <div className="absolute top-10 right-14 w-14 h-7 rounded-full bg-white/70" />
+
+          <div
+            className="absolute"
+            style={{ bottom: "18%", animation: `cart-drive-across ${CART_DURATION_MS}ms ease-in-out` }}
+          >
+            <GolfCart avatars={players.map((p) => p.avatar)} size={180} />
+          </div>
+
+          <div className="absolute inset-x-0 bottom-10 text-center">
+            <span className="inline-block px-4 py-1.5 rounded-full bg-white/90 dark:bg-neutral-900/90 text-green-700 dark:text-green-400 font-bold text-sm shadow">
+              On to the next hole! ⛳
+            </span>
+          </div>
+        </div>
+      )}
+
       <header className="border-b border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 px-4 py-3 sticky top-0 z-10">
         <div className="flex items-center justify-between max-w-2xl mx-auto">
           <button onClick={leaveRoom} className="text-sm text-neutral-500 hover:text-red-500">
@@ -23,48 +140,92 @@ export function Scorecard() {
             Hole {stepIndex + 1} of 9 {!isHost && <span className="text-neutral-400 font-normal">· watching live</span>}
           </div>
         </div>
-        <div className="flex gap-1 max-w-2xl mx-auto mt-2 overflow-x-auto">
+
+        <div className="max-w-2xl mx-auto mt-3 relative h-6">
+          <div className="absolute inset-x-0 top-1/2 -translate-y-1/2 h-3 rounded-full bg-gradient-to-r from-green-500 to-green-700 dark:from-green-700 dark:to-green-900 overflow-hidden">
+            <div
+              className="absolute inset-0 opacity-20"
+              style={{
+                backgroundImage:
+                  "repeating-linear-gradient(90deg, rgba(255,255,255,0.6) 0px, rgba(255,255,255,0.6) 6px, transparent 6px, transparent 12px)",
+              }}
+            />
+          </div>
           {results.map((r, i) => {
             const done = players.every((p) => (r.strokes[p.name] ?? 0) > 0);
+            const pct = (i / (results.length - 1)) * 100;
             return (
               <button
                 key={r.holeNumber}
                 onClick={() => setStepIndex(i)}
-                className={`shrink-0 w-8 h-8 rounded-full text-xs font-semibold flex items-center justify-center border ${
-                  i === stepIndex
-                    ? "bg-green-600 text-white border-green-600"
-                    : done
-                      ? "bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-300 border-green-300 dark:border-green-800"
-                      : "border-neutral-300 dark:border-neutral-700 text-neutral-500"
+                title={`Hole ${r.holeNumber}`}
+                className={`absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-3.5 h-3.5 rounded-full border-2 ${
+                  done
+                    ? "bg-white border-white"
+                    : "bg-green-800/40 border-green-200 dark:border-green-900"
                 }`}
-              >
-                {r.holeNumber}
-              </button>
+                style={{ left: `${pct}%` }}
+              />
             );
           })}
+          <div
+            className="absolute top-1/2 w-5 h-5 transition-all duration-500 ease-out drop-shadow-md"
+            style={{
+              left: `${(stepIndex / (results.length - 1)) * 100}%`,
+              transform: "translate(-50%, -60%)",
+            }}
+          >
+            <svg viewBox="0 0 20 20" width="100%" height="100%" role="img" aria-label="Golf ball marker">
+              <circle cx="10" cy="10" r="9" fill="#ffffff" stroke="#cbd5e1" strokeWidth="1" />
+              {[
+                [7, 6],
+                [10, 5.5],
+                [13, 6],
+                [5.5, 10],
+                [14.5, 10],
+                [7, 14],
+                [13, 14],
+              ].map(([cx, cy], i) => (
+                <circle key={i} cx={cx} cy={cy} r="0.85" fill="#cbd5e1" />
+              ))}
+            </svg>
+          </div>
         </div>
       </header>
 
       <div className="flex-1 max-w-2xl w-full mx-auto p-4 space-y-4">
         <div className="bg-white dark:bg-neutral-900 rounded-xl border border-neutral-200 dark:border-neutral-800 p-4 flex items-center justify-between">
-          <div>
-            <div className="text-2xl font-extrabold">Hole {result.holeNumber}</div>
-            <div className="text-sm text-neutral-500">Par {result.par}</div>
+          <div className="flex items-center gap-2">
+            <FlagIcon className="w-6 h-8 shrink-0" />
+            <div>
+              <div className="text-2xl font-extrabold">Hole {result.holeNumber}</div>
+              <div className="text-sm text-neutral-500">Par {result.par}</div>
+            </div>
           </div>
-          <div className="flex gap-2 text-xs font-semibold">
-            {result.isEagle && (
-              <span className="px-2 py-1 rounded-full bg-purple-100 text-purple-700 dark:bg-purple-900 dark:text-purple-300">
-                Eagle — 3x points
-              </span>
-            )}
-            {result.isBirdie && !result.isEagle && (
-              <span className="px-2 py-1 rounded-full bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300">
-                Birdie — 2x points
-              </span>
-            )}
-            {result.holeInOnePlayers.length > 0 && (
-              <span className="px-2 py-1 rounded-full bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-300 animate-pulse">
-                HOLE IN ONE!
+          <div className="flex flex-col items-end gap-1.5">
+            <div className="flex gap-2 text-xs font-semibold">
+              {result.isEagle && (
+                <span className="px-2 py-1 rounded-full bg-purple-100 text-purple-700 dark:bg-purple-900 dark:text-purple-300">
+                  Eagle — 3x points
+                </span>
+              )}
+              {result.isBirdie && !result.isEagle && (
+                <span className="px-2 py-1 rounded-full bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300">
+                  Birdie — 2x points
+                </span>
+              )}
+              {result.holeInOnePlayers.length > 0 && (
+                <span className="px-2 py-1 rounded-full bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-300 animate-pulse">
+                  HOLE IN ONE!
+                </span>
+              )}
+            </div>
+            {tiedHole && (
+              <span
+                className="px-2 py-1 rounded-full bg-pink-100 text-pink-700 dark:bg-pink-900 dark:text-pink-300 text-xs font-semibold"
+                style={{ animation: "high-five-pop 0.5s ease-out" }}
+              >
+                🙌 Tied hole!
               </span>
             )}
           </div>
@@ -73,6 +234,9 @@ export function Scorecard() {
         <div className="space-y-3">
           {players.map((p) => {
             const strokes = result.strokes[p.name] ?? 0;
+            const wonBucket = result.bucketWinners.includes(p.name);
+            const wonPge = result.pgeWinners.includes(p.name);
+            const tiedThisHole = tiedHole && result.holeWinners.includes(p.name);
             return (
               <div
                 key={p.id}
@@ -80,11 +244,16 @@ export function Scorecard() {
               >
                 <div className="flex items-center justify-between mb-3">
                   <div className="flex items-center gap-2">
-                    <AvatarIcon avatar={p.avatar} className="w-8 h-8 shrink-0" />
+                    <StatusAvatar avatar={p.avatar} className="w-8 h-8 shrink-0" badge={statusBadgeFor(p.name)} />
                     <span className="font-semibold">
                       {p.name}
                       {p.id === me?.id && <span className="text-neutral-400 font-normal"> (you)</span>}
                     </span>
+                    {tiedThisHole && (
+                      <span className="text-base" style={{ animation: "high-five-pop 0.5s ease-out" }}>
+                        🙌
+                      </span>
+                    )}
                   </div>
                   <span className="text-sm text-green-700 dark:text-green-400 font-semibold">
                     +{result.totalPoints[p.name] ?? 0} pts
@@ -129,11 +298,17 @@ export function Scorecard() {
                     <input
                       type="checkbox"
                       disabled={!isHost}
-                      checked={result.bucketWinners.includes(p.name)}
+                      checked={wonBucket}
                       onChange={() => toggleBucket(result.holeNumber, p.name)}
                       className="w-4 h-4 accent-green-600"
                     />
-                    🪣 Won bucket
+                    <span
+                      className="inline-block"
+                      style={wonBucket ? { animation: "bucket-ripple 1s ease-in-out infinite" } : undefined}
+                    >
+                      🪣
+                    </span>
+                    Won bucket
                   </label>
                   {result.pgeEnabled && (
                     <label
@@ -142,11 +317,17 @@ export function Scorecard() {
                       <input
                         type="checkbox"
                         disabled={!isHost}
-                        checked={result.pgeWinners.includes(p.name)}
+                        checked={wonPge}
                         onChange={() => togglePgeWinner(result.holeNumber, p.name)}
                         className="w-4 h-4 accent-yellow-500"
                       />
-                      ⚡ Won PG&E
+                      <span
+                        className="inline-block"
+                        style={wonPge ? { animation: "pge-flicker 1.4s ease-in-out infinite" } : undefined}
+                      >
+                        ⚡
+                      </span>
+                      Won PG&E
                     </label>
                   )}
                 </div>
@@ -173,7 +354,7 @@ export function Scorecard() {
           <div className="flex flex-wrap gap-4">
             {players.map((p) => (
               <div key={p.id} className="flex items-center gap-1.5">
-                <AvatarIcon avatar={p.avatar} className="w-6 h-6 shrink-0" />
+                <StatusAvatar avatar={p.avatar} className="w-6 h-6 shrink-0" badge={statusBadgeFor(p.name)} />
                 <span className="text-sm text-neutral-600 dark:text-neutral-300">{p.name}</span>
                 <span className="text-lg font-extrabold text-green-700 dark:text-green-400">{totals[p.name] ?? 0}</span>
               </div>
@@ -191,14 +372,37 @@ export function Scorecard() {
             Back
           </button>
           {isLastHole ? (
-            <div className="flex-1 flex items-center justify-center text-xs text-neutral-400 text-center px-2">
-              {holeComplete ? "Round finishing…" : "Round finishes once every score is in"}
-            </div>
+            holeComplete ? (
+              isHost ? (
+                <button
+                  type="button"
+                  disabled={confirming}
+                  onClick={() => {
+                    setConfirming(true);
+                    confirmFinishRound();
+                  }}
+                  className="flex-1 rounded-lg bg-green-600 hover:bg-green-700 disabled:opacity-60 text-white py-2.5 font-semibold text-sm"
+                >
+                  {confirming ? "Finishing…" : "Confirm & Finish Round"}
+                </button>
+              ) : (
+                <div className="flex-1 flex items-center justify-center text-xs text-neutral-400 text-center px-2">
+                  Waiting for host to confirm the round…
+                </div>
+              )
+            ) : (
+              <div className="flex-1 flex items-center justify-center text-xs text-neutral-400 text-center px-2">
+                Enter every score to finish
+              </div>
+            )
           ) : (
             <button
               type="button"
               disabled={!holeComplete}
-              onClick={() => setStepIndex((i) => Math.min(results.length - 1, i + 1))}
+              onClick={() => {
+                setStepIndex((i) => Math.min(results.length - 1, i + 1));
+                if (isHost) announceHoleAdvance();
+              }}
               className="flex-1 rounded-lg bg-green-600 hover:bg-green-700 disabled:opacity-40 text-white py-2.5 font-semibold text-sm"
             >
               Next hole

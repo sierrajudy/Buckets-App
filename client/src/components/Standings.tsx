@@ -2,6 +2,9 @@ import { useEffect, useState } from "react";
 import { fetchMyRounds, fetchStandings } from "../lib/api";
 import { useRoom } from "../store";
 import { RoundSummaryTable } from "./RoundSummaryTable";
+import { PointsBar } from "./PointsBar";
+
+const MEDALS = ["🥇", "🥈", "🥉"];
 import type { RoomState, RoundHistoryRow, RoundPlayerSummary, StandingsRow } from "../types";
 
 function buildCurrentGamePlayers(state: RoomState | null): RoundPlayerSummary[] {
@@ -97,20 +100,33 @@ export function Standings({ onBack }: { onBack: () => void }) {
                   {rows
                     .slice()
                     .sort((a, b) => b.matchWins - a.matchWins || b.totalPoints - a.totalPoints)
-                    .map((r) => (
-                      <tr key={r.name} className="border-b border-neutral-100 dark:border-neutral-800 last:border-0">
-                        <td className="px-3 py-2.5 font-semibold">{r.name}</td>
-                        <td className="px-3 py-2.5 text-right">{r.roundsPlayed}</td>
-                        <td className="px-3 py-2.5 text-right text-green-700 dark:text-green-400 font-semibold">
-                          {r.matchWins}
-                        </td>
-                        <td className="px-3 py-2.5 text-right">{r.holesWon}</td>
-                        <td className="px-3 py-2.5 text-right">{r.bucketsWon}</td>
-                        <td className="px-3 py-2.5 text-right">{r.pgeWon}</td>
-                        <td className="px-3 py-2.5 text-right">{r.totalPoints}</td>
-                        <td className="px-3 py-2.5 text-right">{r.beersOwed}</td>
-                      </tr>
-                    ))}
+                    .map((r, i) => {
+                      const maxTotal = Math.max(...rows.map((row) => row.totalPoints), 1);
+                      return (
+                        <tr key={r.name} className="border-b border-neutral-100 dark:border-neutral-800 last:border-0">
+                          <td className="px-3 py-2.5 font-semibold">
+                            {MEDALS[i] && <span className="mr-1">{MEDALS[i]}</span>}
+                            {r.name}
+                          </td>
+                          <td className="px-3 py-2.5 text-right">{r.roundsPlayed}</td>
+                          <td className="px-3 py-2.5 text-right text-green-700 dark:text-green-400 font-semibold">
+                            {r.matchWins}
+                          </td>
+                          <td className="px-3 py-2.5 text-right">{r.holesWon}</td>
+                          <td className="px-3 py-2.5 text-right">{r.bucketsWon}</td>
+                          <td className="px-3 py-2.5 text-right">{r.pgeWon}</td>
+                          <td className="px-3 py-2.5 text-right">
+                            <div className="flex items-center justify-end gap-2">
+                              <span className="w-14">
+                                <PointsBar value={r.totalPoints} max={maxTotal} />
+                              </span>
+                              <span className="w-8 text-right">{r.totalPoints}</span>
+                            </div>
+                          </td>
+                          <td className="px-3 py-2.5 text-right">{r.beersOwed}</td>
+                        </tr>
+                      );
+                    })}
                 </tbody>
               </table>
             </div>

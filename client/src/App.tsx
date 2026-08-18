@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { AuthProvider, useAuth } from "./authStore";
 import { RoomProvider, useRoom } from "./store";
 import { Splash } from "./components/Splash";
@@ -11,6 +11,9 @@ import { Celebration } from "./components/Celebration";
 import { Standings } from "./components/Standings";
 import { Profile } from "./components/Profile";
 import { ResetPassword } from "./components/ResetPassword";
+import { AceIntro } from "./components/AceIntro";
+import { PartyIntro } from "./components/PartyIntro";
+import { LoadingScreen } from "./components/LoadingScreen";
 
 function AppShell() {
   const { status: authStatus } = useAuth();
@@ -18,28 +21,39 @@ function AppShell() {
   const [showSplash, setShowSplash] = useState(true);
   const [showStandings, setShowStandings] = useState(false);
   const [showProfile, setShowProfile] = useState(false);
+  const [showAceIntro, setShowAceIntro] = useState(false);
+  const [showPartyIntro, setShowPartyIntro] = useState(false);
+  const aceShownRef = useRef(false);
+  const partyShownRef = useRef(false);
+
+  const holeInOnePlayer = state?.finishedRound?.holeInOnePlayer ?? null;
+
+  useEffect(() => {
+    if (state?.phase !== "celebration") {
+      aceShownRef.current = false;
+      partyShownRef.current = false;
+      return;
+    }
+    if (holeInOnePlayer) {
+      if (!aceShownRef.current) {
+        aceShownRef.current = true;
+        setShowAceIntro(true);
+      }
+    } else if (!partyShownRef.current) {
+      partyShownRef.current = true;
+      setShowPartyIntro(true);
+    }
+  }, [state?.phase, holeInOnePlayer]);
 
   if (window.location.pathname === "/reset-password") return <ResetPassword />;
 
   if (showSplash) return <Splash onDone={() => setShowSplash(false)} />;
 
-  if (authStatus === "loading") {
-    return (
-      <div className="min-h-screen bg-green-900 flex items-center justify-center text-green-100 text-sm">
-        Loading…
-      </div>
-    );
-  }
+  if (authStatus === "loading") return <LoadingScreen message="Loading…" />;
 
   if (authStatus === "anon") return <Auth />;
 
-  if (connecting) {
-    return (
-      <div className="min-h-screen bg-green-900 flex items-center justify-center text-green-100 text-sm">
-        Reconnecting…
-      </div>
-    );
-  }
+  if (connecting) return <LoadingScreen message="Reconnecting…" />;
 
   if (showProfile) return <Profile onBack={() => setShowProfile(false)} />;
 
@@ -47,6 +61,20 @@ function AppShell() {
 
   if (!state) {
     return <Home onViewStandings={() => setShowStandings(true)} onViewProfile={() => setShowProfile(true)} />;
+  }
+
+  if (showAceIntro && holeInOnePlayer) {
+    return <AceIntro player={holeInOnePlayer} onDone={() => setShowAceIntro(false)} />;
+  }
+
+  if (showPartyIntro && state.finishedRound) {
+    return (
+      <PartyIntro
+        players={state.players.map((p) => ({ name: p.name, avatar: p.avatar }))}
+        winner={state.finishedRound.winner}
+        onDone={() => setShowPartyIntro(false)}
+      />
+    );
   }
 
   switch (state.phase) {

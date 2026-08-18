@@ -100,9 +100,11 @@ export function Lobby({
             Players ({state.players.length}/3)
           </div>
           <div className="space-y-2">
-            {state.players.map((p) => (
+            {state.players.map((p, i) => (
               <div key={p.id} className="flex items-center gap-3">
-                <AvatarIcon avatar={p.avatar} className="w-10 h-10 shrink-0" />
+                <span className="avatar-idle" style={{ animationDelay: `${i * 0.35}s` }}>
+                  <AvatarIcon avatar={p.avatar} className="w-10 h-10 shrink-0" />
+                </span>
                 <span className="font-medium">{p.name}</span>
                 {p.id === state.hostId && (
                   <span className="text-[10px] font-bold uppercase tracking-wide bg-amber-100 text-amber-700 dark:bg-amber-900 dark:text-amber-300 px-1.5 py-0.5 rounded">
