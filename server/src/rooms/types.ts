@@ -65,6 +65,7 @@ export interface Room {
   puttOffWinner: string | null;
   finishedRound: RoundSummary | null;
   createdAt: number;
+  currentStep: number;
 }
 
 export type PublicPlayer = Omit<Player, "socketId">;
@@ -81,4 +82,5 @@ export interface RoomStateForClient {
   tiedLeaders: string[];
   puttOffWinner: string | null;
   finishedRound: RoundSummary | null;
+  currentStep: number;
 }

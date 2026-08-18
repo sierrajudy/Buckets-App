@@ -55,6 +55,7 @@ export interface RoomState {
   tiedLeaders: string[];
   puttOffWinner: string | null;
   finishedRound: RoundSummary | null;
+  currentStep: number;
 }
 
 export interface StandingsRow {

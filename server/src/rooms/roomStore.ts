@@ -66,6 +66,7 @@ export function createRoom(hostName: string): { room: Room; player: Player } {
     puttOffWinner: null,
     finishedRound: null,
     createdAt: Date.now(),
+    currentStep: 0,
   };
   rooms.set(code, room);
   return { room, player };
@@ -120,6 +121,7 @@ export function startGame(room: Room): boolean {
   room.puttOffWinner = null;
   room.finishedRound = null;
   room.phase = "playing";
+  room.currentStep = 0;
   return true;
 }
 
@@ -128,6 +130,17 @@ export function startNewRound(room: Room): void {
   room.puttOffWinner = null;
   room.finishedRound = null;
   room.phase = "lobby";
+  room.currentStep = 0;
+}
+
+/** Host-only: moves the room's shared "current hole" pointer, which drives
+ * guests' auto-follow view and lets a reconnecting client resume at the
+ * host's real position instead of always restarting at hole 1. */
+export function setCurrentStep(room: Room, stepIndex: number): boolean {
+  const results = orderedResults(room);
+  if (!Number.isInteger(stepIndex) || stepIndex < 0 || stepIndex >= results.length) return false;
+  room.currentStep = stepIndex;
+  return true;
 }
 
 export function removePlayer(room: Room, playerId: string): void {
@@ -245,5 +258,6 @@ export function serializeRoomState(room: Room): RoomStateForClient {
     tiedLeaders,
     puttOffWinner: room.puttOffWinner,
     finishedRound: room.finishedRound,
+    currentStep: room.currentStep,
   };
 }

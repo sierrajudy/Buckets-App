@@ -2,7 +2,8 @@ import { useEffect, useRef, useState } from "react";
 import { useRoom } from "../store";
 import { AvatarIcon } from "./Avatars";
 import { GolfCart } from "./GolfCart";
-import type { AvatarKey } from "../types";
+import { HecklerGuy } from "./HecklerGuy";
+import type { AvatarKey, HoleResult } from "../types";
 
 function computeLeader(totals: Record<string, number>, players: { name: string }[]): string | null {
   if (players.length < 2) return null;
@@ -12,6 +13,28 @@ function computeLeader(totals: Record<string, number>, players: { name: string }
   if (max === min) return null;
   const leaders = players.filter((p) => (totals[p.name] ?? 0) === max);
   return leaders.length === 1 ? leaders[0].name : null;
+}
+
+/** Sideline commentary for the hole just finished: a shared bogey-or-worse
+ * tie gets "Join me!", otherwise a lone double-bogey-or-worse gets called out
+ * by name. Anything better than a bogey stays quiet. */
+function computeHeckle(prevResult: HoleResult | undefined, players: { name: string }[]): string | null {
+  if (!prevResult) return null;
+  const overPar = players.map((p) => ({ name: p.name, over: (prevResult.strokes[p.name] ?? 0) - prevResult.par }));
+
+  const byOver = new Map<number, string[]>();
+  for (const { name, over } of overPar) {
+    if (over < 1) continue;
+    byOver.set(over, [...(byOver.get(over) ?? []), name]);
+  }
+  for (const names of byOver.values()) {
+    if (names.length >= 2) return "Join me!";
+  }
+
+  const doubleBogeyPlus = overPar.filter((p) => p.over >= 2).sort((a, b) => b.over - a.over);
+  if (doubleBogeyPlus.length > 0) return `${doubleBogeyPlus[0].name} Cut! Cut! Cut!`;
+
+  return null;
 }
 
 function StatusAvatar({
@@ -64,34 +87,40 @@ export function Scorecard() {
     togglePgeWinner,
     leaveRoom,
     confirmFinishRound,
-    cartTrigger,
-    announceHoleAdvance,
+    setCurrentStep,
   } = useRoom();
-  const [stepIndex, setStepIndex] = useState(0);
+  const hostCurrentStep = state?.currentStep ?? 0;
+  const results = state?.results ?? [];
+  const players = state?.players ?? [];
+  const [stepIndex, setStepIndex] = useState(() => hostCurrentStep);
   const [showBallRoll, setShowBallRoll] = useState(false);
+  const [heckleMessage, setHeckleMessage] = useState<string | null>(null);
   const [confirming, setConfirming] = useState(false);
   const prevStepIndex = useRef(stepIndex);
-  const prevCartTrigger = useRef(cartTrigger);
   const CART_DURATION_MS = 3200;
 
+  // Only animate the cart on a forward move — the host advancing, a guest
+  // stepping forward on their own, or jumping back to the host's hole.
+  // Going back never plays it.
   useEffect(() => {
-    if (prevStepIndex.current === stepIndex) return;
+    const prev = prevStepIndex.current;
     prevStepIndex.current = stepIndex;
+    if (stepIndex <= prev) return;
+    setHeckleMessage(computeHeckle(results[stepIndex - 1], players));
     setShowBallRoll(true);
     const t = setTimeout(() => setShowBallRoll(false), CART_DURATION_MS);
     return () => clearTimeout(t);
-  }, [stepIndex]);
+  }, [stepIndex, results, players]);
 
+  // Guests automatically follow the host forward; they can still browse
+  // back on their own via the Back button until the host moves again.
   useEffect(() => {
-    if (prevCartTrigger.current === cartTrigger) return;
-    prevCartTrigger.current = cartTrigger;
-    setShowBallRoll(true);
-    const t = setTimeout(() => setShowBallRoll(false), CART_DURATION_MS);
-    return () => clearTimeout(t);
-  }, [cartTrigger]);
+    if (isHost) return;
+    setStepIndex(hostCurrentStep);
+  }, [hostCurrentStep, isHost]);
 
   if (!state) return null;
-  const { results, players, totals } = state;
+  const { totals } = state;
   const result = results[stepIndex];
   const isLastHole = stepIndex === results.length - 1;
   const holeComplete = players.every((p) => (result.strokes[p.name] ?? 0) > 0);
@@ -116,6 +145,8 @@ export function Scorecard() {
           <div className="absolute top-16 left-28 w-20 h-9 rounded-full bg-white/70" />
           <div className="absolute top-10 right-14 w-14 h-7 rounded-full bg-white/70" />
 
+          {heckleMessage && <HecklerGuy message={heckleMessage} />}
+
           <div
             className="absolute"
             style={{ bottom: "18%", animation: `cart-drive-across ${CART_DURATION_MS}ms ease-in-out` }}
@@ -137,7 +168,19 @@ export function Scorecard() {
             Leave
           </button>
           <div className="text-sm font-semibold text-neutral-600 dark:text-neutral-300">
-            Hole {stepIndex + 1} of 9 {!isHost && <span className="text-neutral-400 font-normal">· watching live</span>}
+            Hole {stepIndex + 1} of 9{" "}
+            {!isHost &&
+              (stepIndex === state.currentStep ? (
+                <span className="text-neutral-400 font-normal">· watching live</span>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => setStepIndex(state.currentStep)}
+                  className="text-green-600 dark:text-green-400 font-semibold underline underline-offset-2"
+                >
+                  · Jump to current hole
+                </button>
+              ))}
           </div>
         </div>
 
@@ -400,8 +443,9 @@ export function Scorecard() {
               type="button"
               disabled={!holeComplete}
               onClick={() => {
-                setStepIndex((i) => Math.min(results.length - 1, i + 1));
-                if (isHost) announceHoleAdvance();
+                const next = Math.min(results.length - 1, stepIndex + 1);
+                setStepIndex(next);
+                if (isHost) setCurrentStep(next);
               }}
               className="flex-1 rounded-lg bg-green-600 hover:bg-green-700 disabled:opacity-40 text-white py-2.5 font-semibold text-sm"
             >

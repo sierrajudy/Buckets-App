@@ -36,8 +36,7 @@ interface RoomContextValue {
   togglePgeWinner: (holeNumber: number, targetName: string) => void;
   resolvePuttOff: (winner: string) => void;
   confirmFinishRound: () => void;
-  cartTrigger: number;
-  announceHoleAdvance: () => void;
+  setCurrentStep: (stepIndex: number) => void;
 }
 
 const RoomContext = createContext<RoomContextValue | null>(null);
@@ -46,16 +45,11 @@ export function RoomProvider({ children }: { children: ReactNode }) {
   const [state, setState] = useState<RoomState | null>(null);
   const [playerId, setPlayerId] = useState<string | null>(null);
   const [connecting, setConnecting] = useState(true);
-  const [cartTrigger, setCartTrigger] = useState(0);
   const attemptedRejoin = useRef(false);
 
   useEffect(() => {
     function onState(next: RoomState) {
       setState(next);
-    }
-
-    function onHoleAdvanced() {
-      setCartTrigger((c) => c + 1);
     }
 
     function attemptRejoin() {
@@ -84,13 +78,11 @@ export function RoomProvider({ children }: { children: ReactNode }) {
     }
 
     socket.on("room:state", onState);
-    socket.on("hole:advanced", onHoleAdvanced);
     socket.on("connect", attemptRejoin);
     if (socket.connected) attemptRejoin();
 
     return () => {
       socket.off("room:state", onState);
-      socket.off("hole:advanced", onHoleAdvanced);
       socket.off("connect", attemptRejoin);
     };
   }, []);
@@ -166,8 +158,8 @@ export function RoomProvider({ children }: { children: ReactNode }) {
     socket.emit("room:confirmFinish", {});
   }
 
-  function announceHoleAdvance() {
-    socket.emit("hole:advance", {});
+  function setCurrentStep(stepIndex: number) {
+    socket.emit("hole:setCurrentStep", { stepIndex });
   }
 
   const me = state?.players.find((p) => p.id === playerId) ?? null;
@@ -194,8 +186,7 @@ export function RoomProvider({ children }: { children: ReactNode }) {
         togglePgeWinner,
         resolvePuttOff,
         confirmFinishRound,
-        cartTrigger,
-        announceHoleAdvance,
+        setCurrentStep,
       }}
     >
       {children}
