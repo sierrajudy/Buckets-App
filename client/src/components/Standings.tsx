@@ -1,41 +1,24 @@
 import { useEffect, useState } from "react";
 import { fetchMyRounds, fetchStandings } from "../lib/api";
-import { useAuth } from "../authStore";
 import { useRoom } from "../store";
-import { RoundHistoryTable } from "./RoundHistoryTable";
-import type { RoundHistoryRow, RoomState, StandingsRow } from "../types";
+import { RoundSummaryTable } from "./RoundSummaryTable";
+import type { RoomState, RoundHistoryRow, RoundPlayerSummary, StandingsRow } from "../types";
 
-function buildCurrentGameRow(state: RoomState | null, myName: string | undefined): RoundHistoryRow | null {
-  if (!state || !myName || state.phase === "lobby") return null;
-  const holeStrokes = Array.from({ length: 9 }, (_, i) => {
-    const result = state.results.find((r) => r.holeNumber === i + 1);
-    const strokes = result?.strokes[myName];
-    return strokes && strokes > 0 ? strokes : null;
-  });
-  const buckets = state.results.filter((r) => r.bucketWinners.includes(myName)).length;
-  const pge = state.results.filter((r) => r.pgeEnabled && r.pgeWinners.includes(myName)).length;
-  const tiebreak =
-    state.phase === "celebration" && state.finishedRound?.puttOff.used
-      ? state.finishedRound.puttOff.winner === myName
-        ? "won"
-        : "lost"
-      : null;
-  const won = state.phase === "celebration" && state.finishedRound?.winner === myName;
+function buildCurrentGamePlayers(state: RoomState | null): RoundPlayerSummary[] {
+  if (!state || state.phase === "lobby") return [];
+  const winner = state.phase === "celebration" ? state.finishedRound?.winner : undefined;
 
-  return {
-    id: "current",
-    date: "now",
-    holeStrokes,
-    buckets,
-    pge,
-    tiebreak,
-    total: state.totals[myName] ?? 0,
-    won,
-  };
+  return state.players.map((p) => ({
+    name: p.name,
+    total: state.totals[p.name] ?? 0,
+    holesWon: state.results.filter((r) => r.holeWinners.includes(p.name)).length,
+    buckets: state.results.filter((r) => r.bucketWinners.includes(p.name)).length,
+    pge: state.results.filter((r) => r.pgeEnabled && r.pgeWinners.includes(p.name)).length,
+    won: p.name === winner,
+  }));
 }
 
 export function Standings({ onBack }: { onBack: () => void }) {
-  const { user } = useAuth();
   const { state } = useRoom();
   const [rows, setRows] = useState<StandingsRow[] | null>(null);
   const [myRounds, setMyRounds] = useState<RoundHistoryRow[] | null>(null);
@@ -52,7 +35,7 @@ export function Standings({ onBack }: { onBack: () => void }) {
       });
   }, []);
 
-  const currentGame = buildCurrentGameRow(state, user?.name);
+  const currentGamePlayers = buildCurrentGamePlayers(state);
   const lastGame = myRounds && myRounds.length > 0 ? myRounds[0] : null;
 
   return (
@@ -68,16 +51,20 @@ export function Standings({ onBack }: { onBack: () => void }) {
           </button>
         </div>
 
-        {currentGame && (
+        {currentGamePlayers.length > 0 && (
           <div>
-            <div className="text-sm font-semibold text-neutral-500 mb-2">Your current game</div>
-            <RoundHistoryTable rows={[currentGame]} />
+            <div className="text-sm font-semibold text-neutral-500 mb-2">Current Round</div>
+            <RoundSummaryTable date="now" players={currentGamePlayers} />
           </div>
         )}
 
         <div>
-          <div className="text-sm font-semibold text-neutral-500 mb-2">Your last game</div>
-          <RoundHistoryTable rows={lastGame ? [lastGame] : []} emptyMessage="No completed rounds yet." />
+          <div className="text-sm font-semibold text-neutral-500 mb-2">Last Round Played</div>
+          <RoundSummaryTable
+            date={lastGame?.date ?? ""}
+            players={lastGame?.players ?? []}
+            emptyMessage="No completed rounds yet."
+          />
         </div>
 
         <div>

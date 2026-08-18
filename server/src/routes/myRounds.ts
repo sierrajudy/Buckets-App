@@ -7,9 +7,19 @@ export const myRoundsRouter = Router();
 interface HoleResult {
   holeNumber: number;
   strokes: Record<string, number>;
+  holeWinners: string[];
   bucketWinners: string[];
   pgeEnabled: boolean;
   pgeWinners: string[];
+}
+
+export interface RoundPlayerSummary {
+  name: string;
+  total: number;
+  holesWon: number;
+  buckets: number;
+  pge: number;
+  won: boolean;
 }
 
 export interface RoundHistoryRow {
@@ -21,6 +31,18 @@ export interface RoundHistoryRow {
   tiebreak: "won" | "lost" | null;
   total: number;
   won: boolean;
+  players: RoundPlayerSummary[];
+}
+
+function summarizePlayers(players: string[], holes: HoleResult[], totals: Record<string, number>, winner: string) {
+  return players.map((name) => ({
+    name,
+    total: totals[name] ?? 0,
+    holesWon: holes.filter((h) => h.holeWinners.includes(name)).length,
+    buckets: holes.filter((h) => h.bucketWinners.includes(name)).length,
+    pge: holes.filter((h) => h.pgeEnabled && h.pgeWinners.includes(name)).length,
+    won: name === winner,
+  }));
 }
 
 myRoundsRouter.get("/", async (req, res) => {
@@ -58,6 +80,7 @@ myRoundsRouter.get("/", async (req, res) => {
       tiebreak,
       total: totals[user.name] ?? 0,
       won: winner === user.name,
+      players: summarizePlayers(players, holes, totals, winner),
     });
   }
 

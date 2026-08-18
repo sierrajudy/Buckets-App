@@ -68,6 +68,15 @@ export interface StandingsRow {
   beersOwed: number;
 }
 
+export interface RoundPlayerSummary {
+  name: string;
+  total: number;
+  holesWon: number;
+  buckets: number;
+  pge: number;
+  won: boolean;
+}
+
 export interface RoundHistoryRow {
   id: string;
   date: string;
@@ -77,4 +86,5 @@ export interface RoundHistoryRow {
   tiebreak: "won" | "lost" | null;
   total: number;
   won: boolean;
+  players: RoundPlayerSummary[];
 }
