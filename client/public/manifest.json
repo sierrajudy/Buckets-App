@@ -1,0 +1,12 @@
+{
+  "name": "Buckets — Monarch Bay",
+  "short_name": "Buckets",
+  "description": "Real-time scorekeeping for the Buckets golf match game",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#166534",
+  "theme_color": "#16a34a",
+  "icons": [
+    { "src": "/favicon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }
+  ]
+}
