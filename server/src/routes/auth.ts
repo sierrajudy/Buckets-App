@@ -10,6 +10,7 @@ import {
   isValidEmail,
   verifyPassword,
 } from "../lib/auth.js";
+import { sendPasswordResetEmail } from "../lib/email.js";
 
 export const authRouter = Router();
 
@@ -71,4 +72,59 @@ authRouter.get("/me", async (req, res) => {
   const user = await getUserByToken(bearerToken(req));
   if (!user) return res.status(401).json({ error: "Not signed in." });
   res.json({ user });
+});
+
+authRouter.post("/forgot-password", async (req, res) => {
+  const email = String(req.body?.email ?? "").trim().toLowerCase();
+
+  if (isValidEmail(email)) {
+    const result = await db.execute({
+      sql: "SELECT id, name FROM users WHERE email = ? COLLATE NOCASE",
+      args: [email],
+    });
+    const row = result.rows[0] as unknown as Record<string, unknown> | undefined;
+    if (row) {
+      const token = uuid();
+      const expiresAt = new Date(Date.now() + 60 * 60 * 1000).toISOString();
+      await db.execute({
+        sql: "INSERT INTO password_resets (token, user_id, expires_at) VALUES (?, ?, ?)",
+        args: [token, row.id as string, expiresAt],
+      });
+      const resetUrl = `${req.protocol}://${req.get("host")}/reset-password?token=${token}`;
+      await sendPasswordResetEmail(email, row.name as string, resetUrl);
+    }
+  }
+
+  // Always respond the same way, whether or not that email has an account —
+  // otherwise this endpoint could be used to check who has signed up.
+  res.json({ ok: true });
+});
+
+authRouter.post("/reset-password", async (req, res) => {
+  const token = String(req.body?.token ?? "");
+  const password = String(req.body?.password ?? "");
+
+  if (password.length < 6) return res.status(400).json({ error: "Password must be at least 6 characters." });
+
+  const result = await db.execute({
+    sql: "SELECT user_id, expires_at FROM password_resets WHERE token = ?",
+    args: [token],
+  });
+  const row = result.rows[0] as unknown as Record<string, unknown> | undefined;
+  if (!row) return res.status(400).json({ error: "This reset link is invalid or has already been used." });
+
+  if (new Date(row.expires_at as string).getTime() < Date.now()) {
+    await db.execute({ sql: "DELETE FROM password_resets WHERE token = ?", args: [token] });
+    return res.status(400).json({ error: "This reset link has expired. Request a new one." });
+  }
+
+  const userId = row.user_id as string;
+  await db.execute({
+    sql: "UPDATE users SET password_hash = ? WHERE id = ?",
+    args: [hashPassword(password), userId],
+  });
+  await db.execute({ sql: "DELETE FROM password_resets WHERE user_id = ?", args: [userId] });
+  await db.execute({ sql: "DELETE FROM sessions WHERE user_id = ?", args: [userId] });
+
+  res.json({ ok: true });
 });

@@ -52,3 +52,21 @@ export async function logoutRequest(token: string): Promise<void> {
     headers: { Authorization: `Bearer ${token}` },
   }).catch(() => {});
 }
+
+export async function forgotPassword(email: string): Promise<{ ok: true }> {
+  const res = await fetch("/api/auth/forgot-password", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ email }),
+  });
+  return parse<{ ok: true }>(res);
+}
+
+export async function resetPassword(token: string, password: string): Promise<{ ok: true }> {
+  const res = await fetch("/api/auth/reset-password", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ token, password }),
+  });
+  return parse<{ ok: true }>(res);
+}

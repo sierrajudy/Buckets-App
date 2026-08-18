@@ -10,6 +10,7 @@ import { PuttOff } from "./components/PuttOff";
 import { Celebration } from "./components/Celebration";
 import { Standings } from "./components/Standings";
 import { Profile } from "./components/Profile";
+import { ResetPassword } from "./components/ResetPassword";
 
 function AppShell() {
   const { status: authStatus } = useAuth();
@@ -17,6 +18,8 @@ function AppShell() {
   const [showSplash, setShowSplash] = useState(true);
   const [showStandings, setShowStandings] = useState(false);
   const [showProfile, setShowProfile] = useState(false);
+
+  if (window.location.pathname === "/reset-password") return <ResetPassword />;
 
   if (showSplash) return <Splash onDone={() => setShowSplash(false)} />;
 
