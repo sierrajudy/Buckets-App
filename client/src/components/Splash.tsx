@@ -31,9 +31,41 @@ export function Splash({ onDone }: { onDone: () => void }) {
           className="absolute bottom-0 left-1/2 -translate-x-1/2 w-40 h-32"
           style={{ animation: "bucket-wobble 2.1s ease-in-out 0.6s both", transformOrigin: "60px 90px" }}
         >
-          <rect x="14" y="34" width="92" height="58" rx="8" fill="#78350f" stroke="#451a03" strokeWidth="3" />
-          <rect x="14" y="34" width="92" height="14" fill="#92400e" />
-          <path d="M22 34 Q60 6 98 34" fill="none" stroke="#451a03" strokeWidth="5" strokeLinecap="round" />
+          <defs>
+            <linearGradient id="bucketMetal" x1="0" y1="0" x2="1" y2="0">
+              <stop offset="0%" stopColor="#f1f5f9" />
+              <stop offset="35%" stopColor="#cbd5e1" />
+              <stop offset="60%" stopColor="#94a3b8" />
+              <stop offset="100%" stopColor="#b8c3d1" />
+            </linearGradient>
+          </defs>
+
+          <path
+            d="M18 30 Q60 20 102 30 L95 92 Q60 100 25 92 Z"
+            fill="url(#bucketMetal)"
+            stroke="#64748b"
+            strokeWidth="2"
+            strokeLinejoin="round"
+          />
+          <path d="M17 52 L103 52 L101 58 L19 58 Z" fill="#94a3b8" opacity="0.7" />
+          <path d="M21 74 L99 74 L97.5 79 L22.5 79 Z" fill="#94a3b8" opacity="0.7" />
+          <ellipse cx="60" cy="30" rx="42" ry="8" fill="#e2e8f0" stroke="#64748b" strokeWidth="2" />
+          <ellipse cx="60" cy="30" rx="42" ry="8" fill="none" stroke="#f8fafc" strokeWidth="1.5" opacity="0.6" />
+          <path d="M30 88 Q34 46 32 27" stroke="#f8fafc" strokeWidth="3" strokeLinecap="round" opacity="0.5" />
+          <path
+            d="M25 27 Q60 2 95 27"
+            fill="none"
+            stroke="#64748b"
+            strokeWidth="3.5"
+            strokeLinecap="round"
+          />
+          <path
+            d="M25 27 Q60 2 95 27"
+            fill="none"
+            stroke="#e2e8f0"
+            strokeWidth="1.5"
+            strokeLinecap="round"
+          />
         </svg>
       </div>
 
