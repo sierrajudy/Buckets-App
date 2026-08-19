@@ -40,6 +40,11 @@ export const COURSES: Course[] = [
     name: "Berkeley Country Club",
     pars: [4, 3, 4, 4, 4, 4, 4, 5, 4, 5, 4, 3, 4, 4, 4, 5, 3, 4],
   },
+  {
+    id: "blue-hill",
+    name: "Blue Hill Country Club",
+    pars: [5, 4, 4, 4, 3, 5, 4, 3, 4, 4, 4, 3, 5, 3, 4, 4, 4, 5],
+  },
 ];
 
 export const DEFAULT_COURSE_ID = "monarch-bay";

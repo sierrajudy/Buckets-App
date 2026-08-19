@@ -11,4 +11,5 @@ export const COURSES: CourseOption[] = [
   { id: "corica-south", name: "Corica Park — South Course" },
   { id: "corica-north", name: "Corica Park — North Course" },
   { id: "berkeley-cc", name: "Berkeley Country Club" },
+  { id: "blue-hill", name: "Blue Hill Country Club" },
 ];
