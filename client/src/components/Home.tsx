@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useAuth } from "../authStore";
 import { useRoom } from "../store";
+import { RulesModal } from "./RulesModal";
 
 export function Home({
   onViewStandings,
@@ -15,6 +16,7 @@ export function Home({
   const [code, setCode] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [showRules, setShowRules] = useState(false);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -27,13 +29,22 @@ export function Home({
 
   return (
     <div className="relative min-h-screen bg-gradient-to-b from-green-50 to-white dark:from-green-950 dark:to-neutral-950 flex items-center justify-center p-4">
-      <button
-        type="button"
-        onClick={onViewProfile}
-        className="absolute top-4 right-4 flex items-center gap-1.5 rounded-full bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-700 shadow-sm px-3 py-1.5 text-sm font-medium text-neutral-600 dark:text-neutral-300 hover:bg-neutral-50 dark:hover:bg-neutral-800"
-      >
-        <span aria-hidden>👤</span> Profile
-      </button>
+      <div className="absolute top-4 right-4 flex items-center gap-2">
+        <button
+          type="button"
+          onClick={() => setShowRules(true)}
+          className="rounded-full bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-700 shadow-sm px-3 py-1.5 text-sm font-medium text-neutral-600 dark:text-neutral-300 hover:bg-neutral-50 dark:hover:bg-neutral-800"
+        >
+          Rules
+        </button>
+        <button
+          type="button"
+          onClick={onViewProfile}
+          className="flex items-center gap-1.5 rounded-full bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-700 shadow-sm px-3 py-1.5 text-sm font-medium text-neutral-600 dark:text-neutral-300 hover:bg-neutral-50 dark:hover:bg-neutral-800"
+        >
+          <span aria-hidden>👤</span> Profile
+        </button>
+      </div>
 
       <form
         onSubmit={handleSubmit}
@@ -111,6 +122,8 @@ export function Home({
           View standings & history
         </button>
       </form>
+
+      {showRules && <RulesModal onClose={() => setShowRules(false)} />}
     </div>
   );
 }

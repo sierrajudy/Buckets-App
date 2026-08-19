@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useRoom } from "../store";
 import { AVATAR_KEYS, AVATAR_META, AvatarIcon, type AvatarKey } from "./Avatars";
+import { RulesModal } from "./RulesModal";
 
 export function Lobby({
   onViewStandings,
@@ -13,6 +14,7 @@ export function Lobby({
   const [starting, setStarting] = useState(false);
   const [startError, setStartError] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
+  const [showRules, setShowRules] = useState(false);
 
   if (!state) return null;
 
@@ -45,6 +47,12 @@ export function Lobby({
             Leave
           </button>
           <div className="flex items-center gap-4">
+            <button
+              onClick={() => setShowRules(true)}
+              className="text-sm text-neutral-500 hover:text-green-600 dark:hover:text-green-400"
+            >
+              Rules
+            </button>
             <button
               onClick={onViewProfile}
               className="text-sm text-neutral-500 hover:text-green-600 dark:hover:text-green-400"
@@ -168,6 +176,8 @@ export function Lobby({
           </p>
         )}
       </div>
+
+      {showRules && <RulesModal onClose={() => setShowRules(false)} />}
     </div>
   );
 }
