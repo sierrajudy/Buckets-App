@@ -76,6 +76,7 @@ export interface RoundPlayerSummary {
   buckets: number;
   pge: number;
   won: boolean;
+  strokes: number;
 }
 
 export interface RoundHistoryRow {

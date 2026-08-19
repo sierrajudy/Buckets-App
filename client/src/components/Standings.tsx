@@ -18,6 +18,7 @@ function buildCurrentGamePlayers(state: RoomState | null): RoundPlayerSummary[] 
     buckets: state.results.filter((r) => r.bucketWinners.includes(p.name)).length,
     pge: state.results.filter((r) => r.pgeEnabled && r.pgeWinners.includes(p.name)).length,
     won: p.name === winner,
+    strokes: state.results.reduce((sum, r) => sum + (r.strokes[p.name] ?? 0), 0),
   }));
 }
 

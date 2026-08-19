@@ -116,6 +116,20 @@ export function Celebration({ onViewStandings }: { onViewStandings: () => void }
           </div>
         </div>
 
+        <div className="rounded-2xl p-4 bg-neutral-900 border border-neutral-800 text-center space-y-3">
+          <p className="text-sm text-neutral-300">
+            Enjoying Buckets? Venmo <span className="font-semibold text-white">@Sierra-judy-2</span>
+          </p>
+          <a
+            href="https://forms.gle/Ak7XVKw863xM1B8L8"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-block rounded-lg border border-neutral-700 text-neutral-200 hover:bg-neutral-800 px-4 py-2 text-sm font-semibold"
+          >
+            Send Feedback
+          </a>
+        </div>
+
         <div className="flex gap-2">
           <button
             onClick={onViewStandings}

@@ -20,6 +20,7 @@ export interface RoundPlayerSummary {
   buckets: number;
   pge: number;
   won: boolean;
+  strokes: number;
 }
 
 export interface RoundHistoryRow {
@@ -42,6 +43,7 @@ function summarizePlayers(players: string[], holes: HoleResult[], totals: Record
     buckets: holes.filter((h) => h.bucketWinners.includes(name)).length,
     pge: holes.filter((h) => h.pgeEnabled && h.pgeWinners.includes(name)).length,
     won: name === winner,
+    strokes: holes.reduce((sum, h) => sum + (h.strokes[name] ?? 0), 0),
   }));
 }
 
