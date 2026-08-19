@@ -10,10 +10,12 @@ function formatDate(value: string): string {
 
 export function RoundSummaryTable({
   date,
+  course,
   players,
   emptyMessage,
 }: {
   date: string;
+  course?: string;
   players: RoundPlayerSummary[];
   emptyMessage?: string;
 }) {
@@ -26,7 +28,15 @@ export function RoundSummaryTable({
 
   return (
     <div className="rounded-xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 overflow-hidden">
-      <div className="px-4 pt-3 pb-1 text-sm text-neutral-500">Date: {formatDate(date)}</div>
+      <div className="px-4 pt-3 pb-1 text-sm text-neutral-500">
+        Date: {formatDate(date)}
+        {course && (
+          <>
+            {" · "}
+            <span className="font-bold text-neutral-700 dark:text-neutral-300">{course}</span>
+          </>
+        )}
+      </div>
       <div className="overflow-x-auto">
         <table className="w-full text-sm">
           <thead>

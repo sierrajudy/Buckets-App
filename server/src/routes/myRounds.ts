@@ -26,6 +26,7 @@ export interface RoundPlayerSummary {
 export interface RoundHistoryRow {
   id: string;
   date: string;
+  course: string;
   holeStrokes: (number | null)[];
   buckets: number;
   pge: number;
@@ -76,6 +77,7 @@ myRoundsRouter.get("/", async (req, res) => {
     rows.push({
       id: raw.id as string,
       date: raw.created_at as string,
+      course: raw.course as string,
       holeStrokes,
       buckets,
       pge,

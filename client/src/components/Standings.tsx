@@ -63,7 +63,7 @@ export function Standings({ onBack }: { onBack: () => void }) {
         {currentGamePlayers.length > 0 && (
           <div>
             <div className="text-sm font-semibold text-neutral-500 mb-2">Current Round</div>
-            <RoundSummaryTable date="now" players={currentGamePlayers} />
+            <RoundSummaryTable date="now" course={state?.course} players={currentGamePlayers} />
           </div>
         )}
 
@@ -72,7 +72,9 @@ export function Standings({ onBack }: { onBack: () => void }) {
             Last Round Played
             {!lastGame && <span className="text-xs font-normal text-neutral-400">Not enough data, play again</span>}
           </div>
-          {lastGame && <RoundSummaryTable date={lastGame.date} players={lastGame.players} />}
+          {lastGame && (
+            <RoundSummaryTable date={lastGame.date} course={lastGame.course} players={lastGame.players} />
+          )}
         </div>
 
         <div>

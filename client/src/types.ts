@@ -81,6 +81,7 @@ export interface RoundPlayerSummary {
 export interface RoundHistoryRow {
   id: string;
   date: string;
+  course: string;
   holeStrokes: (number | null)[];
   buckets: number;
   pge: number;
