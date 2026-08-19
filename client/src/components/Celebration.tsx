@@ -118,7 +118,15 @@ export function Celebration({ onViewStandings }: { onViewStandings: () => void }
 
         <div className="rounded-2xl p-4 bg-neutral-900 border border-neutral-800 text-center space-y-3">
           <p className="text-sm text-neutral-300">
-            Enjoying Buckets? Venmo <span className="font-semibold text-white">@Sierra-judy-2</span>
+            Enjoying Buckets? Venmo{" "}
+            <a
+              href="https://venmo.com/u/Sierra-Judy-2"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="font-semibold text-white underline underline-offset-2 hover:text-green-400"
+            >
+              @Sierra-judy-2
+            </a>
           </p>
           <a
             href="https://forms.gle/Ak7XVKw863xM1B8L8"
