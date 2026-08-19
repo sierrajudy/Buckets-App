@@ -101,10 +101,10 @@ export function findTiedLeaders(totals: Record<string, number>, players: string[
   return leaders.length > 1 ? leaders : [];
 }
 
-export function buildHolesOrder(startingHole: number): number[] {
+export function buildHolesOrder(startingHole: number, holeCount: number): number[] {
   const order: number[] = [];
-  for (let i = 0; i < 9; i++) {
-    order.push(((startingHole - 1 + i) % 9) + 1);
+  for (let i = 0; i < holeCount; i++) {
+    order.push(((startingHole - 1 + i) % holeCount) + 1);
   }
   return order;
 }

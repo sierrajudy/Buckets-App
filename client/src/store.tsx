@@ -27,6 +27,7 @@ interface RoomContextValue {
   joinRoom: (code: string) => Promise<AckResponse>;
   selectAvatar: (avatar: AvatarKey) => void;
   setConfig: (startingHole: number) => void;
+  setCourse: (courseId: string) => void;
   startGame: () => Promise<AckResponse>;
   newRound: () => void;
   leaveRoom: () => void;
@@ -119,6 +120,10 @@ export function RoomProvider({ children }: { children: ReactNode }) {
     socket.emit("room:setConfig", { startingHole });
   }
 
+  function setCourse(courseId: string) {
+    socket.emit("room:setCourse", { courseId });
+  }
+
   function startGame(): Promise<AckResponse> {
     return emitWithAck("room:start", {});
   }
@@ -177,6 +182,7 @@ export function RoomProvider({ children }: { children: ReactNode }) {
         joinRoom,
         selectAvatar,
         setConfig,
+        setCourse,
         startGame,
         newRound,
         leaveRoom,

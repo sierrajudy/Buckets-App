@@ -1,14 +1,13 @@
 import { v4 as uuid } from "uuid";
 import {
   AVATAR_KEYS,
-  COURSE_NAME,
-  PARS,
   type AvatarKey,
   type HoleEntry,
   type Player,
   type Room,
   type RoomStateForClient,
 } from "./types.js";
+import { DEFAULT_COURSE_ID, getCourse, isValidCourseId } from "./courses.js";
 import {
   buildHolesOrder,
   computeHoleResult,
@@ -33,12 +32,13 @@ function generateRoomCode(): string {
   return code;
 }
 
-function initEntries(): Record<number, HoleEntry> {
+function initEntries(courseId: string): Record<number, HoleEntry> {
+  const pars = getCourse(courseId).pars;
   const entries: Record<number, HoleEntry> = {};
-  for (let holeNumber = 1; holeNumber <= 9; holeNumber++) {
+  for (let holeNumber = 1; holeNumber <= pars.length; holeNumber++) {
     entries[holeNumber] = {
       holeNumber,
-      par: PARS[holeNumber - 1],
+      par: pars[holeNumber - 1],
       strokes: {},
       bucketWinners: [],
       pgeEnabled: false,
@@ -58,11 +58,12 @@ export function createRoom(hostName: string): { room: Room; player: Player } {
   const room: Room = {
     code,
     hostId: player.id,
-    course: COURSE_NAME,
+    courseId: DEFAULT_COURSE_ID,
+    course: getCourse(DEFAULT_COURSE_ID).name,
     startingHole: 1,
     players: [player],
     phase: "lobby",
-    entries: initEntries(),
+    entries: initEntries(DEFAULT_COURSE_ID),
     puttOffWinner: null,
     finishedRound: null,
     createdAt: Date.now(),
@@ -102,8 +103,22 @@ export function setPlayerAvatar(room: Room, playerId: string, avatar: AvatarKey)
 
 export function setConfig(room: Room, startingHole: number): void {
   if (room.phase !== "lobby") return;
-  if (startingHole < 1 || startingHole > 9) return;
+  const holeCount = getCourse(room.courseId).pars.length;
+  if (startingHole < 1 || startingHole > holeCount) return;
   room.startingHole = Math.round(startingHole);
+}
+
+/** Host-only: switches the room's course. Re-initializes the hole entries
+ * to match the new course's par values and hole count, and resets the
+ * starting hole since it may no longer be in range. */
+export function setCourse(room: Room, courseId: string): boolean {
+  if (room.phase !== "lobby") return false;
+  if (!isValidCourseId(courseId)) return false;
+  room.courseId = courseId;
+  room.course = getCourse(courseId).name;
+  room.entries = initEntries(courseId);
+  room.startingHole = 1;
+  return true;
 }
 
 export function canStart(room: Room): boolean {
@@ -117,7 +132,7 @@ export function canStart(room: Room): boolean {
 
 export function startGame(room: Room): boolean {
   if (!canStart(room)) return false;
-  room.entries = initEntries();
+  room.entries = initEntries(room.courseId);
   room.puttOffWinner = null;
   room.finishedRound = null;
   room.phase = "playing";
@@ -126,7 +141,7 @@ export function startGame(room: Room): boolean {
 }
 
 export function startNewRound(room: Room): void {
-  room.entries = initEntries();
+  room.entries = initEntries(room.courseId);
   room.puttOffWinner = null;
   room.finishedRound = null;
   room.phase = "lobby";
@@ -142,7 +157,8 @@ function playerNames(room: Room): string[] {
 }
 
 function orderedResults(room: Room) {
-  const order = buildHolesOrder(room.startingHole);
+  const holeCount = getCourse(room.courseId).pars.length;
+  const order = buildHolesOrder(room.startingHole, holeCount);
   const names = playerNames(room);
   return order.map((holeNumber) => computeHoleResult(room.entries[holeNumber], names));
 }
@@ -257,6 +273,7 @@ export function serializeRoomState(room: Room): RoomStateForClient {
   return {
     code: room.code,
     hostId: room.hostId,
+    courseId: room.courseId,
     course: room.course,
     startingHole: room.startingHole,
     players: room.players.map(({ socketId: _socketId, ...pub }) => pub),

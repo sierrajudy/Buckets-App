@@ -64,7 +64,7 @@ myRoundsRouter.get("/", async (req, res) => {
     const puttOffUsed = Boolean(raw.putt_off_used);
     const puttOffWinner = (raw.putt_off_winner as string) ?? null;
 
-    const holeStrokes = Array.from({ length: 9 }, (_, i) => {
+    const holeStrokes = Array.from({ length: holes.length }, (_, i) => {
       const hole = holes.find((h) => h.holeNumber === i + 1);
       const strokes = hole?.strokes[user.name];
       return strokes && strokes > 0 ? strokes : null;

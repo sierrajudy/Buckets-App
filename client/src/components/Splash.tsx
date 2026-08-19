@@ -79,7 +79,7 @@ export function Splash({ onDone }: { onDone: () => void }) {
         className="mt-1 text-sm text-green-200 font-medium tracking-wide"
         style={{ animation: "pop-in 0.6s ease-out 1.3s both" }}
       >
-        Monarch Bay Golf Club
+        Play with your foursome, anywhere
       </div>
     </div>
   );

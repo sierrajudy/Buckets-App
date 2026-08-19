@@ -1,9 +1,6 @@
 export const AVATAR_KEYS = ["ball", "club", "tee", "beer", "bag", "flag", "cart", "cap"] as const;
 export type AvatarKey = (typeof AVATAR_KEYS)[number];
 
-export const COURSE_NAME = "Monarch Bay Golf Club — Marina Course";
-export const PARS: number[] = [4, 3, 3, 4, 3, 3, 3, 4, 3];
-
 export type RoomPhase = "lobby" | "playing" | "puttoff" | "celebration";
 
 export interface Player {
@@ -57,11 +54,12 @@ export interface RoundSummary {
 export interface Room {
   code: string;
   hostId: string;
+  courseId: string;
   course: string;
   startingHole: number;
   players: Player[];
   phase: RoomPhase;
-  entries: Record<number, HoleEntry>; // by hole number 1-9
+  entries: Record<number, HoleEntry>; // keyed by hole number, 1 through the course's hole count
   puttOffWinner: string | null;
   finishedRound: RoundSummary | null;
   createdAt: number;
@@ -73,6 +71,7 @@ export type PublicPlayer = Omit<Player, "socketId">;
 export interface RoomStateForClient {
   code: string;
   hostId: string;
+  courseId: string;
   course: string;
   startingHole: number;
   players: PublicPlayer[];

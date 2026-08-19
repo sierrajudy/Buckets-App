@@ -1,5 +1,3 @@
-export const COURSE_NAME = "Monarch Bay Golf Club — Marina Course";
-
 export const AVATAR_KEYS = ["ball", "club", "tee", "beer", "bag", "flag", "cart", "cap"] as const;
 export type AvatarKey = (typeof AVATAR_KEYS)[number];
 
@@ -46,6 +44,7 @@ export interface RoundSummary {
 export interface RoomState {
   code: string;
   hostId: string;
+  courseId: string;
   course: string;
   startingHole: number;
   players: Player[];

@@ -24,10 +24,10 @@ export function RulesModal({ onClose }: { onClose: () => void }) {
           <section className="space-y-1.5">
             <h3 className="font-bold text-neutral-900 dark:text-white">The basics</h3>
             <ul className="list-disc pl-5 space-y-1">
-              <li>2-4 players, one round covering 9 holes.</li>
+              <li>2-4 players, one round covering all 18 holes of whichever course the host picks.</li>
               <li>One person hosts each round and enters everyone's strokes as you play — ideally the host rotates each time you golf, so everyone gets a turn.</li>
               <li>Everyone else can watch the scorecard live on their own phone as the host updates it.</li>
-              <li>Whoever has the most points after 9 holes wins the match. If it's tied, it's settled with a putt-off — closest to the hole wins.</li>
+              <li>Whoever has the most points after 18 holes wins the match. If it's tied, it's settled with a putt-off — closest to the hole wins.</li>
               <li>Loser (or losers, if more than one player is tied for last) buys the beers.</li>
             </ul>
           </section>

@@ -167,7 +167,7 @@ export function Scorecard() {
             Leave
           </button>
           <div className="text-sm font-semibold text-neutral-600 dark:text-neutral-300">
-            Hole {stepIndex + 1} of 9{" "}
+            Hole {stepIndex + 1} of {results.length}{" "}
             {!isHost &&
               (stepIndex === state.currentStep ? (
                 <span className="text-neutral-400 font-normal">· watching live</span>

@@ -11,6 +11,7 @@ import {
   resolvePuttOff,
   serializeRoomState,
   setConfig,
+  setCourse,
   setPlayerAvatar,
   startGame,
   startNewRound,
@@ -87,6 +88,12 @@ export function registerRoomHandlers(io: Server) {
       if (!room || !isHost(room, data.playerId)) return;
       setConfig(room, Number(payload?.startingHole));
       broadcast(io, room);
+    });
+
+    socket.on("room:setCourse", (payload: { courseId: string }) => {
+      const room = data.roomCode ? getRoom(data.roomCode) : undefined;
+      if (!room || !isHost(room, data.playerId)) return;
+      if (setCourse(room, payload?.courseId)) broadcast(io, room);
     });
 
     socket.on("room:start", (_payload: unknown, ack?: Ack) => {
