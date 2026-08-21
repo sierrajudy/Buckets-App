@@ -3,6 +3,7 @@ import { fetchMyRounds, fetchStandings } from "../lib/api";
 import { useRoom } from "../store";
 import { RoundSummaryTable } from "./RoundSummaryTable";
 import { PointsBar } from "./PointsBar";
+import { HoleBreakdownModal } from "./HoleBreakdownModal";
 
 const MEDALS = ["🥇", "🥈", "🥉"];
 import type { RoomState, RoundHistoryRow, RoundPlayerSummary, StandingsRow } from "../types";
@@ -27,6 +28,8 @@ export function Standings({ onBack }: { onBack: () => void }) {
   const [rows, setRows] = useState<StandingsRow[] | null>(null);
   const [myRounds, setMyRounds] = useState<RoundHistoryRow[] | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [showCurrentBreakdown, setShowCurrentBreakdown] = useState(false);
+  const [showLastBreakdown, setShowLastBreakdown] = useState(false);
 
   useEffect(() => {
     fetchStandings()
@@ -64,6 +67,15 @@ export function Standings({ onBack }: { onBack: () => void }) {
           <div>
             <div className="text-sm font-semibold text-neutral-500 mb-2">Current Round</div>
             <RoundSummaryTable date="now" course={state?.course} players={currentGamePlayers} />
+            {state && state.results.some((r) => Object.values(r.strokes).some((s) => s > 0)) && (
+              <button
+                type="button"
+                onClick={() => setShowCurrentBreakdown(true)}
+                className="mt-2 text-sm font-semibold text-green-700 dark:text-green-400 hover:underline"
+              >
+                See hole-by-hole breakdown →
+              </button>
+            )}
           </div>
         )}
 
@@ -73,7 +85,16 @@ export function Standings({ onBack }: { onBack: () => void }) {
             {!lastGame && <span className="text-xs font-normal text-neutral-400">Not enough data, play again</span>}
           </div>
           {lastGame && (
-            <RoundSummaryTable date={lastGame.date} course={lastGame.course} players={lastGame.players} />
+            <>
+              <RoundSummaryTable date={lastGame.date} course={lastGame.course} players={lastGame.players} />
+              <button
+                type="button"
+                onClick={() => setShowLastBreakdown(true)}
+                className="mt-2 text-sm font-semibold text-green-700 dark:text-green-400 hover:underline"
+              >
+                See hole-by-hole breakdown →
+              </button>
+            </>
           )}
         </div>
 
@@ -140,6 +161,24 @@ export function Standings({ onBack }: { onBack: () => void }) {
           )}
         </div>
       </div>
+
+      {showCurrentBreakdown && state && (
+        <HoleBreakdownModal
+          course={state.course}
+          players={state.players.map((p) => p.name)}
+          holes={state.results}
+          onClose={() => setShowCurrentBreakdown(false)}
+        />
+      )}
+
+      {showLastBreakdown && lastGame && (
+        <HoleBreakdownModal
+          course={lastGame.course}
+          players={lastGame.players.map((p) => p.name)}
+          holes={lastGame.holes}
+          onClose={() => setShowLastBreakdown(false)}
+        />
+      )}
     </div>
   );
 }

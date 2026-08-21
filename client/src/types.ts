@@ -95,4 +95,5 @@ export interface RoundHistoryRow {
   total: number;
   won: boolean;
   players: RoundPlayerSummary[];
+  holes: HoleResult[];
 }

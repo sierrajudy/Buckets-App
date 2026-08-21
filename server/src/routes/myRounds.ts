@@ -1,17 +1,9 @@
 import { Router } from "express";
 import { db } from "../db.js";
 import { bearerToken, getUserByToken } from "../lib/auth.js";
+import type { HoleResult } from "../rooms/types.js";
 
 export const myRoundsRouter = Router();
-
-interface HoleResult {
-  holeNumber: number;
-  strokes: Record<string, number>;
-  holeWinners: string[];
-  bucketWinners: string[];
-  pgeEnabled: boolean;
-  pgeWinners: string[];
-}
 
 export interface RoundPlayerSummary {
   name: string;
@@ -34,6 +26,7 @@ export interface RoundHistoryRow {
   total: number;
   won: boolean;
   players: RoundPlayerSummary[];
+  holes: HoleResult[];
 }
 
 function summarizePlayers(players: string[], holes: HoleResult[], totals: Record<string, number>, winner: string) {
@@ -85,6 +78,7 @@ myRoundsRouter.get("/", async (req, res) => {
       total: totals[user.name] ?? 0,
       won: winner === user.name,
       players: summarizePlayers(players, holes, totals, winner),
+      holes,
     });
   }
 
