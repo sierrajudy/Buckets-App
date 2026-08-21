@@ -1,7 +1,6 @@
 import { useMemo } from "react";
 import { useRoom } from "../store";
 import { AvatarIcon } from "./Avatars";
-import { RoomCodeBadge } from "./RoomCodeBadge";
 import { EmojiReactionBar } from "./EmojiReactionBar";
 import { joinNames } from "../lib/format";
 
@@ -66,10 +65,6 @@ export function Celebration({ onViewStandings }: { onViewStandings: () => void }
       </div>
 
       <div className="relative z-10 max-w-lg w-full text-center space-y-8">
-        <div className="flex justify-center">
-          <RoomCodeBadge variant="dark" />
-        </div>
-
         {round.holeInOnePlayer && (
           <div className="text-amber-400 font-bold text-sm tracking-widest uppercase">
             Match won on a hole in one!

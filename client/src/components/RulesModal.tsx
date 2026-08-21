@@ -47,7 +47,7 @@ export function RulesModal({ onClose }: { onClose: () => void }) {
               </li>
               <li>
                 <span className="font-semibold">Eagle</span> (2+ under par) is worth{" "}
-                <span className="font-semibold">3 bonus points</span>, same deal — every player who gets one, not
+                <span className="font-semibold">2 bonus points</span>, same deal — every player who gets one, not
                 just the hole winner.
               </li>
               <li>

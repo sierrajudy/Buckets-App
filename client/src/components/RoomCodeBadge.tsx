@@ -14,14 +14,10 @@ export function RoomCodeBadge({ variant = "light" }: { variant?: "light" | "dark
   return (
     <div className={`flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-semibold shrink-0 ${wrapClass}`}>
       <span className="tracking-widest font-mono">{state.code}</span>
-      {spectatorCount > 0 && (
-        <>
-          <span className="opacity-40">·</span>
-          <span className="flex items-center gap-0.5" title={`${spectatorCount} watching`}>
-            👀 {spectatorCount}
-          </span>
-        </>
-      )}
+      <span className="opacity-40">·</span>
+      <span className="flex items-center gap-0.5" title={`${spectatorCount} watching`}>
+        👀 {spectatorCount}
+      </span>
     </div>
   );
 }

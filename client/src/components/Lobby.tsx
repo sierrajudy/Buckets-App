@@ -78,11 +78,9 @@ export function Lobby({
             {state.code}
           </button>
           <div className="text-xs text-neutral-400 mt-1">{copied ? "Copied!" : "Tap to copy · share with your group"}</div>
-          {state.spectators.length > 0 && (
-            <div className="text-xs text-neutral-500 mt-2">
-              👀 {state.spectators.length} {state.spectators.length === 1 ? "person" : "people"} watching
-            </div>
-          )}
+          <div className="text-xs text-neutral-500 mt-2">
+            👀 {state.spectators.length} {state.spectators.length === 1 ? "person" : "people"} watching
+          </div>
         </div>
 
         {isSpectator && (

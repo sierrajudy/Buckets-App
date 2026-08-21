@@ -1,6 +1,6 @@
 import { useRoom } from "../store";
 
-export function PredictionPicker({ dark = false }: { dark?: boolean }) {
+export function PredictionPicker({ dark = false, readOnly = false }: { dark?: boolean; readOnly?: boolean }) {
   const { state, playerId, predict } = useRoom();
   if (!state) return null;
 
@@ -15,8 +15,13 @@ export function PredictionPicker({ dark = false }: { dark?: boolean }) {
     : "bg-white dark:bg-neutral-900 border-neutral-200 dark:border-neutral-800";
   const labelClass = dark ? "text-neutral-400" : "text-neutral-500";
   const idleBtnClass = dark
-    ? "border-neutral-700 text-neutral-200 hover:bg-neutral-800"
-    : "border-neutral-200 dark:border-neutral-700 hover:bg-neutral-50 dark:hover:bg-neutral-800";
+    ? "border-neutral-700 text-neutral-200"
+    : "border-neutral-200 dark:border-neutral-700";
+  const idleBtnHover = readOnly
+    ? ""
+    : dark
+      ? "hover:bg-neutral-800"
+      : "hover:bg-neutral-50 dark:hover:bg-neutral-800";
   const tallyClass = dark ? "text-neutral-500" : "text-neutral-400";
 
   return (
@@ -27,11 +32,14 @@ export function PredictionPicker({ dark = false }: { dark?: boolean }) {
           <button
             key={p.id}
             type="button"
+            disabled={readOnly}
             onClick={() => predict(p.name)}
             className={`flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-sm font-semibold ${
+              readOnly ? "cursor-default" : ""
+            } ${
               myPick === p.name
                 ? "border-green-600 bg-green-50 dark:bg-green-950 text-green-700 dark:text-green-400"
-                : idleBtnClass
+                : `${idleBtnClass} ${idleBtnHover}`
             }`}
           >
             {p.name}

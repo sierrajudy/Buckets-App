@@ -2,7 +2,7 @@ import type { HoleEntry, HoleResult, RoundSummary } from "./types.js";
 
 const BASE_HOLE_POINTS = 2;
 const BIRDIE_BONUS = 1;
-const EAGLE_BONUS = 3;
+const EAGLE_BONUS = 2;
 const BUCKET_POINTS = 1;
 const PGE_POINTS = 1;
 

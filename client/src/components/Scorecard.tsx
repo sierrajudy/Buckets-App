@@ -256,7 +256,7 @@ export function Scorecard() {
             <div className="flex gap-2 text-xs font-semibold">
               {result.isEagle && (
                 <span className="px-2 py-1 rounded-full bg-purple-100 text-purple-700 dark:bg-purple-900 dark:text-purple-300">
-                  Eagle — +3 pts
+                  Eagle — +2 pts
                 </span>
               )}
               {result.isBirdie && (
@@ -412,11 +412,13 @@ export function Scorecard() {
           </div>
         </div>
 
-        {isSpectator && (
+        {isSpectator ? (
           <div className="space-y-3">
             <PredictionPicker />
             <EmojiReactionBar />
           </div>
+        ) : (
+          state.spectators.length > 0 && <PredictionPicker readOnly />
         )}
 
         <div className="flex gap-2 pb-6">

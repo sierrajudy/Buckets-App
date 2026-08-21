@@ -63,11 +63,13 @@ export function PuttOff() {
         )}
       </div>
 
-      {isSpectator && (
+      {isSpectator ? (
         <div className="space-y-3">
           <PredictionPicker dark />
           <EmojiReactionBar dark />
         </div>
+      ) : (
+        state.spectators.length > 0 && <PredictionPicker dark readOnly />
       )}
       </div>
     </div>
