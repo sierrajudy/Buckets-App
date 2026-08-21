@@ -245,6 +245,31 @@ export async function confirmFinishRound(room: Room): Promise<boolean> {
   return true;
 }
 
+/** Host-only: ends the round right now, whatever hole it's on. Whatever
+ * holes have scores count as played; anything not yet entered contributes
+ * nothing (same as it would mid-round), so this just finalizes with the
+ * totals as they currently stand — no "all holes complete" or "no tie"
+ * requirement like confirmFinishRound has, since the whole point is to
+ * cut the round short deliberately. */
+export async function endGameEarly(room: Room): Promise<boolean> {
+  if (room.phase !== "playing") return false;
+  const names = playerNames(room);
+  const results = orderedResults(room);
+
+  const round = finalizeRound({
+    course: room.course,
+    players: names,
+    startingHole: room.startingHole,
+    holes: results,
+    holeInOnePlayer: findHoleInOneWinner(results),
+    puttOffWinner: null,
+  });
+  room.finishedRound = round;
+  room.phase = "celebration";
+  await persistRound(round);
+  return true;
+}
+
 export async function resolvePuttOff(room: Room, winnerName: string): Promise<boolean> {
   if (room.phase !== "puttoff") return false;
   const names = playerNames(room);

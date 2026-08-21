@@ -4,6 +4,7 @@ import {
   canStart,
   confirmFinishRound,
   createRoom,
+  endGameEarly,
   getRoom,
   joinRoom,
   recomputeAndMaybeFinish,
@@ -169,6 +170,14 @@ export function registerRoomHandlers(io: Server) {
       const room = data.roomCode ? getRoom(data.roomCode) : undefined;
       if (!room || !isHost(room, data.playerId)) return;
       confirmFinishRound(room).then((ok) => {
+        if (ok) broadcast(io, room);
+      });
+    });
+
+    socket.on("room:endGame", () => {
+      const room = data.roomCode ? getRoom(data.roomCode) : undefined;
+      if (!room || !isHost(room, data.playerId)) return;
+      endGameEarly(room).then((ok) => {
         if (ok) broadcast(io, room);
       });
     });

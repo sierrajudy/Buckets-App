@@ -37,6 +37,7 @@ interface RoomContextValue {
   togglePgeWinner: (holeNumber: number, targetName: string) => void;
   resolvePuttOff: (winner: string) => void;
   confirmFinishRound: () => void;
+  endGame: () => void;
   setCurrentStep: (stepIndex: number) => void;
 }
 
@@ -163,6 +164,10 @@ export function RoomProvider({ children }: { children: ReactNode }) {
     socket.emit("room:confirmFinish", {});
   }
 
+  function endGame() {
+    socket.emit("room:endGame", {});
+  }
+
   function setCurrentStep(stepIndex: number) {
     socket.emit("hole:setCurrentStep", { stepIndex });
   }
@@ -192,6 +197,7 @@ export function RoomProvider({ children }: { children: ReactNode }) {
         togglePgeWinner,
         resolvePuttOff,
         confirmFinishRound,
+        endGame,
         setCurrentStep,
       }}
     >

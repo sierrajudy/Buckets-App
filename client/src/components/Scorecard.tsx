@@ -77,6 +77,7 @@ export function Scorecard() {
     togglePgeWinner,
     leaveRoom,
     confirmFinishRound,
+    endGame,
     setCurrentStep,
   } = useRoom();
   const hostCurrentStep = state?.currentStep ?? 0;
@@ -86,6 +87,8 @@ export function Scorecard() {
   const [showBallRoll, setShowBallRoll] = useState(false);
   const [heckleMessage, setHeckleMessage] = useState<string | null>(null);
   const [confirming, setConfirming] = useState(false);
+  const [showEndConfirm, setShowEndConfirm] = useState(false);
+  const [ending, setEnding] = useState(false);
   const prevStepIndex = useRef(stepIndex);
   const resultsRef = useRef(results);
   const playersRef = useRef(players);
@@ -405,6 +408,15 @@ export function Scorecard() {
         </div>
 
         <div className="flex gap-2 pb-6">
+          {isHost && (
+            <button
+              type="button"
+              onClick={() => setShowEndConfirm(true)}
+              className="shrink-0 rounded-lg border border-red-300 dark:border-red-900 text-red-600 dark:text-red-400 px-3 py-2.5 font-semibold text-sm hover:bg-red-50 dark:hover:bg-red-950/40"
+            >
+              End Game
+            </button>
+          )}
           <button
             type="button"
             disabled={stepIndex === 0}
@@ -453,6 +465,43 @@ export function Scorecard() {
           )}
         </div>
       </div>
+
+      {showEndConfirm && (
+        <div
+          className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4"
+          onClick={() => setShowEndConfirm(false)}
+        >
+          <div
+            className="w-full max-w-sm bg-white dark:bg-neutral-900 rounded-2xl shadow-lg p-6 space-y-5 text-center"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <p className="font-semibold text-lg text-neutral-900 dark:text-white">
+              Are you sure you want to end the game?
+            </p>
+            <div className="flex gap-3">
+              <button
+                type="button"
+                disabled={ending}
+                onClick={() => {
+                  setEnding(true);
+                  endGame();
+                }}
+                className="flex-1 rounded-lg bg-green-600 hover:bg-green-700 disabled:opacity-60 text-white font-semibold py-2.5"
+              >
+                {ending ? "Ending…" : "Yes"}
+              </button>
+              <button
+                type="button"
+                disabled={ending}
+                onClick={() => setShowEndConfirm(false)}
+                className="flex-1 rounded-lg bg-red-600 hover:bg-red-700 disabled:opacity-60 text-white font-semibold py-2.5"
+              >
+                No
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
