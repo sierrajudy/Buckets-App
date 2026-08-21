@@ -11,8 +11,9 @@ export function Home({
   onViewProfile: () => void;
 }) {
   const { user, logout } = useAuth();
-  const { createRoom, joinRoom } = useRoom();
+  const { createRoom, joinRoom, spectateRoom } = useRoom();
   const [mode, setMode] = useState<"create" | "join">("create");
+  const [asSpectator, setAsSpectator] = useState(false);
   const [code, setCode] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -22,7 +23,12 @@ export function Home({
     e.preventDefault();
     setBusy(true);
     setError(null);
-    const res = mode === "create" ? await createRoom() : await joinRoom(code.trim().toUpperCase());
+    const res =
+      mode === "create"
+        ? await createRoom()
+        : asSpectator
+          ? await spectateRoom(code.trim().toUpperCase())
+          : await joinRoom(code.trim().toUpperCase());
     setBusy(false);
     if (!res.ok) setError(res.error ?? "Something went wrong.");
   }
@@ -85,15 +91,43 @@ export function Home({
         </div>
 
         {mode === "join" && (
-          <div>
-            <label className="block text-sm font-medium mb-1">Room code</label>
-            <input
-              value={code}
-              onChange={(e) => setCode(e.target.value.toUpperCase())}
-              placeholder="ABCDE"
-              maxLength={5}
-              className="w-full rounded-lg border border-neutral-300 dark:border-neutral-700 bg-transparent px-3 py-2 text-sm tracking-[0.3em] font-mono uppercase focus:outline-none focus:ring-2 focus:ring-green-500"
-            />
+          <div className="space-y-3">
+            <div>
+              <label className="block text-sm font-medium mb-1">Room code</label>
+              <input
+                value={code}
+                onChange={(e) => setCode(e.target.value.toUpperCase())}
+                placeholder="ABCDE"
+                maxLength={5}
+                className="w-full rounded-lg border border-neutral-300 dark:border-neutral-700 bg-transparent px-3 py-2 text-sm tracking-[0.3em] font-mono uppercase focus:outline-none focus:ring-2 focus:ring-green-500"
+              />
+            </div>
+
+            <div className="flex gap-2">
+              {[
+                { value: false, label: "Join as a player" },
+                { value: true, label: "Just watching" },
+              ].map((opt) => (
+                <button
+                  type="button"
+                  key={String(opt.value)}
+                  onClick={() => setAsSpectator(opt.value)}
+                  className={`flex-1 rounded-lg py-2 text-xs font-semibold border ${
+                    asSpectator === opt.value
+                      ? "bg-green-600 text-white border-green-600"
+                      : "border-neutral-300 dark:border-neutral-700 text-neutral-600 dark:text-neutral-300 hover:bg-neutral-50 dark:hover:bg-neutral-800"
+                  }`}
+                >
+                  {opt.label}
+                </button>
+              ))}
+            </div>
+            {asSpectator && (
+              <p className="text-xs text-neutral-500 dark:text-neutral-400">
+                You'll watch the scorecard live — no avatar, no editing, just following along. Works even if the
+                round already started.
+              </p>
+            )}
           </div>
         )}
 
@@ -111,7 +145,13 @@ export function Home({
           disabled={busy}
           className="w-full rounded-lg bg-green-600 hover:bg-green-700 disabled:opacity-50 text-white font-semibold py-2.5 transition-colors"
         >
-          {busy ? "One sec…" : mode === "create" ? "Create room" : "Join room"}
+          {busy
+            ? "One sec…"
+            : mode === "create"
+              ? "Create room"
+              : asSpectator
+                ? "Start watching"
+                : "Join room"}
         </button>
 
         <button

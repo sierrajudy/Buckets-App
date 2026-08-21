@@ -11,7 +11,7 @@ export function Lobby({
   onViewStandings: () => void;
   onViewProfile: () => void;
 }) {
-  const { state, isHost, me, selectAvatar, setConfig, setCourse, startGame, leaveRoom } = useRoom();
+  const { state, isHost, isSpectator, me, selectAvatar, setConfig, setCourse, startGame, leaveRoom } = useRoom();
   const [starting, setStarting] = useState(false);
   const [startError, setStartError] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
@@ -78,7 +78,18 @@ export function Lobby({
             {state.code}
           </button>
           <div className="text-xs text-neutral-400 mt-1">{copied ? "Copied!" : "Tap to copy · share with your group"}</div>
+          {state.spectators.length > 0 && (
+            <div className="text-xs text-neutral-500 mt-2">
+              👀 {state.spectators.length} {state.spectators.length === 1 ? "person" : "people"} watching
+            </div>
+          )}
         </div>
+
+        {isSpectator && (
+          <div className="bg-white dark:bg-neutral-900 rounded-2xl border border-neutral-200 dark:border-neutral-800 p-4 text-center text-sm text-neutral-500 dark:text-neutral-400">
+            You're spectating — sit back and watch, no avatar needed. Waiting for the host to start the round…
+          </div>
+        )}
 
         <div className="bg-white dark:bg-neutral-900 rounded-2xl border border-neutral-200 dark:border-neutral-800 p-4">
           <div className="text-sm font-semibold text-neutral-500 mb-1">Course</div>
@@ -146,51 +157,54 @@ export function Lobby({
           </div>
         </div>
 
-        <div className="bg-white dark:bg-neutral-900 rounded-2xl border border-neutral-200 dark:border-neutral-800 p-4">
-          <div className="text-sm font-semibold text-neutral-500 mb-3">Pick your avatar</div>
-          <div className="grid grid-cols-4 gap-2">
-            {AVATAR_KEYS.map((key) => {
-              const takenByOther = takenAvatars.has(key) && me?.avatar !== key;
-              const selected = me?.avatar === key;
-              return (
-                <button
-                  key={key}
-                  type="button"
-                  disabled={takenByOther}
-                  onClick={() => selectAvatar(key as AvatarKey)}
-                  className={`relative rounded-xl border-2 p-2 flex flex-col items-center gap-1 transition-all ${
-                    selected
-                      ? "border-green-600 bg-green-50 dark:bg-green-950"
-                      : takenByOther
-                        ? "border-transparent opacity-30 cursor-not-allowed"
-                        : "border-transparent hover:border-green-300"
-                  }`}
-                >
-                  <AvatarIcon avatar={key as AvatarKey} className="w-12 h-12" />
-                  <span className="text-[10px] font-medium text-neutral-500 dark:text-neutral-400">
-                    {AVATAR_META[key as AvatarKey].label}
-                  </span>
-                </button>
-              );
-            })}
+        {!isSpectator && (
+          <div className="bg-white dark:bg-neutral-900 rounded-2xl border border-neutral-200 dark:border-neutral-800 p-4">
+            <div className="text-sm font-semibold text-neutral-500 mb-3">Pick your avatar</div>
+            <div className="grid grid-cols-4 gap-2">
+              {AVATAR_KEYS.map((key) => {
+                const takenByOther = takenAvatars.has(key) && me?.avatar !== key;
+                const selected = me?.avatar === key;
+                return (
+                  <button
+                    key={key}
+                    type="button"
+                    disabled={takenByOther}
+                    onClick={() => selectAvatar(key as AvatarKey)}
+                    className={`relative rounded-xl border-2 p-2 flex flex-col items-center gap-1 transition-all ${
+                      selected
+                        ? "border-green-600 bg-green-50 dark:bg-green-950"
+                        : takenByOther
+                          ? "border-transparent opacity-30 cursor-not-allowed"
+                          : "border-transparent hover:border-green-300"
+                    }`}
+                  >
+                    <AvatarIcon avatar={key as AvatarKey} className="w-12 h-12" />
+                    <span className="text-[10px] font-medium text-neutral-500 dark:text-neutral-400">
+                      {AVATAR_META[key as AvatarKey].label}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
           </div>
-        </div>
+        )}
 
         {startError && <p className="text-sm text-red-500 text-center">{startError}</p>}
 
-        {isHost ? (
-          <button
-            onClick={handleStart}
-            disabled={!canStart || starting}
-            className="w-full rounded-lg bg-green-600 hover:bg-green-700 disabled:opacity-40 text-white font-semibold py-3"
-          >
-            {starting ? "Starting…" : "Start round"}
-          </button>
-        ) : (
-          <p className="text-center text-sm text-neutral-500 py-2">
-            {canStart ? "Waiting for the host to start the round…" : "Waiting for everyone to pick an avatar…"}
-          </p>
-        )}
+        {!isSpectator &&
+          (isHost ? (
+            <button
+              onClick={handleStart}
+              disabled={!canStart || starting}
+              className="w-full rounded-lg bg-green-600 hover:bg-green-700 disabled:opacity-40 text-white font-semibold py-3"
+            >
+              {starting ? "Starting…" : "Start round"}
+            </button>
+          ) : (
+            <p className="text-center text-sm text-neutral-500 py-2">
+              {canStart ? "Waiting for the host to start the round…" : "Waiting for everyone to pick an avatar…"}
+            </p>
+          ))}
       </div>
 
       {showRules && <RulesModal onClose={() => setShowRules(false)} />}

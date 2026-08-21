@@ -14,6 +14,7 @@ import { ResetPassword } from "./components/ResetPassword";
 import { AceIntro } from "./components/AceIntro";
 import { PartyIntro } from "./components/PartyIntro";
 import { LoadingScreen } from "./components/LoadingScreen";
+import { ReactionOverlay } from "./components/ReactionOverlay";
 
 function AppShell() {
   const { status: authStatus } = useAuth();
@@ -80,14 +81,32 @@ function AppShell() {
   switch (state.phase) {
     case "lobby":
       return (
-        <Lobby onViewStandings={() => setShowStandings(true)} onViewProfile={() => setShowProfile(true)} />
+        <>
+          <ReactionOverlay />
+          <Lobby onViewStandings={() => setShowStandings(true)} onViewProfile={() => setShowProfile(true)} />
+        </>
       );
     case "playing":
-      return <Scorecard />;
+      return (
+        <>
+          <ReactionOverlay />
+          <Scorecard />
+        </>
+      );
     case "puttoff":
-      return <PuttOff />;
+      return (
+        <>
+          <ReactionOverlay />
+          <PuttOff />
+        </>
+      );
     case "celebration":
-      return <Celebration onViewStandings={() => setShowStandings(true)} />;
+      return (
+        <>
+          <ReactionOverlay />
+          <Celebration onViewStandings={() => setShowStandings(true)} />
+        </>
+      );
     default:
       return null;
   }

@@ -1,10 +1,13 @@
 import { useState } from "react";
 import { useRoom } from "../store";
 import { AvatarIcon } from "./Avatars";
+import { RoomCodeBadge } from "./RoomCodeBadge";
+import { EmojiReactionBar } from "./EmojiReactionBar";
+import { PredictionPicker } from "./PredictionPicker";
 import { joinNames } from "../lib/format";
 
 export function PuttOff() {
-  const { state, isHost, resolvePuttOff } = useRoom();
+  const { state, isHost, isSpectator, resolvePuttOff } = useRoom();
   const [winner, setWinner] = useState<string | null>(null);
 
   if (!state) return null;
@@ -16,7 +19,11 @@ export function PuttOff() {
 
   return (
     <div className="min-h-screen bg-neutral-950 flex items-center justify-center p-4">
-      <div className="w-full max-w-md bg-neutral-900 rounded-2xl border border-neutral-800 p-6 space-y-5 text-center">
+      <div className="w-full max-w-md space-y-3">
+      <div className="flex justify-center">
+        <RoomCodeBadge variant="dark" />
+      </div>
+      <div className="bg-neutral-900 rounded-2xl border border-neutral-800 p-6 space-y-5 text-center">
         <div className="text-4xl">⛳</div>
         <h2 className="text-2xl font-extrabold text-white">It's a tie!</h2>
         <p className="text-neutral-400 text-sm">
@@ -54,6 +61,14 @@ export function PuttOff() {
         ) : (
           <p className="text-sm text-neutral-500">Waiting for the host to record the putt-off winner…</p>
         )}
+      </div>
+
+      {isSpectator && (
+        <div className="space-y-3">
+          <PredictionPicker dark />
+          <EmojiReactionBar dark />
+        </div>
+      )}
       </div>
     </div>
   );

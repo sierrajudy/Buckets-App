@@ -6,6 +6,7 @@ import {
   type Player,
   type Room,
   type RoomStateForClient,
+  type Spectator,
 } from "./types.js";
 import { DEFAULT_COURSE_ID, getCourse, isValidCourseId } from "./courses.js";
 import {
@@ -62,6 +63,8 @@ export function createRoom(hostName: string): { room: Room; player: Player } {
     course: getCourse(DEFAULT_COURSE_ID).name,
     startingHole: 1,
     players: [player],
+    spectators: [],
+    predictions: {},
     phase: "lobby",
     entries: initEntries(DEFAULT_COURSE_ID),
     puttOffWinner: null,
@@ -74,7 +77,11 @@ export function createRoom(hostName: string): { room: Room; player: Player } {
 }
 
 export function isNameTaken(room: Room, name: string): boolean {
-  return room.players.some((p) => p.name.toLowerCase() === name.trim().toLowerCase());
+  const lower = name.trim().toLowerCase();
+  return (
+    room.players.some((p) => p.name.toLowerCase() === lower) ||
+    room.spectators.some((s) => s.name.toLowerCase() === lower)
+  );
 }
 
 export function joinRoom(room: Room, name: string): Player | { error: string } {
@@ -86,6 +93,32 @@ export function joinRoom(room: Room, name: string): Player | { error: string } {
   const player: Player = { id: uuid(), name: trimmed, avatar: null, connected: true, socketId: null };
   room.players.push(player);
   return player;
+}
+
+/** Spectators can join anytime — before the round starts or mid-round —
+ * unlike players, who are locked out once the lobby closes. They don't
+ * count toward the 2-4 player cap and never touch the entries/scoring. */
+export function spectateRoom(room: Room, name: string): Spectator | { error: string } {
+  const trimmed = name.trim();
+  if (!trimmed) return { error: "Name is required." };
+  if (isNameTaken(room, trimmed)) return { error: "That name is already taken in this room." };
+  const spectator: Spectator = { id: uuid(), name: trimmed, socketId: null };
+  room.spectators.push(spectator);
+  return spectator;
+}
+
+export function removeSpectator(room: Room, spectatorId: string): void {
+  room.spectators = room.spectators.filter((s) => s.id !== spectatorId);
+  delete room.predictions[spectatorId];
+}
+
+/** A spectator's just-for-fun pick of who they think will win the current
+ * round — no real stakes, purely a live tally for engagement. */
+export function setPrediction(room: Room, spectatorId: string, playerName: string): boolean {
+  if (!room.spectators.some((s) => s.id === spectatorId)) return false;
+  if (!room.players.some((p) => p.name === playerName)) return false;
+  room.predictions[spectatorId] = playerName;
+  return true;
 }
 
 export function isAvatarTaken(room: Room, avatar: AvatarKey, excludePlayerId: string): boolean {
@@ -135,6 +168,7 @@ export function startGame(room: Room): boolean {
   room.entries = initEntries(room.courseId);
   room.puttOffWinner = null;
   room.finishedRound = null;
+  room.predictions = {};
   room.phase = "playing";
   room.currentStep = 0;
   return true;
@@ -144,6 +178,7 @@ export function startNewRound(room: Room): void {
   room.entries = initEntries(room.courseId);
   room.puttOffWinner = null;
   room.finishedRound = null;
+  room.predictions = {};
   room.phase = "lobby";
   room.currentStep = 0;
 }
@@ -302,6 +337,8 @@ export function serializeRoomState(room: Room): RoomStateForClient {
     course: room.course,
     startingHole: room.startingHole,
     players: room.players.map(({ socketId: _socketId, ...pub }) => pub),
+    spectators: room.spectators.map(({ socketId: _socketId, ...pub }) => pub),
+    predictions: room.predictions,
     phase: room.phase,
     results,
     totals,

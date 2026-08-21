@@ -9,11 +9,14 @@ import {
   joinRoom,
   recomputeAndMaybeFinish,
   removePlayer,
+  removeSpectator,
   resolvePuttOff,
   serializeRoomState,
   setConfig,
   setCourse,
   setPlayerAvatar,
+  setPrediction,
+  spectateRoom,
   startGame,
   startNewRound,
 } from "./roomStore.js";
@@ -23,6 +26,7 @@ import type { AuthUser } from "../lib/auth.js";
 interface SocketData {
   roomCode?: string;
   playerId?: string;
+  spectatorId?: string;
   user: AuthUser;
 }
 
@@ -63,19 +67,47 @@ export function registerRoomHandlers(io: Server) {
       ack({ ok: true, playerId: result.id, state: serializeRoomState(room) });
     });
 
+    socket.on("room:spectate", (payload: { code: string }, ack: Ack) => {
+      const code = (payload?.code ?? "").trim().toUpperCase();
+      const room = getRoom(code);
+      if (!room) return ack({ ok: false, error: "Room not found." });
+      const result = spectateRoom(room, data.user.name);
+      if ("error" in result) return ack({ ok: false, error: result.error });
+      result.socketId = socket.id;
+      data.roomCode = room.code;
+      data.spectatorId = result.id;
+      socket.join(room.code);
+      broadcast(io, room);
+      ack({ ok: true, playerId: result.id, spectator: true, state: serializeRoomState(room) });
+    });
+
     socket.on("room:rejoin", (payload: { code: string; playerId: string }, ack: Ack) => {
       const code = (payload?.code ?? "").trim().toUpperCase();
       const room = getRoom(code);
       if (!room) return ack({ ok: false, error: "Room no longer exists." });
+
       const player = room.players.find((p) => p.id === payload?.playerId);
-      if (!player || player.name !== data.user.name) return ack({ ok: false, error: "You're not in this room." });
-      player.connected = true;
-      player.socketId = socket.id;
-      data.roomCode = room.code;
-      data.playerId = player.id;
-      socket.join(room.code);
-      broadcast(io, room);
-      ack({ ok: true, playerId: player.id, state: serializeRoomState(room) });
+      if (player && player.name === data.user.name) {
+        player.connected = true;
+        player.socketId = socket.id;
+        data.roomCode = room.code;
+        data.playerId = player.id;
+        socket.join(room.code);
+        broadcast(io, room);
+        return ack({ ok: true, playerId: player.id, state: serializeRoomState(room) });
+      }
+
+      const spectator = room.spectators.find((s) => s.id === payload?.playerId);
+      if (spectator && spectator.name === data.user.name) {
+        spectator.socketId = socket.id;
+        data.roomCode = room.code;
+        data.spectatorId = spectator.id;
+        socket.join(room.code);
+        broadcast(io, room);
+        return ack({ ok: true, playerId: spectator.id, spectator: true, state: serializeRoomState(room) });
+      }
+
+      ack({ ok: false, error: "You're not in this room." });
     });
 
     socket.on("room:selectAvatar", (payload: { avatar: AvatarKey }) => {
@@ -115,12 +147,15 @@ export function registerRoomHandlers(io: Server) {
 
     socket.on("room:leave", () => {
       const room = data.roomCode ? getRoom(data.roomCode) : undefined;
-      if (!room || !data.playerId) return;
-      removePlayer(room, data.playerId);
+      if (!room) return;
+      if (data.playerId) removePlayer(room, data.playerId);
+      else if (data.spectatorId) removeSpectator(room, data.spectatorId);
+      else return;
       socket.leave(room.code);
       broadcast(io, room);
       data.roomCode = undefined;
       data.playerId = undefined;
+      data.spectatorId = undefined;
     });
 
     socket.on("hole:setStrokes", (payload: { holeNumber: number; targetName: string; strokes: number }) => {
@@ -182,6 +217,24 @@ export function registerRoomHandlers(io: Server) {
       });
     });
 
+    socket.on("spectator:predict", (payload: { playerName: string }) => {
+      const room = data.roomCode ? getRoom(data.roomCode) : undefined;
+      if (!room || !data.spectatorId) return;
+      if (setPrediction(room, data.spectatorId, payload?.playerName)) broadcast(io, room);
+    });
+
+    // Ephemeral only — never stored in room state, just relayed live to
+    // everyone else in the room for the floating-reaction animation.
+    socket.on("spectator:react", (payload: { emoji: string }) => {
+      const room = data.roomCode ? getRoom(data.roomCode) : undefined;
+      if (!room || !data.spectatorId) return;
+      const spectator = room.spectators.find((s) => s.id === data.spectatorId);
+      if (!spectator) return;
+      const emoji = typeof payload?.emoji === "string" ? payload.emoji.slice(0, 8) : "";
+      if (!emoji) return;
+      io.to(room.code).emit("spectator:reacted", { emoji, name: spectator.name });
+    });
+
     socket.on("hole:setCurrentStep", (payload: { stepIndex: number }) => {
       const room = data.roomCode ? getRoom(data.roomCode) : undefined;
       if (!room || !isHost(room, data.playerId)) return;
@@ -200,13 +253,28 @@ export function registerRoomHandlers(io: Server) {
 
     socket.on("disconnect", () => {
       const room = data.roomCode ? getRoom(data.roomCode) : undefined;
-      if (!room || !data.playerId) return;
-      const player = room.players.find((p) => p.id === data.playerId);
-      // Only flip to disconnected if no newer connection (e.g. a reload,
-      // or the same player open in another tab) has since taken over.
-      if (player && player.socketId === socket.id) {
-        player.connected = false;
-        broadcast(io, room);
+      if (!room) return;
+
+      if (data.playerId) {
+        const player = room.players.find((p) => p.id === data.playerId);
+        // Only flip to disconnected if no newer connection (e.g. a reload,
+        // or the same player open in another tab) has since taken over.
+        if (player && player.socketId === socket.id) {
+          player.connected = false;
+          broadcast(io, room);
+        }
+        return;
+      }
+
+      if (data.spectatorId) {
+        const spectator = room.spectators.find((s) => s.id === data.spectatorId);
+        // Same "still my socket" guard, but spectators are lightweight —
+        // just drop them outright so the watching-count stays accurate,
+        // rather than lingering in a permanent "reconnecting" state.
+        if (spectator && spectator.socketId === socket.id) {
+          removeSpectator(room, data.spectatorId);
+          broadcast(io, room);
+        }
       }
     });
   });

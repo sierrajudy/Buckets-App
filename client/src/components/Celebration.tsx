@@ -1,6 +1,8 @@
 import { useMemo } from "react";
 import { useRoom } from "../store";
 import { AvatarIcon } from "./Avatars";
+import { RoomCodeBadge } from "./RoomCodeBadge";
+import { EmojiReactionBar } from "./EmojiReactionBar";
 import { joinNames } from "../lib/format";
 
 const CONFETTI_COLORS = ["#facc15", "#22c55e", "#3b82f6", "#ef4444", "#a855f7", "#f97316"];
@@ -32,7 +34,7 @@ function useConfetti(count = 140): ConfettiPiece[] {
 }
 
 export function Celebration({ onViewStandings }: { onViewStandings: () => void }) {
-  const { state, isHost, newRound } = useRoom();
+  const { state, isHost, isSpectator, newRound } = useRoom();
   const confetti = useConfetti();
 
   if (!state || !state.finishedRound) return null;
@@ -64,6 +66,10 @@ export function Celebration({ onViewStandings }: { onViewStandings: () => void }
       </div>
 
       <div className="relative z-10 max-w-lg w-full text-center space-y-8">
+        <div className="flex justify-center">
+          <RoomCodeBadge variant="dark" />
+        </div>
+
         {round.holeInOnePlayer && (
           <div className="text-amber-400 font-bold text-sm tracking-widest uppercase">
             Match won on a hole in one!
@@ -137,6 +143,8 @@ export function Celebration({ onViewStandings }: { onViewStandings: () => void }
             Send Feedback
           </a>
         </div>
+
+        {isSpectator && <EmojiReactionBar dark />}
 
         <div className="flex gap-2">
           <button

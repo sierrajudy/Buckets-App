@@ -17,14 +17,22 @@ function emitWithAck(event: string, payload: unknown): Promise<AckResponse> {
   });
 }
 
+export interface Reaction {
+  id: number;
+  emoji: string;
+  name: string;
+}
+
 interface RoomContextValue {
   state: RoomState | null;
   playerId: string | null;
   isHost: boolean;
+  isSpectator: boolean;
   me: RoomState["players"][number] | null;
   connecting: boolean;
   createRoom: () => Promise<AckResponse>;
   joinRoom: (code: string) => Promise<AckResponse>;
+  spectateRoom: (code: string) => Promise<AckResponse>;
   selectAvatar: (avatar: AvatarKey) => void;
   setConfig: (startingHole: number) => void;
   setCourse: (courseId: string) => void;
@@ -39,6 +47,10 @@ interface RoomContextValue {
   confirmFinishRound: () => void;
   endGame: () => void;
   setCurrentStep: (stepIndex: number) => void;
+  predict: (playerName: string) => void;
+  sendReaction: (emoji: string) => void;
+  reactions: Reaction[];
+  dismissReaction: (id: number) => void;
 }
 
 const RoomContext = createContext<RoomContextValue | null>(null);
@@ -47,11 +59,19 @@ export function RoomProvider({ children }: { children: ReactNode }) {
   const [state, setState] = useState<RoomState | null>(null);
   const [playerId, setPlayerId] = useState<string | null>(null);
   const [connecting, setConnecting] = useState(true);
+  const [reactions, setReactions] = useState<Reaction[]>([]);
   const attemptedRejoin = useRef(false);
+  const reactionId = useRef(0);
 
   useEffect(() => {
     function onState(next: RoomState) {
       setState(next);
+    }
+
+    function onReaction(payload: { emoji: string; name: string }) {
+      reactionId.current += 1;
+      const id = reactionId.current;
+      setReactions((r) => [...r, { id, emoji: payload.emoji, name: payload.name }]);
     }
 
     function attemptRejoin() {
@@ -80,11 +100,13 @@ export function RoomProvider({ children }: { children: ReactNode }) {
     }
 
     socket.on("room:state", onState);
+    socket.on("spectator:reacted", onReaction);
     socket.on("connect", attemptRejoin);
     if (socket.connected) attemptRejoin();
 
     return () => {
       socket.off("room:state", onState);
+      socket.off("spectator:reacted", onReaction);
       socket.off("connect", attemptRejoin);
     };
   }, []);
@@ -105,6 +127,16 @@ export function RoomProvider({ children }: { children: ReactNode }) {
 
   async function joinRoom(code: string): Promise<AckResponse> {
     const res = await emitWithAck("room:join", { code });
+    if (res.ok) {
+      setPlayerId(res.playerId as string);
+      setState(res.state as RoomState);
+      persistSession((res.state as RoomState).code, res.playerId as string);
+    }
+    return res;
+  }
+
+  async function spectateRoom(code: string): Promise<AckResponse> {
+    const res = await emitWithAck("room:spectate", { code });
     if (res.ok) {
       setPlayerId(res.playerId as string);
       setState(res.state as RoomState);
@@ -172,8 +204,21 @@ export function RoomProvider({ children }: { children: ReactNode }) {
     socket.emit("hole:setCurrentStep", { stepIndex });
   }
 
+  function predict(playerName: string) {
+    socket.emit("spectator:predict", { playerName });
+  }
+
+  function sendReaction(emoji: string) {
+    socket.emit("spectator:react", { emoji });
+  }
+
+  function dismissReaction(id: number) {
+    setReactions((r) => r.filter((entry) => entry.id !== id));
+  }
+
   const me = state?.players.find((p) => p.id === playerId) ?? null;
   const isHost = Boolean(state && playerId && state.hostId === playerId);
+  const isSpectator = Boolean(state && playerId && state.spectators.some((s) => s.id === playerId));
 
   return (
     <RoomContext.Provider
@@ -181,10 +226,12 @@ export function RoomProvider({ children }: { children: ReactNode }) {
         state,
         playerId,
         isHost,
+        isSpectator,
         me,
         connecting,
         createRoom,
         joinRoom,
+        spectateRoom,
         selectAvatar,
         setConfig,
         setCourse,
@@ -199,6 +246,10 @@ export function RoomProvider({ children }: { children: ReactNode }) {
         confirmFinishRound,
         endGame,
         setCurrentStep,
+        predict,
+        sendReaction,
+        reactions,
+        dismissReaction,
       }}
     >
       {children}

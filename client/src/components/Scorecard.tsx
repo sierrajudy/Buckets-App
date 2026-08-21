@@ -3,6 +3,9 @@ import { useRoom } from "../store";
 import { AvatarIcon } from "./Avatars";
 import { GolfCart } from "./GolfCart";
 import { HecklerGuy } from "./HecklerGuy";
+import { RoomCodeBadge } from "./RoomCodeBadge";
+import { EmojiReactionBar } from "./EmojiReactionBar";
+import { PredictionPicker } from "./PredictionPicker";
 import type { AvatarKey, HoleResult } from "../types";
 
 function computeLeader(totals: Record<string, number>, players: { name: string }[]): string | null {
@@ -70,6 +73,7 @@ export function Scorecard() {
   const {
     state,
     isHost,
+    isSpectator,
     me,
     setStrokes,
     toggleBucket,
@@ -184,6 +188,7 @@ export function Scorecard() {
                 </button>
               ))}
           </div>
+          <RoomCodeBadge />
         </div>
 
         <div className="max-w-2xl mx-auto mt-3 relative h-6">
@@ -406,6 +411,13 @@ export function Scorecard() {
             ))}
           </div>
         </div>
+
+        {isSpectator && (
+          <div className="space-y-3">
+            <PredictionPicker />
+            <EmojiReactionBar />
+          </div>
+        )}
 
         <div className="flex gap-2 pb-6">
           {isHost && (

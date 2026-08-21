@@ -11,6 +11,12 @@ export interface Player {
   socketId: string | null;
 }
 
+export interface Spectator {
+  id: string;
+  name: string;
+  socketId: string | null;
+}
+
 export interface HoleEntry {
   holeNumber: number;
   par: number;
@@ -57,6 +63,9 @@ export interface Room {
   course: string;
   startingHole: number;
   players: Player[];
+  spectators: Spectator[];
+  /** Spectator id -> the player name they're predicting will win this round. */
+  predictions: Record<string, string>;
   phase: RoomPhase;
   entries: Record<number, HoleEntry>; // keyed by hole number, 1 through the course's hole count
   puttOffWinner: string | null;
@@ -66,6 +75,7 @@ export interface Room {
 }
 
 export type PublicPlayer = Omit<Player, "socketId">;
+export type PublicSpectator = Omit<Spectator, "socketId">;
 
 export interface RoomStateForClient {
   code: string;
@@ -74,6 +84,8 @@ export interface RoomStateForClient {
   course: string;
   startingHole: number;
   players: PublicPlayer[];
+  spectators: PublicSpectator[];
+  predictions: Record<string, string>;
   phase: RoomPhase;
   results: HoleResult[];
   totals: Record<string, number>;

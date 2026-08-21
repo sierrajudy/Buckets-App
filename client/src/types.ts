@@ -10,6 +10,11 @@ export interface Player {
   connected: boolean;
 }
 
+export interface Spectator {
+  id: string;
+  name: string;
+}
+
 export interface HoleResult {
   holeNumber: number;
   par: number;
@@ -47,6 +52,8 @@ export interface RoomState {
   course: string;
   startingHole: number;
   players: Player[];
+  spectators: Spectator[];
+  predictions: Record<string, string>;
   phase: RoomPhase;
   results: HoleResult[];
   totals: Record<string, number>;
