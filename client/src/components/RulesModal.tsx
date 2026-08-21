@@ -41,12 +41,14 @@ export function RulesModal({ onClose }: { onClose: () => void }) {
                 split the points evenly.
               </li>
               <li>
-                <span className="font-semibold">Birdie</span> (1 under par) doubles the hole to{" "}
-                <span className="font-semibold">4 points</span>.
+                <span className="font-semibold">Birdie</span> (1 under par) is worth{" "}
+                <span className="font-semibold">1 bonus point</span> to every player who gets one on that hole,
+                whether or not they won the hole outright.
               </li>
               <li>
-                <span className="font-semibold">Eagle</span> (2+ under par) triples the hole to{" "}
-                <span className="font-semibold">6 points</span>.
+                <span className="font-semibold">Eagle</span> (2+ under par) is worth{" "}
+                <span className="font-semibold">3 bonus points</span>, same deal — every player who gets one, not
+                just the hole winner.
               </li>
               <li>
                 <span className="font-semibold">Bucket challenge</span> — worth 1 bonus point. The host picks

@@ -1,6 +1,8 @@
 import type { HoleEntry, HoleResult, RoundSummary } from "./types.js";
 
 const BASE_HOLE_POINTS = 2;
+const BIRDIE_BONUS = 1;
+const EAGLE_BONUS = 3;
 const BUCKET_POINTS = 1;
 const PGE_POINTS = 1;
 
@@ -24,6 +26,8 @@ function sumRecords(records: Record<string, number>[], players: string[]): Recor
 /**
  * A tie for lowest score splits the hole-win pool evenly among however many
  * players tied, which works the same way regardless of room size (2-4).
+ * Birdie/eagle are flat bonus points paid to every player who earns them on
+ * that hole, independent of who actually won the hole outright.
  */
 export function computeHoleResult(entry: HoleEntry, players: string[]): HoleResult {
   const strokes: Record<string, number> = {};
@@ -36,16 +40,19 @@ export function computeHoleResult(entry: HoleEntry, players: string[]): HoleResu
   const minScore = validPlayers.length > 0 ? Math.min(...validPlayers.map((p) => strokes[p])) : 0;
   const holeWinners = validPlayers.filter((p) => strokes[p] === minScore);
 
-  const underPar = entry.par - minScore;
-  const multiplier = validPlayers.length > 0 && underPar >= 1 ? underPar + 1 : 1;
-  const isBirdie = multiplier === 2;
-  const isEagle = multiplier >= 3;
+  const underPar = (p: string) => entry.par - strokes[p];
+  const birdiePlayers = validPlayers.filter((p) => underPar(p) === 1);
+  const eaglePlayers = validPlayers.filter((p) => underPar(p) >= 2);
+  const isBirdie = birdiePlayers.length > 0;
+  const isEagle = eaglePlayers.length > 0;
 
   const holeInOnePlayers = validPlayers.filter((p) => strokes[p] === 1);
   const isHoleInOne = holeInOnePlayers.length > 0;
 
-  const holePool = BASE_HOLE_POINTS * multiplier;
-  const holePoints = splitPool(holePool, holeWinners, players);
+  const holePoints = splitPool(BASE_HOLE_POINTS, holeWinners, players);
+  const bonusPoints = Object.fromEntries(
+    players.map((p) => [p, (birdiePlayers.includes(p) ? BIRDIE_BONUS : 0) + (eaglePlayers.includes(p) ? EAGLE_BONUS : 0)]),
+  );
 
   const bucketPoints = splitPool(BUCKET_POINTS, entry.bucketWinners, players);
 
@@ -53,13 +60,12 @@ export function computeHoleResult(entry: HoleEntry, players: string[]): HoleResu
     ? splitPool(PGE_POINTS, entry.pgeWinners, players)
     : Object.fromEntries(players.map((p) => [p, 0]));
 
-  const totalPoints = sumRecords([holePoints, bucketPoints, pgePoints], players);
+  const totalPoints = sumRecords([holePoints, bonusPoints, bucketPoints, pgePoints], players);
 
   return {
     holeNumber: entry.holeNumber,
     par: entry.par,
     strokes,
-    multiplier,
     isBirdie,
     isEagle,
     isHoleInOne,

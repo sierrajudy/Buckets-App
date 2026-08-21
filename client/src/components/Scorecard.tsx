@@ -251,12 +251,12 @@ export function Scorecard() {
             <div className="flex gap-2 text-xs font-semibold">
               {result.isEagle && (
                 <span className="px-2 py-1 rounded-full bg-purple-100 text-purple-700 dark:bg-purple-900 dark:text-purple-300">
-                  Eagle — 3x points
+                  Eagle — +3 pts
                 </span>
               )}
-              {result.isBirdie && !result.isEagle && (
+              {result.isBirdie && (
                 <span className="px-2 py-1 rounded-full bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300">
-                  Birdie — 2x points
+                  Birdie — +1 pt
                 </span>
               )}
               {result.holeInOnePlayers.length > 0 && (

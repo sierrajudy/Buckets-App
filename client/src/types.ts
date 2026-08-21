@@ -14,7 +14,6 @@ export interface HoleResult {
   holeNumber: number;
   par: number;
   strokes: Record<string, number>;
-  multiplier: number;
   isBirdie: boolean;
   isEagle: boolean;
   isHoleInOne: boolean;
