@@ -17,6 +17,17 @@ export const db: Client = createClient({
   authToken: process.env.TURSO_AUTH_TOKEN,
 });
 
+/** SQLite/libSQL has no "ADD COLUMN IF NOT EXISTS", so this just tries the
+ * ALTER and swallows the "already exists" error on every restart after the
+ * first. */
+async function addColumnIfMissing(table: string, column: string, definition: string): Promise<void> {
+  try {
+    await db.execute(`ALTER TABLE ${table} ADD COLUMN ${column} ${definition}`);
+  } catch (err) {
+    if (!String(err instanceof Error ? err.message : err).toLowerCase().includes("duplicate column")) throw err;
+  }
+}
+
 export async function initDb(): Promise<void> {
   await db.execute(`
     CREATE TABLE IF NOT EXISTS rounds (
@@ -46,6 +57,9 @@ export async function initDb(): Promise<void> {
       created_at TEXT NOT NULL DEFAULT (datetime('now'))
     )
   `);
+
+  await addColumnIfMissing("users", "email_round_start", "INTEGER NOT NULL DEFAULT 0");
+  await addColumnIfMissing("users", "email_standings", "INTEGER NOT NULL DEFAULT 0");
 
   await db.execute(`
     CREATE TABLE IF NOT EXISTS sessions (

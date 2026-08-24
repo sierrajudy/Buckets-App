@@ -18,6 +18,7 @@ import {
   finalizeRound,
 } from "./gameLogic.js";
 import { persistRound } from "../lib/persistRound.js";
+import { notifyStandings } from "../lib/notifications.js";
 
 const rooms = new Map<string, Room>();
 
@@ -245,6 +246,7 @@ export async function advanceCurrentStep(room: Room, stepIndex: number): Promise
     room.finishedRound = round;
     room.phase = "celebration";
     await persistRound(round);
+    notifyStandings(round);
     return true;
   }
 
@@ -277,6 +279,7 @@ export async function confirmFinishRound(room: Room): Promise<boolean> {
   room.finishedRound = round;
   room.phase = "celebration";
   await persistRound(round);
+  notifyStandings(round);
   return true;
 }
 
@@ -302,6 +305,7 @@ export async function endGameEarly(room: Room): Promise<boolean> {
   room.finishedRound = round;
   room.phase = "celebration";
   await persistRound(round);
+  notifyStandings(round);
   return true;
 }
 
@@ -322,6 +326,7 @@ export async function resolvePuttOff(room: Room, winnerName: string): Promise<bo
   room.puttOffWinner = winnerName;
   room.phase = "celebration";
   await persistRound(round);
+  notifyStandings(round);
   return true;
 }
 

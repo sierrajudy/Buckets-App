@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useAuth } from "../authStore";
 import { fetchMyRounds } from "../lib/api";
 import { RoundHistoryTable } from "./RoundHistoryTable";
+import { EmailPreferences } from "./EmailPreferences";
 import type { RoundHistoryRow } from "../types";
 
 export function Profile({ onBack }: { onBack: () => void }) {
@@ -44,6 +45,8 @@ export function Profile({ onBack }: { onBack: () => void }) {
             </div>
           )}
         </div>
+
+        <EmailPreferences />
 
         <div>
           <div className="text-sm font-semibold text-neutral-500 mb-2">Every round you've played</div>

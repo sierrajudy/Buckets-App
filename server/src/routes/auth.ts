@@ -8,6 +8,7 @@ import {
   getUserByToken,
   hashPassword,
   isValidEmail,
+  rowToAuthUser,
   verifyPassword,
 } from "../lib/auth.js";
 import { sendPasswordResetEmail } from "../lib/email.js";
@@ -42,7 +43,7 @@ authRouter.post("/signup", async (req, res) => {
   });
 
   const token = await createSession(id);
-  res.status(201).json({ token, user: { id, email, name } });
+  res.status(201).json({ token, user: { id, email, name, emailRoundStart: false, emailStandings: false } });
 });
 
 authRouter.post("/login", async (req, res) => {
@@ -50,7 +51,7 @@ authRouter.post("/login", async (req, res) => {
   const password = String(req.body?.password ?? "");
 
   const result = await db.execute({
-    sql: "SELECT id, email, name, password_hash FROM users WHERE email = ? COLLATE NOCASE",
+    sql: "SELECT id, email, name, password_hash, email_round_start, email_standings FROM users WHERE email = ? COLLATE NOCASE",
     args: [email],
   });
   const row = result.rows[0] as unknown as Record<string, unknown> | undefined;
@@ -59,7 +60,7 @@ authRouter.post("/login", async (req, res) => {
   }
 
   const token = await createSession(row.id as string);
-  res.json({ token, user: { id: row.id, email: row.email, name: row.name } });
+  res.json({ token, user: rowToAuthUser(row) });
 });
 
 authRouter.post("/logout", async (req, res) => {
@@ -72,6 +73,21 @@ authRouter.get("/me", async (req, res) => {
   const user = await getUserByToken(bearerToken(req));
   if (!user) return res.status(401).json({ error: "Not signed in." });
   res.json({ user });
+});
+
+authRouter.patch("/email-preferences", async (req, res) => {
+  const user = await getUserByToken(bearerToken(req));
+  if (!user) return res.status(401).json({ error: "Not signed in." });
+
+  const emailRoundStart = Boolean(req.body?.emailRoundStart);
+  const emailStandings = Boolean(req.body?.emailStandings);
+
+  await db.execute({
+    sql: "UPDATE users SET email_round_start = ?, email_standings = ? WHERE id = ?",
+    args: [emailRoundStart ? 1 : 0, emailStandings ? 1 : 0, user.id],
+  });
+
+  res.json({ user: { ...user, emailRoundStart, emailStandings } });
 });
 
 authRouter.post("/forgot-password", async (req, res) => {

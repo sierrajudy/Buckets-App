@@ -6,6 +6,8 @@ export interface AuthUser {
   id: string;
   email: string;
   name: string;
+  emailRoundStart: boolean;
+  emailStandings: boolean;
 }
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -50,12 +52,21 @@ export function bearerToken(req: { headers: { authorization?: string } }): strin
 export async function getUserByToken(token: string | undefined | null): Promise<AuthUser | null> {
   if (!token) return null;
   const result = await db.execute({
-    sql: `SELECT users.id, users.email, users.name FROM sessions
+    sql: `SELECT users.id, users.email, users.name, users.email_round_start, users.email_standings FROM sessions
           JOIN users ON users.id = sessions.user_id
           WHERE sessions.token = ?`,
     args: [token],
   });
   if (result.rows.length === 0) return null;
-  const row = result.rows[0] as unknown as Record<string, unknown>;
-  return { id: row.id as string, email: row.email as string, name: row.name as string };
+  return rowToAuthUser(result.rows[0] as unknown as Record<string, unknown>);
+}
+
+export function rowToAuthUser(row: Record<string, unknown>): AuthUser {
+  return {
+    id: row.id as string,
+    email: row.email as string,
+    name: row.name as string,
+    emailRoundStart: Boolean(row.email_round_start),
+    emailStandings: Boolean(row.email_standings),
+  };
 }

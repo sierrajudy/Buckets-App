@@ -22,6 +22,7 @@ import {
 } from "./roomStore.js";
 import type { AvatarKey, Room } from "./types.js";
 import type { AuthUser } from "../lib/auth.js";
+import { notifyRoundStarted } from "../lib/notifications.js";
 
 interface SocketData {
   roomCode?: string;
@@ -136,6 +137,7 @@ export function registerRoomHandlers(io: Server) {
       startGame(room);
       broadcast(io, room);
       ack?.({ ok: true });
+      notifyRoundStarted({ players: room.players.map((p) => p.name), course: room.course, roomCode: room.code });
     });
 
     socket.on("room:newRound", () => {

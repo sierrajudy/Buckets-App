@@ -8,6 +8,8 @@ export interface AuthUser {
   id: string;
   email: string;
   name: string;
+  emailRoundStart: boolean;
+  emailStandings: boolean;
 }
 
 interface AuthResponse {
@@ -69,4 +71,16 @@ export async function resetPassword(token: string, password: string): Promise<{ 
     body: JSON.stringify({ token, password }),
   });
   return parse<{ ok: true }>(res);
+}
+
+export async function updateEmailPreferences(
+  token: string,
+  prefs: { emailRoundStart: boolean; emailStandings: boolean },
+): Promise<{ user: AuthUser }> {
+  const res = await fetch("/api/auth/email-preferences", {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+    body: JSON.stringify(prefs),
+  });
+  return parse<{ user: AuthUser }>(res);
 }
