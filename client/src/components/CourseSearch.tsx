@@ -5,7 +5,13 @@ import type { CourseSearchResult, CourseSelection, CourseTees } from "../types";
 const MIN_QUERY_LENGTH = 2;
 const DEBOUNCE_MS = 300;
 
-export function CourseSearch({ onSelect }: { onSelect: (course: CourseSelection) => void }) {
+export function CourseSearch({
+  onSelect,
+  hasSelection,
+}: {
+  onSelect: (course: CourseSelection) => void;
+  hasSelection: boolean;
+}) {
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<CourseSearchResult[] | null>(null);
   const [searching, setSearching] = useState(false);
@@ -16,6 +22,11 @@ export function CourseSearch({ onSelect }: { onSelect: (course: CourseSelection)
   const [tees, setTees] = useState<CourseTees | null>(null);
   const [loadingTees, setLoadingTees] = useState(false);
   const [resolvingTee, setResolvingTee] = useState(false);
+
+  // Once a course+tee is already set, collapse to a "Change course" button
+  // rather than leaving the search box sitting there — editing reopens it.
+  const [editing, setEditing] = useState(false);
+  const showSearch = !hasSelection || editing;
 
   useEffect(() => {
     if (picked) return; // a course is already picked — the tee dropdown owns the UI now
@@ -63,10 +74,11 @@ export function CourseSearch({ onSelect }: { onSelect: (course: CourseSelection)
     }
   }
 
-  function handleChangeCourse() {
+  function resetSearch() {
     setPicked(null);
     setTees(null);
     setError(null);
+    setQuery("");
   }
 
   async function handlePickTee(teeKey: string) {
@@ -76,14 +88,27 @@ export function CourseSearch({ onSelect }: { onSelect: (course: CourseSelection)
     try {
       const course = await selectCourseTee(picked.id, teeKey);
       onSelect(course);
-      setPicked(null);
-      setTees(null);
-      setQuery("");
+      resetSearch();
+      setEditing(false); // collapse back to the "Change course" button
     } catch (err) {
       setError(err instanceof Error ? err.message : "Couldn't load that tee.");
     } finally {
       setResolvingTee(false);
     }
+  }
+
+  if (!showSearch) {
+    return (
+      <div className="mt-3">
+        <button
+          type="button"
+          onClick={() => setEditing(true)}
+          className="text-xs text-neutral-500 hover:text-green-600 dark:hover:text-green-400"
+        >
+          Change course
+        </button>
+      </div>
+    );
   }
 
   if (picked) {
@@ -93,10 +118,10 @@ export function CourseSearch({ onSelect }: { onSelect: (course: CourseSelection)
           <div className="text-sm font-semibold">{picked.name}</div>
           <button
             type="button"
-            onClick={handleChangeCourse}
+            onClick={resetSearch}
             className="text-xs text-neutral-500 hover:text-green-600 dark:hover:text-green-400 shrink-0"
           >
-            Change course
+            Search again
           </button>
         </div>
 
@@ -126,15 +151,29 @@ export function CourseSearch({ onSelect }: { onSelect: (course: CourseSelection)
 
   return (
     <div className="mt-3 space-y-2">
-      <div className="relative">
-        <input
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          placeholder="Search any course (e.g. Pebble Beach)"
-          className="w-full rounded-lg border border-neutral-300 dark:border-neutral-700 bg-transparent px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
-        />
-        {searching && (
-          <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-neutral-400">…</span>
+      <div className="flex items-center gap-2">
+        <div className="relative flex-1">
+          <input
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="Search any course (e.g. Pebble Beach)"
+            className="w-full rounded-lg border border-neutral-300 dark:border-neutral-700 bg-transparent px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
+          />
+          {searching && (
+            <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-neutral-400">…</span>
+          )}
+        </div>
+        {hasSelection && (
+          <button
+            type="button"
+            onClick={() => {
+              resetSearch();
+              setEditing(false);
+            }}
+            className="text-xs text-neutral-500 hover:text-red-500 shrink-0"
+          >
+            Cancel
+          </button>
         )}
       </div>
 

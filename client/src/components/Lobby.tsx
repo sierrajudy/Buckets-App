@@ -109,7 +109,9 @@ export function Lobby({
             </div>
           )}
 
-          {isHost && <CourseSearch onSelect={(course) => setCourse(course.id)} />}
+          {isHost && (
+            <CourseSearch onSelect={(course) => setCourse(course.id)} hasSelection={Boolean(state.courseId)} />
+          )}
 
           {state.courseId &&
             (isHost ? (
