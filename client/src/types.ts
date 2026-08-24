@@ -97,3 +97,15 @@ export interface RoundHistoryRow {
   players: RoundPlayerSummary[];
   holes: HoleResult[];
 }
+
+export interface CourseSearchResult {
+  id: string;
+  name: string;
+  location: string;
+}
+
+export interface CourseSelection {
+  id: string;
+  name: string;
+  pars: number[];
+}

@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useRoom } from "../store";
 import { AVATAR_KEYS, AVATAR_META, AvatarIcon, type AvatarKey } from "./Avatars";
 import { RulesModal } from "./RulesModal";
-import { COURSES } from "../lib/courses";
+import { CourseSearch } from "./CourseSearch";
 
 export function Lobby({
   onViewStandings,
@@ -91,22 +91,9 @@ export function Lobby({
 
         <div className="bg-white dark:bg-neutral-900 rounded-2xl border border-neutral-200 dark:border-neutral-800 p-4">
           <div className="text-sm font-semibold text-neutral-500 mb-1">Course</div>
+          <div className="font-semibold">{state.course}</div>
 
-          {isHost ? (
-            <select
-              value={state.courseId}
-              onChange={(e) => setCourse(e.target.value)}
-              className="w-full rounded-lg border border-neutral-300 dark:border-neutral-700 bg-transparent px-3 py-2 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-green-500"
-            >
-              {COURSES.map((c) => (
-                <option key={c.id} value={c.id}>
-                  {c.name}
-                </option>
-              ))}
-            </select>
-          ) : (
-            <div className="font-semibold">{state.course}</div>
-          )}
+          {isHost && <CourseSearch onSelect={(course) => setCourse(course.id)} />}
 
           {isHost ? (
             <div className="mt-3">

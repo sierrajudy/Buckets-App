@@ -11,6 +11,7 @@ import { roundsRouter } from "./routes/rounds.js";
 import { standingsRouter } from "./routes/standings.js";
 import { authRouter } from "./routes/auth.js";
 import { myRoundsRouter } from "./routes/myRounds.js";
+import { coursesRouter } from "./routes/courses.js";
 import { getUserByToken } from "./lib/auth.js";
 import { registerRoomHandlers } from "./rooms/socketHandlers.js";
 
@@ -30,6 +31,7 @@ async function main() {
   app.use("/api/rounds", roundsRouter);
   app.use("/api/standings", standingsRouter);
   app.use("/api/my-rounds", myRoundsRouter);
+  app.use("/api/courses", coursesRouter);
 
   const clientDist = path.join(__dirname, "..", "..", "client", "dist");
   if (fs.existsSync(clientDist)) {
