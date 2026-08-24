@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { fetchGolfCourseDetail, searchGolfCourses } from "../lib/golfCourseApi.js";
+import { courseDisplayName, fetchGolfCourseDetail, searchGolfCourses } from "../lib/golfCourseApi.js";
 import { registerCourse } from "../rooms/courses.js";
 
 export const coursesRouter = Router();
@@ -13,7 +13,7 @@ coursesRouter.get("/search", async (req, res) => {
     res.json(
       results.map((c) => ({
         id: c.id,
-        name: c.club_name || c.course_name,
+        name: courseDisplayName(c.club_name, c.course_name),
         location: [c.location.city, c.location.state, c.location.country].filter(Boolean).join(", "),
       })),
     );

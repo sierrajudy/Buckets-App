@@ -33,6 +33,17 @@ interface GolfApiCourseDetail {
   tees: { male?: GolfApiTee[]; female?: GolfApiTee[] };
 }
 
+/** Many clubs have multiple courses (e.g. "Corica Park Gc" has a North and a
+ * South course) that otherwise show up as visually-identical duplicates —
+ * append the course name whenever it's a distinct value. */
+export function courseDisplayName(clubName: string, courseName: string): string {
+  const club = clubName?.trim() || "";
+  const course = courseName?.trim() || "";
+  if (!club) return course;
+  if (!course || course.toLowerCase() === club.toLowerCase()) return club;
+  return `${club} — ${course}`;
+}
+
 function apiKey(): string {
   const key = process.env.GOLF_COURSE_API_KEY;
   if (!key) throw new Error("GOLF_COURSE_API_KEY is not configured.");
@@ -68,7 +79,7 @@ export async function fetchGolfCourseDetail(
   }
 
   return {
-    name: course.club_name || course.course_name,
+    name: courseDisplayName(course.club_name, course.course_name),
     pars: tee.holes.map((h) => h.par),
   };
 }
