@@ -36,7 +36,8 @@ export function Lobby({
 
   async function copyCode() {
     try {
-      await navigator.clipboard.writeText(state!.code);
+      const link = `${window.location.origin}/?code=${state!.code}`;
+      await navigator.clipboard.writeText(`Join my Buckets round! Code: ${state!.code}\n${link}`);
       setCopied(true);
       setTimeout(() => setCopied(false), 1500);
     } catch {

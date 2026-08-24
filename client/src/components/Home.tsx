@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useAuth } from "../authStore";
 import { useRoom } from "../store";
 import { RulesModal } from "./RulesModal";
@@ -12,12 +12,18 @@ export function Home({
 }) {
   const { user, logout } = useAuth();
   const { createRoom, joinRoom, spectateRoom } = useRoom();
-  const [mode, setMode] = useState<"create" | "join">("create");
+  const codeFromLink = new URLSearchParams(window.location.search).get("code")?.toUpperCase() ?? "";
+  const [mode, setMode] = useState<"create" | "join">(codeFromLink ? "join" : "create");
   const [asSpectator, setAsSpectator] = useState(false);
-  const [code, setCode] = useState("");
+  const [code, setCode] = useState(codeFromLink);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [showRules, setShowRules] = useState(false);
+
+  useEffect(() => {
+    if (codeFromLink) window.history.replaceState(null, "", window.location.pathname);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
