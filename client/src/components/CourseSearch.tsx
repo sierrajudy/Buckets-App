@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
-import { searchCourses, selectCourse } from "../lib/api";
-import type { CourseSearchResult, CourseSelection } from "../types";
+import { fetchCourseTees, searchCourses, selectCourseTee } from "../lib/api";
+import type { CourseSearchResult, CourseSelection, CourseTees } from "../types";
 
 const MIN_QUERY_LENGTH = 2;
 const DEBOUNCE_MS = 300;
@@ -9,11 +9,16 @@ export function CourseSearch({ onSelect }: { onSelect: (course: CourseSelection)
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<CourseSearchResult[] | null>(null);
   const [searching, setSearching] = useState(false);
-  const [selectingId, setSelectingId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const requestId = useRef(0);
 
+  const [picked, setPicked] = useState<{ id: string; name: string } | null>(null);
+  const [tees, setTees] = useState<CourseTees | null>(null);
+  const [loadingTees, setLoadingTees] = useState(false);
+  const [resolvingTee, setResolvingTee] = useState(false);
+
   useEffect(() => {
+    if (picked) return; // a course is already picked — the tee dropdown owns the UI now
     const trimmed = query.trim();
     if (trimmed.length < MIN_QUERY_LENGTH) {
       setResults(null);
@@ -40,21 +45,83 @@ export function CourseSearch({ onSelect }: { onSelect: (course: CourseSelection)
     }, DEBOUNCE_MS);
 
     return () => clearTimeout(timer);
-  }, [query]);
+  }, [query, picked]);
 
-  async function handlePick(result: CourseSearchResult) {
-    setSelectingId(result.id);
+  async function handlePickCourse(result: CourseSearchResult) {
+    setPicked({ id: result.id, name: result.name });
+    setResults(null);
+    setError(null);
+    setLoadingTees(true);
+    try {
+      const detail = await fetchCourseTees(result.id);
+      setTees(detail);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Couldn't load tees for that course.");
+      setTees(null);
+    } finally {
+      setLoadingTees(false);
+    }
+  }
+
+  function handleChangeCourse() {
+    setPicked(null);
+    setTees(null);
+    setError(null);
+  }
+
+  async function handlePickTee(teeKey: string) {
+    if (!picked || !teeKey) return;
+    setResolvingTee(true);
     setError(null);
     try {
-      const course = await selectCourse(result.id);
+      const course = await selectCourseTee(picked.id, teeKey);
       onSelect(course);
-      setResults(null);
+      setPicked(null);
+      setTees(null);
       setQuery("");
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Couldn't load that course.");
+      setError(err instanceof Error ? err.message : "Couldn't load that tee.");
     } finally {
-      setSelectingId(null);
+      setResolvingTee(false);
     }
+  }
+
+  if (picked) {
+    return (
+      <div className="mt-3 space-y-2">
+        <div className="flex items-center justify-between gap-2">
+          <div className="text-sm font-semibold">{picked.name}</div>
+          <button
+            type="button"
+            onClick={handleChangeCourse}
+            className="text-xs text-neutral-500 hover:text-green-600 dark:hover:text-green-400 shrink-0"
+          >
+            Change course
+          </button>
+        </div>
+
+        {loadingTees && <p className="text-xs text-neutral-500">Loading tees…</p>}
+        {error && <p className="text-xs text-red-500">{error}</p>}
+
+        {tees && tees.tees.length > 0 && (
+          <select
+            defaultValue=""
+            disabled={resolvingTee}
+            onChange={(e) => handlePickTee(e.target.value)}
+            className="w-full rounded-lg border border-neutral-300 dark:border-neutral-700 bg-transparent px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500 disabled:opacity-50"
+          >
+            <option value="" disabled>
+              {resolvingTee ? "Loading course…" : "Pick a tee"}
+            </option>
+            {tees.tees.map((t) => (
+              <option key={t.key} value={t.key}>
+                {t.label} — Par {t.parTotal}, {t.totalYards} yds
+              </option>
+            ))}
+          </select>
+        )}
+      </div>
+    );
   }
 
   return (
@@ -82,13 +149,11 @@ export function CourseSearch({ onSelect }: { onSelect: (course: CourseSelection)
               <button
                 key={r.id}
                 type="button"
-                disabled={selectingId !== null}
-                onClick={() => handlePick(r)}
-                className="w-full text-left px-3 py-2 text-sm hover:bg-neutral-50 dark:hover:bg-neutral-800 disabled:opacity-50"
+                onClick={() => handlePickCourse(r)}
+                className="w-full text-left px-3 py-2 text-sm hover:bg-neutral-50 dark:hover:bg-neutral-800"
               >
                 <div className="font-semibold">{r.name}</div>
                 {r.location && <div className="text-xs text-neutral-500">{r.location}</div>}
-                {selectingId === r.id && <div className="text-xs text-green-600 mt-0.5">Loading course…</div>}
               </button>
             ))}
           </div>

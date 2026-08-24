@@ -249,7 +249,11 @@ export function Scorecard() {
             <FlagIcon className="w-6 h-8 shrink-0" />
             <div>
               <div className="text-2xl font-extrabold">Hole {result.holeNumber}</div>
-              <div className="text-sm text-neutral-500">Par {result.par}</div>
+              <div className="text-sm text-neutral-500">
+                Par {result.par}
+                {result.yardage > 0 && ` · ${result.yardage} yds`}
+                {result.handicap > 0 && ` · Hcp ${result.handicap}`}
+              </div>
             </div>
           </div>
           <div className="flex flex-col items-end gap-1.5">

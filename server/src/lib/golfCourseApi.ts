@@ -22,6 +22,9 @@ interface GolfApiTee {
   tee_name: string;
   number_of_holes: number;
   par_total: number;
+  course_rating: number;
+  slope_rating: number;
+  total_yards: number;
   holes: GolfApiHole[];
 }
 
@@ -65,21 +68,86 @@ export async function searchGolfCourses(query: string): Promise<GolfApiSearchRes
   return data.courses ?? [];
 }
 
-/** Picks the first 18-hole tee available (preferring men's tees), since Buckets
- * only tracks par per hole — yardage/rating/slope differ by tee but par rarely does. */
-export async function fetchGolfCourseDetail(
-  id: string,
-): Promise<{ name: string; pars: number[] } | { error: string }> {
+export interface TeeOption {
+  key: string;
+  label: string;
+  courseRating: number;
+  slopeRating: number;
+  totalYards: number;
+  parTotal: number;
+}
+
+export interface CourseTees {
+  name: string;
+  tees: TeeOption[];
+}
+
+function teeKey(gender: "male" | "female", teeName: string): string {
+  return `${gender}:${teeName}`;
+}
+
+function teeLabel(gender: "male" | "female", teeName: string): string {
+  return `${teeName} (${gender === "male" ? "Men's" : "Women's"})`;
+}
+
+/** Every 18-hole tee available for a course, across both tee sets, for the
+ * host to pick from once they've settled on the club/course itself. */
+export async function fetchGolfCourseTees(id: string): Promise<CourseTees> {
   const data = await golfApiFetch<{ course: GolfApiCourseDetail }>(`/courses/${encodeURIComponent(id)}`);
   const course = data.course;
-  const tee = course.tees.male?.find((t) => t.number_of_holes === 18) ?? course.tees.female?.find((t) => t.number_of_holes === 18);
 
-  if (!tee) {
-    return { error: "This course doesn't have 18-hole tee data available." };
+  const tees: TeeOption[] = [];
+  for (const gender of ["male", "female"] as const) {
+    for (const tee of course.tees[gender] ?? []) {
+      if (tee.number_of_holes !== 18) continue;
+      tees.push({
+        key: teeKey(gender, tee.tee_name),
+        label: teeLabel(gender, tee.tee_name),
+        courseRating: tee.course_rating,
+        slopeRating: tee.slope_rating,
+        totalYards: tee.total_yards,
+        parTotal: tee.par_total,
+      });
+    }
   }
+
+  return { name: courseDisplayName(course.club_name, course.course_name), tees };
+}
+
+export interface ResolvedTee {
+  name: string;
+  teeLabel: string;
+  courseRating: number;
+  slopeRating: number;
+  totalYards: number;
+  pars: number[];
+  yardages: number[];
+  handicaps: number[];
+}
+
+/** Resolves one specific tee (by the key returned from fetchGolfCourseTees)
+ * into the full per-hole data Buckets needs to run a round on it. */
+export async function fetchGolfCourseTeeDetail(
+  id: string,
+  key: string,
+): Promise<ResolvedTee | { error: string }> {
+  const data = await golfApiFetch<{ course: GolfApiCourseDetail }>(`/courses/${encodeURIComponent(id)}`);
+  const course = data.course;
+
+  const [gender, teeName] = key.includes(":") ? [key.slice(0, key.indexOf(":")), key.slice(key.indexOf(":") + 1)] : [null, null];
+  if (gender !== "male" && gender !== "female") return { error: "Invalid tee selection." };
+
+  const tee = (course.tees[gender] ?? []).find((t) => t.tee_name === teeName && t.number_of_holes === 18);
+  if (!tee) return { error: "That tee is no longer available for this course." };
 
   return {
     name: courseDisplayName(course.club_name, course.course_name),
+    teeLabel: teeLabel(gender, tee.tee_name),
+    courseRating: tee.course_rating,
+    slopeRating: tee.slope_rating,
+    totalYards: tee.total_yards,
     pars: tee.holes.map((h) => h.par),
+    yardages: tee.holes.map((h) => h.yardage),
+    handicaps: tee.holes.map((h) => h.handicap),
   };
 }

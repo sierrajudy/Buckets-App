@@ -1,4 +1,4 @@
-import type { CourseSearchResult, CourseSelection, RoundHistoryRow, StandingsRow } from "../types";
+import type { CourseSearchResult, CourseSelection, CourseTees, RoundHistoryRow, StandingsRow } from "../types";
 import { getStoredToken } from "./authApi";
 
 async function json<T>(res: Response): Promise<T> {
@@ -32,7 +32,12 @@ export async function searchCourses(query: string): Promise<CourseSearchResult[]
   return jsonOrServerError<CourseSearchResult[]>(res);
 }
 
-export async function selectCourse(id: string): Promise<CourseSelection> {
+export async function fetchCourseTees(id: string): Promise<CourseTees> {
   const res = await fetch(`/api/courses/${encodeURIComponent(id)}`);
+  return jsonOrServerError<CourseTees>(res);
+}
+
+export async function selectCourseTee(id: string, teeKey: string): Promise<CourseSelection> {
+  const res = await fetch(`/api/courses/${encodeURIComponent(id)}/tee?key=${encodeURIComponent(teeKey)}`);
   return jsonOrServerError<CourseSelection>(res);
 }

@@ -35,12 +35,14 @@ function generateRoomCode(): string {
 }
 
 function initEntries(courseId: string): Record<number, HoleEntry> {
-  const pars = getCourse(courseId).pars;
+  const course = getCourse(courseId);
   const entries: Record<number, HoleEntry> = {};
-  for (let holeNumber = 1; holeNumber <= pars.length; holeNumber++) {
+  for (let holeNumber = 1; holeNumber <= course.pars.length; holeNumber++) {
     entries[holeNumber] = {
       holeNumber,
-      par: pars[holeNumber - 1],
+      par: course.pars[holeNumber - 1],
+      yardage: course.yardages?.[holeNumber - 1] ?? 0,
+      handicap: course.handicaps?.[holeNumber - 1] ?? 0,
       strokes: {},
       bucketWinners: [],
       pgeEnabled: false,
@@ -335,11 +337,17 @@ export function serializeRoomState(room: Room): RoomStateForClient {
   const results = orderedResults(room);
   const totals = computeRunningTotals(results, names);
   const tiedLeaders = room.phase === "puttoff" ? findTiedLeaders(totals, names) : [];
+  const course = getCourse(room.courseId);
+  const courseStats =
+    course.teeLabel && course.totalYards != null && course.courseRating != null && course.slopeRating != null
+      ? { teeLabel: course.teeLabel, totalYards: course.totalYards, courseRating: course.courseRating, slopeRating: course.slopeRating }
+      : null;
   return {
     code: room.code,
     hostId: room.hostId,
     courseId: room.courseId,
     course: room.course,
+    courseStats,
     startingHole: room.startingHole,
     players: room.players.map(({ socketId: _socketId, ...pub }) => pub),
     spectators: room.spectators.map(({ socketId: _socketId, ...pub }) => pub),

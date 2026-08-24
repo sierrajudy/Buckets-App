@@ -20,6 +20,9 @@ export interface Spectator {
 export interface HoleEntry {
   holeNumber: number;
   par: number;
+  /** 0 when the course has no GolfCourseAPI tee data (e.g. the bootstrap default). */
+  yardage: number;
+  handicap: number;
   strokes: Record<string, number | null>; // keyed by player name
   bucketWinners: string[];
   pgeEnabled: boolean;
@@ -29,6 +32,8 @@ export interface HoleEntry {
 export interface HoleResult {
   holeNumber: number;
   par: number;
+  yardage: number;
+  handicap: number;
   strokes: Record<string, number>;
   isBirdie: boolean;
   isEagle: boolean;
@@ -77,11 +82,19 @@ export interface Room {
 export type PublicPlayer = Omit<Player, "socketId">;
 export type PublicSpectator = Omit<Spectator, "socketId">;
 
+export interface CourseStats {
+  teeLabel: string;
+  totalYards: number;
+  courseRating: number;
+  slopeRating: number;
+}
+
 export interface RoomStateForClient {
   code: string;
   hostId: string;
   courseId: string;
   course: string;
+  courseStats: CourseStats | null;
   startingHole: number;
   players: PublicPlayer[];
   spectators: PublicSpectator[];

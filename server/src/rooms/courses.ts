@@ -2,6 +2,14 @@ export interface Course {
   id: string;
   name: string;
   pars: number[];
+  /** Present only for courses selected via GolfCourseAPI search — the seed
+   * courses below don't have per-hole yardage/handicap or tee stats. */
+  yardages?: number[];
+  handicaps?: number[];
+  teeLabel?: string;
+  totalYards?: number;
+  courseRating?: number;
+  slopeRating?: number;
 }
 
 /** Bootstrap set — used only as the default for a brand-new room before the

@@ -18,6 +18,8 @@ export interface Spectator {
 export interface HoleResult {
   holeNumber: number;
   par: number;
+  yardage: number;
+  handicap: number;
   strokes: Record<string, number>;
   isBirdie: boolean;
   isEagle: boolean;
@@ -45,11 +47,19 @@ export interface RoundSummary {
   losers: string[];
 }
 
+export interface CourseStats {
+  teeLabel: string;
+  totalYards: number;
+  courseRating: number;
+  slopeRating: number;
+}
+
 export interface RoomState {
   code: string;
   hostId: string;
   courseId: string;
   course: string;
+  courseStats: CourseStats | null;
   startingHole: number;
   players: Player[];
   spectators: Spectator[];
@@ -104,8 +114,28 @@ export interface CourseSearchResult {
   location: string;
 }
 
+export interface CourseTeeOption {
+  key: string;
+  label: string;
+  courseRating: number;
+  slopeRating: number;
+  totalYards: number;
+  parTotal: number;
+}
+
+export interface CourseTees {
+  name: string;
+  tees: CourseTeeOption[];
+}
+
 export interface CourseSelection {
   id: string;
   name: string;
   pars: number[];
+  yardages: number[];
+  handicaps: number[];
+  teeLabel: string;
+  totalYards: number;
+  courseRating: number;
+  slopeRating: number;
 }

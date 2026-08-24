@@ -92,6 +92,12 @@ export function Lobby({
         <div className="bg-white dark:bg-neutral-900 rounded-2xl border border-neutral-200 dark:border-neutral-800 p-4">
           <div className="text-sm font-semibold text-neutral-500 mb-1">Course</div>
           <div className="font-semibold">{state.course}</div>
+          {state.courseStats && (
+            <div className="text-xs text-neutral-500 mt-0.5">
+              {state.courseStats.teeLabel} tees · {state.courseStats.totalYards} yds · Rating{" "}
+              {state.courseStats.courseRating.toFixed(1)} · Slope {state.courseStats.slopeRating}
+            </div>
+          )}
 
           {isHost && <CourseSearch onSelect={(course) => setCourse(course.id)} />}
 

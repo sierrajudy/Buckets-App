@@ -65,6 +65,8 @@ export function computeHoleResult(entry: HoleEntry, players: string[]): HoleResu
   return {
     holeNumber: entry.holeNumber,
     par: entry.par,
+    yardage: entry.yardage,
+    handicap: entry.handicap,
     strokes,
     isBirdie,
     isEagle,
