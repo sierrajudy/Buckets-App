@@ -15,7 +15,7 @@ export function RoundSummaryTable({
   emptyMessage,
 }: {
   date: string;
-  course?: string;
+  course?: string | null;
   players: RoundPlayerSummary[];
   emptyMessage?: string;
 }) {

@@ -57,8 +57,8 @@ export interface CourseStats {
 export interface RoomState {
   code: string;
   hostId: string;
-  courseId: string;
-  course: string;
+  courseId: string | null;
+  course: string | null;
   courseStats: CourseStats | null;
   startingHole: number;
   players: Player[];

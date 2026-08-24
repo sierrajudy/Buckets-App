@@ -16,7 +16,7 @@ export function HoleBreakdownModal({
   holes,
   onClose,
 }: {
-  course?: string;
+  course?: string | null;
   players: string[];
   holes: HoleResult[];
   onClose: () => void;

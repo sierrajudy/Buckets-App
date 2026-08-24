@@ -64,8 +64,8 @@ export interface RoundSummary {
 export interface Room {
   code: string;
   hostId: string;
-  courseId: string;
-  course: string;
+  courseId: string | null;
+  course: string | null;
   startingHole: number;
   players: Player[];
   spectators: Spectator[];
@@ -92,8 +92,8 @@ export interface CourseStats {
 export interface RoomStateForClient {
   code: string;
   hostId: string;
-  courseId: string;
-  course: string;
+  courseId: string | null;
+  course: string | null;
   courseStats: CourseStats | null;
   startingHole: number;
   players: PublicPlayer[];

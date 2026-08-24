@@ -20,7 +20,11 @@ export function Lobby({
   if (!state) return null;
 
   const takenAvatars = new Set(state.players.filter((p) => p.avatar).map((p) => p.avatar));
-  const canStart = state.players.length >= 2 && state.players.length <= 4 && state.players.every((p) => p.avatar);
+  const canStart =
+    Boolean(state.courseId) &&
+    state.players.length >= 2 &&
+    state.players.length <= 4 &&
+    state.players.every((p) => p.avatar);
 
   async function handleStart() {
     setStarting(true);
@@ -91,7 +95,13 @@ export function Lobby({
 
         <div className="bg-white dark:bg-neutral-900 rounded-2xl border border-neutral-200 dark:border-neutral-800 p-4">
           <div className="text-sm font-semibold text-neutral-500 mb-1">Course</div>
-          <div className="font-semibold">{state.course}</div>
+          {state.course ? (
+            <div className="font-semibold">{state.course}</div>
+          ) : (
+            <div className="font-semibold italic text-neutral-400">
+              {isHost ? "No course selected yet — search below" : "Host hasn't picked a course yet"}
+            </div>
+          )}
           {state.courseStats && (
             <div className="text-xs text-neutral-500 mt-0.5">
               {state.courseStats.teeLabel} tees · {state.courseStats.totalYards} yds · Rating{" "}
@@ -101,24 +111,25 @@ export function Lobby({
 
           {isHost && <CourseSearch onSelect={(course) => setCourse(course.id)} />}
 
-          {isHost ? (
-            <div className="mt-3">
-              <label className="block text-sm font-medium mb-1">Starting hole</label>
-              <select
-                value={state.startingHole}
-                onChange={(e) => setConfig(Number(e.target.value))}
-                className="w-full rounded-lg border border-neutral-300 dark:border-neutral-700 bg-transparent px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
-              >
-                {Array.from({ length: state.results.length }, (_, i) => i + 1).map((h) => (
-                  <option key={h} value={h}>
-                    Hole {h}
-                  </option>
-                ))}
-              </select>
-            </div>
-          ) : (
-            <div className="text-sm text-neutral-500 mt-1">Starting hole {state.startingHole}</div>
-          )}
+          {state.courseId &&
+            (isHost ? (
+              <div className="mt-3">
+                <label className="block text-sm font-medium mb-1">Starting hole</label>
+                <select
+                  value={state.startingHole}
+                  onChange={(e) => setConfig(Number(e.target.value))}
+                  className="w-full rounded-lg border border-neutral-300 dark:border-neutral-700 bg-transparent px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
+                >
+                  {Array.from({ length: state.results.length }, (_, i) => i + 1).map((h) => (
+                    <option key={h} value={h}>
+                      Hole {h}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            ) : (
+              <div className="text-sm text-neutral-500 mt-1">Starting hole {state.startingHole}</div>
+            ))}
         </div>
 
         <div className="bg-white dark:bg-neutral-900 rounded-2xl border border-neutral-200 dark:border-neutral-800 p-4">
@@ -184,16 +195,25 @@ export function Lobby({
 
         {!isSpectator &&
           (isHost ? (
-            <button
-              onClick={handleStart}
-              disabled={!canStart || starting}
-              className="w-full rounded-lg bg-green-600 hover:bg-green-700 disabled:opacity-40 text-white font-semibold py-3"
-            >
-              {starting ? "Starting…" : "Start round"}
-            </button>
+            <div>
+              <button
+                onClick={handleStart}
+                disabled={!canStart || starting}
+                className="w-full rounded-lg bg-green-600 hover:bg-green-700 disabled:opacity-40 text-white font-semibold py-3"
+              >
+                {starting ? "Starting…" : "Start round"}
+              </button>
+              {!state.courseId && (
+                <p className="text-center text-xs text-neutral-500 mt-2">Pick a course above to continue</p>
+              )}
+            </div>
           ) : (
             <p className="text-center text-sm text-neutral-500 py-2">
-              {canStart ? "Waiting for the host to start the round…" : "Waiting for everyone to pick an avatar…"}
+              {!state.courseId
+                ? "Waiting for the host to pick a course…"
+                : canStart
+                  ? "Waiting for the host to start the round…"
+                  : "Waiting for everyone to pick an avatar…"}
             </p>
           ))}
       </div>

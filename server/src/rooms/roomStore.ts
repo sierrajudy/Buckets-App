@@ -8,7 +8,7 @@ import {
   type RoomStateForClient,
   type Spectator,
 } from "./types.js";
-import { DEFAULT_COURSE_ID, getCourse, isValidCourseId } from "./courses.js";
+import { getCourse, isValidCourseId } from "./courses.js";
 import {
   buildHolesOrder,
   computeHoleResult,
@@ -34,15 +34,16 @@ function generateRoomCode(): string {
   return code;
 }
 
-function initEntries(courseId: string): Record<number, HoleEntry> {
+function initEntries(courseId: string | null): Record<number, HoleEntry> {
   const course = getCourse(courseId);
+  if (!course) return {};
   const entries: Record<number, HoleEntry> = {};
   for (let holeNumber = 1; holeNumber <= course.pars.length; holeNumber++) {
     entries[holeNumber] = {
       holeNumber,
       par: course.pars[holeNumber - 1],
-      yardage: course.yardages?.[holeNumber - 1] ?? 0,
-      handicap: course.handicaps?.[holeNumber - 1] ?? 0,
+      yardage: course.yardages[holeNumber - 1] ?? 0,
+      handicap: course.handicaps[holeNumber - 1] ?? 0,
       strokes: {},
       bucketWinners: [],
       pgeEnabled: false,
@@ -62,14 +63,14 @@ export function createRoom(hostName: string): { room: Room; player: Player } {
   const room: Room = {
     code,
     hostId: player.id,
-    courseId: DEFAULT_COURSE_ID,
-    course: getCourse(DEFAULT_COURSE_ID).name,
+    courseId: null,
+    course: null,
     startingHole: 1,
     players: [player],
     spectators: [],
     predictions: {},
     phase: "lobby",
-    entries: initEntries(DEFAULT_COURSE_ID),
+    entries: {},
     puttOffWinner: null,
     finishedRound: null,
     createdAt: Date.now(),
@@ -139,8 +140,9 @@ export function setPlayerAvatar(room: Room, playerId: string, avatar: AvatarKey)
 
 export function setConfig(room: Room, startingHole: number): void {
   if (room.phase !== "lobby") return;
-  const holeCount = getCourse(room.courseId).pars.length;
-  if (startingHole < 1 || startingHole > holeCount) return;
+  const course = getCourse(room.courseId);
+  if (!course) return;
+  if (startingHole < 1 || startingHole > course.pars.length) return;
   room.startingHole = Math.round(startingHole);
 }
 
@@ -150,8 +152,10 @@ export function setConfig(room: Room, startingHole: number): void {
 export function setCourse(room: Room, courseId: string): boolean {
   if (room.phase !== "lobby") return false;
   if (!isValidCourseId(courseId)) return false;
+  const course = getCourse(courseId);
+  if (!course) return false;
   room.courseId = courseId;
-  room.course = getCourse(courseId).name;
+  room.course = course.name;
   room.entries = initEntries(courseId);
   room.startingHole = 1;
   return true;
@@ -160,6 +164,7 @@ export function setCourse(room: Room, courseId: string): boolean {
 export function canStart(room: Room): boolean {
   return (
     room.phase === "lobby" &&
+    room.courseId !== null &&
     room.players.length >= 2 &&
     room.players.length <= 4 &&
     room.players.every((p) => p.avatar !== null)
@@ -195,7 +200,7 @@ function playerNames(room: Room): string[] {
 }
 
 function orderedResults(room: Room) {
-  const holeCount = getCourse(room.courseId).pars.length;
+  const holeCount = getCourse(room.courseId)?.pars.length ?? 0;
   const order = buildHolesOrder(room.startingHole, holeCount);
   const names = playerNames(room);
   return order.map((holeNumber) => computeHoleResult(room.entries[holeNumber], names));
@@ -238,7 +243,7 @@ export async function advanceCurrentStep(room: Room, stepIndex: number): Promise
   const justLeft = results[stepIndex - 1];
   if (justLeft && justLeft.holeInOnePlayers.length > 0) {
     const round = finalizeRound({
-      course: room.course,
+      course: room.course!,
       players: names,
       startingHole: room.startingHole,
       holes: results,
@@ -271,7 +276,7 @@ export async function confirmFinishRound(room: Room): Promise<boolean> {
   if (findTiedLeaders(totals, names).length > 1) return false;
 
   const round = finalizeRound({
-    course: room.course,
+    course: room.course!,
     players: names,
     startingHole: room.startingHole,
     holes: results,
@@ -297,7 +302,7 @@ export async function endGameEarly(room: Room): Promise<boolean> {
   const results = orderedResults(room);
 
   const round = finalizeRound({
-    course: room.course,
+    course: room.course!,
     players: names,
     startingHole: room.startingHole,
     holes: results,
@@ -317,7 +322,7 @@ export async function resolvePuttOff(room: Room, winnerName: string): Promise<bo
   if (!names.includes(winnerName)) return false;
   const results = orderedResults(room);
   const round = finalizeRound({
-    course: room.course,
+    course: room.course!,
     players: names,
     startingHole: room.startingHole,
     holes: results,
@@ -338,10 +343,9 @@ export function serializeRoomState(room: Room): RoomStateForClient {
   const totals = computeRunningTotals(results, names);
   const tiedLeaders = room.phase === "puttoff" ? findTiedLeaders(totals, names) : [];
   const course = getCourse(room.courseId);
-  const courseStats =
-    course.teeLabel && course.totalYards != null && course.courseRating != null && course.slopeRating != null
-      ? { teeLabel: course.teeLabel, totalYards: course.totalYards, courseRating: course.courseRating, slopeRating: course.slopeRating }
-      : null;
+  const courseStats = course
+    ? { teeLabel: course.teeLabel, totalYards: course.totalYards, courseRating: course.courseRating, slopeRating: course.slopeRating }
+    : null;
   return {
     code: room.code,
     hostId: room.hostId,

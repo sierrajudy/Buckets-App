@@ -133,11 +133,12 @@ export function registerRoomHandlers(io: Server) {
     socket.on("room:start", (_payload: unknown, ack?: Ack) => {
       const room = data.roomCode ? getRoom(data.roomCode) : undefined;
       if (!room || !isHost(room, data.playerId)) return ack?.({ ok: false, error: "Only the host can start." });
+      if (!room.courseId) return ack?.({ ok: false, error: "Pick a course before starting." });
       if (!canStart(room)) return ack?.({ ok: false, error: "Need 2-4 players, each with an avatar chosen." });
       startGame(room);
       broadcast(io, room);
       ack?.({ ok: true });
-      notifyRoundStarted({ players: room.players.map((p) => p.name), course: room.course, roomCode: room.code });
+      notifyRoundStarted({ players: room.players.map((p) => p.name), course: room.course!, roomCode: room.code });
     });
 
     socket.on("room:newRound", () => {
