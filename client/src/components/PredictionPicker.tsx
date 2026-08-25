@@ -26,6 +26,9 @@ export function PredictionPicker({ dark = false, readOnly = false }: { dark?: bo
 
   return (
     <div className={`rounded-xl border p-3 ${wrapClass}`}>
+      <div className={`text-sm font-bold mb-1 ${dark ? "text-neutral-200" : "text-neutral-800 dark:text-neutral-200"}`}>
+        Spectator Predictions
+      </div>
       <div className={`text-xs font-semibold mb-2 ${labelClass}`}>🔮 Who's going to win?</div>
       <div className="flex flex-wrap gap-2">
         {state.players.map((p) => (

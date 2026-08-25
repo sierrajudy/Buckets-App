@@ -404,7 +404,7 @@ export function Scorecard() {
         </label>
 
         <div className="bg-white dark:bg-neutral-900 rounded-xl border border-neutral-200 dark:border-neutral-800 p-4">
-          <div className="text-sm font-semibold text-neutral-500 mb-2">Running score</div>
+          <div className="text-sm font-bold text-neutral-500 mb-2">Running score</div>
           <div className="flex flex-wrap gap-4">
             {players.map((p) => (
               <div key={p.id} className="flex items-center gap-1.5">
