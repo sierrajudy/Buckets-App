@@ -1,3 +1,4 @@
+import { useState } from "react";
 import type { RoundHistoryRow } from "../types";
 
 function formatDate(value: string): string {
@@ -6,7 +7,18 @@ function formatDate(value: string): string {
   return d.toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" });
 }
 
-export function RoundHistoryTable({ rows, emptyMessage }: { rows: RoundHistoryRow[]; emptyMessage?: string }) {
+export function RoundHistoryTable({
+  rows,
+  emptyMessage,
+  onDelete,
+}: {
+  rows: RoundHistoryRow[];
+  emptyMessage?: string;
+  onDelete?: (id: string) => Promise<void> | void;
+}) {
+  const [confirmingId, setConfirmingId] = useState<string | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+
   if (rows.length === 0) {
     return <p className="text-sm text-neutral-500">{emptyMessage ?? "No rounds yet."}</p>;
   }
@@ -14,6 +26,14 @@ export function RoundHistoryTable({ rows, emptyMessage }: { rows: RoundHistoryRo
   // Old 9-hole rounds and new 18-hole rounds can both show up here, so size
   // the hole columns to whichever round in the list has the most.
   const maxHoles = Math.max(0, ...rows.map((r) => r.holeStrokes.length));
+
+  async function confirmDelete(id: string) {
+    if (!onDelete) return;
+    setDeletingId(id);
+    await onDelete(id);
+    setDeletingId(null);
+    setConfirmingId(null);
+  }
 
   return (
     <div className="overflow-x-auto rounded-xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900">
@@ -30,6 +50,7 @@ export function RoundHistoryTable({ rows, emptyMessage }: { rows: RoundHistoryRo
             <th className="px-3 py-2.5 font-semibold text-right whitespace-nowrap">PG&amp;E</th>
             <th className="px-3 py-2.5 font-semibold text-right whitespace-nowrap">Tiebreak</th>
             <th className="px-3 py-2.5 font-semibold text-right whitespace-nowrap">Total</th>
+            {onDelete && <th className="px-3 py-2.5" />}
           </tr>
         </thead>
         <tbody>
@@ -57,6 +78,39 @@ export function RoundHistoryTable({ rows, emptyMessage }: { rows: RoundHistoryRo
                 {r.total}
                 {r.won && <span className="ml-1 text-green-600">🏆</span>}
               </td>
+              {onDelete && (
+                <td className="px-3 py-2.5 text-right whitespace-nowrap">
+                  {confirmingId === r.id ? (
+                    <span className="inline-flex items-center gap-1.5">
+                      <button
+                        type="button"
+                        disabled={deletingId === r.id}
+                        onClick={() => confirmDelete(r.id)}
+                        className="text-xs font-semibold text-red-600 hover:text-red-700 disabled:opacity-60"
+                      >
+                        {deletingId === r.id ? "Removing…" : "Confirm"}
+                      </button>
+                      <button
+                        type="button"
+                        disabled={deletingId === r.id}
+                        onClick={() => setConfirmingId(null)}
+                        className="text-xs text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-300"
+                      >
+                        Cancel
+                      </button>
+                    </span>
+                  ) : (
+                    <button
+                      type="button"
+                      title="Delete this round"
+                      onClick={() => setConfirmingId(r.id)}
+                      className="text-neutral-300 hover:text-red-600 dark:text-neutral-600 dark:hover:text-red-400"
+                    >
+                      🗑
+                    </button>
+                  )}
+                </td>
+              )}
             </tr>
           ))}
         </tbody>

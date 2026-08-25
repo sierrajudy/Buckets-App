@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useAuth } from "../authStore";
-import { fetchMyRounds } from "../lib/api";
+import { fetchMyRounds, deleteRound } from "../lib/api";
 import { RoundHistoryTable } from "./RoundHistoryTable";
 import { EmailPreferences } from "./EmailPreferences";
 import type { RoundHistoryRow } from "../types";
@@ -17,6 +17,15 @@ export function Profile({ onBack, autoOpenEmailPrefs = false }: { onBack: () => 
   }, []);
 
   const wins = rows?.filter((r) => r.won).length ?? 0;
+
+  async function handleDelete(id: string) {
+    const res = await deleteRound(id);
+    if (res.ok) {
+      setRows((prev) => prev?.filter((r) => r.id !== id) ?? prev);
+    } else {
+      setError(res.error);
+    }
+  }
 
   return (
     <div className="min-h-screen bg-neutral-50 dark:bg-neutral-950 p-4">
@@ -52,7 +61,9 @@ export function Profile({ onBack, autoOpenEmailPrefs = false }: { onBack: () => 
           <div className="text-sm font-semibold text-neutral-500 mb-2">Every round you've played</div>
           {error && <p className="text-sm text-red-500">{error}</p>}
           {!rows && !error && <p className="text-sm text-neutral-500">Loading…</p>}
-          {rows && <RoundHistoryTable rows={rows} emptyMessage="No rounds yet — go host or join one!" />}
+          {rows && (
+            <RoundHistoryTable rows={rows} emptyMessage="No rounds yet — go host or join one!" onDelete={handleDelete} />
+          )}
         </div>
       </div>
     </div>

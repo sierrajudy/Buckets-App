@@ -27,6 +27,19 @@ export async function fetchMyRounds(): Promise<RoundHistoryRow[]> {
   return json<RoundHistoryRow[]>(res);
 }
 
+export async function deleteRound(id: string): Promise<{ ok: true } | { ok: false; error: string }> {
+  const token = getStoredToken();
+  const res = await fetch(`/api/rounds/${encodeURIComponent(id)}`, {
+    method: "DELETE",
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
+  });
+  if (!res.ok) {
+    const body = await res.json().catch(() => null);
+    return { ok: false, error: (body?.error as string) || `Request failed: ${res.status}` };
+  }
+  return { ok: true };
+}
+
 export async function searchCourses(query: string): Promise<CourseSearchResult[]> {
   const res = await fetch(`/api/courses/search?q=${encodeURIComponent(query)}`);
   return jsonOrServerError<CourseSearchResult[]>(res);
