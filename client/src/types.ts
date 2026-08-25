@@ -36,6 +36,7 @@ export interface HoleResult {
 }
 
 export interface RoundSummary {
+  id: string;
   course: string;
   players: string[];
   startingHole: number;

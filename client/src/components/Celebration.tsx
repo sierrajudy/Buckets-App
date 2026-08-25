@@ -1,8 +1,9 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { useRoom } from "../store";
 import { AvatarIcon } from "./Avatars";
 import { EmojiReactionBar } from "./EmojiReactionBar";
 import { joinNames } from "../lib/format";
+import { deleteRound } from "../lib/api";
 
 const CONFETTI_COLORS = ["#facc15", "#22c55e", "#3b82f6", "#ef4444", "#a855f7", "#f97316"];
 
@@ -39,11 +40,28 @@ export function Celebration({
   onViewStandings: () => void;
   onViewProfile: () => void;
 }) {
-  const { state, isHost, isSpectator, newRound } = useRoom();
+  const { state, isHost, isSpectator, newRound, leaveRoom } = useRoom();
   const confetti = useConfetti();
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const [deleted, setDeleted] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
 
   if (!state || !state.finishedRound) return null;
   const round = state.finishedRound;
+
+  async function handleDeleteRound() {
+    setDeleting(true);
+    setDeleteError(null);
+    const res = await deleteRound(round.id);
+    setDeleting(false);
+    if (res.ok) {
+      setDeleted(true);
+      setShowDeleteConfirm(false);
+    } else {
+      setDeleteError(res.error);
+    }
+  }
 
   function avatarFor(name: string) {
     return state!.players.find((p) => p.name === name)?.avatar ?? null;
@@ -71,14 +89,24 @@ export function Celebration({
       </div>
 
       <div className="relative z-10 max-w-lg w-full text-center space-y-8">
-        <button
-          type="button"
-          onClick={() => window.location.reload()}
-          title="Reload if the game stops updating (e.g. after switching apps)"
-          className="text-xs text-neutral-500 hover:text-white"
-        >
-          Refresh
-        </button>
+        <div className="flex items-center justify-between text-xs">
+          <button type="button" onClick={leaveRoom} className="text-neutral-500 hover:text-red-400">
+            Home
+          </button>
+          <div className="flex items-center gap-4">
+            <button
+              type="button"
+              onClick={() => window.location.reload()}
+              title="Reload if the game stops updating (e.g. after switching apps)"
+              className="text-neutral-500 hover:text-white"
+            >
+              Refresh
+            </button>
+            <button type="button" onClick={onViewProfile} className="text-neutral-500 hover:text-white">
+              👤 Profile
+            </button>
+          </div>
+        </div>
 
         {round.holeInOnePlayer && (
           <div className="text-amber-400 font-bold text-sm tracking-widest uppercase">
@@ -163,6 +191,23 @@ export function Celebration({
           <div className="text-xs text-neutral-400 mt-1">Tap to manage your notification settings</div>
         </button>
 
+        {!isSpectator && (
+          <div className="text-center">
+            {deleted ? (
+              <p className="text-xs text-neutral-500">This round won't be saved to anyone's history.</p>
+            ) : (
+              <button
+                type="button"
+                onClick={() => setShowDeleteConfirm(true)}
+                className="text-xs text-neutral-600 hover:text-red-400"
+              >
+                🗑 Don't save this round's data
+              </button>
+            )}
+            {deleteError && <p className="text-xs text-red-400 mt-1">{deleteError}</p>}
+          </div>
+        )}
+
         {isSpectator && <EmojiReactionBar dark />}
 
         <div className="flex gap-2">
@@ -186,6 +231,41 @@ export function Celebration({
           )}
         </div>
       </div>
+
+      {showDeleteConfirm && (
+        <div
+          className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4"
+          onClick={() => !deleting && setShowDeleteConfirm(false)}
+        >
+          <div
+            className="w-full max-w-sm bg-neutral-900 border border-neutral-800 rounded-2xl shadow-lg p-6 space-y-5 text-center"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <p className="font-semibold text-white">Don't save this round's data?</p>
+            <p className="text-sm text-neutral-400">
+              This removes it from everyone's history and the standings — not just yours. This can't be undone.
+            </p>
+            <div className="flex gap-3">
+              <button
+                type="button"
+                disabled={deleting}
+                onClick={handleDeleteRound}
+                className="flex-1 rounded-lg bg-red-600 hover:bg-red-700 disabled:opacity-60 text-white font-semibold py-2.5"
+              >
+                {deleting ? "Removing…" : "Yes, don't save it"}
+              </button>
+              <button
+                type="button"
+                disabled={deleting}
+                onClick={() => setShowDeleteConfirm(false)}
+                className="flex-1 rounded-lg border border-neutral-700 text-neutral-200 hover:bg-neutral-800 disabled:opacity-60 font-semibold py-2.5"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

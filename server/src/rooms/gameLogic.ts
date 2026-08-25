@@ -1,3 +1,4 @@
+import { v4 as uuid } from "uuid";
 import type { HoleEntry, HoleResult, RoundSummary } from "./types.js";
 
 const BASE_HOLE_POINTS = 2;
@@ -147,6 +148,7 @@ export function finalizeRound(params: {
   const losers = players.filter((p) => p !== winner && (totals[p] ?? 0) === minTotal);
 
   return {
+    id: uuid(),
     course,
     players,
     startingHole,
