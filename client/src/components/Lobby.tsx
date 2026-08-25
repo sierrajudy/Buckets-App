@@ -54,6 +54,13 @@ export function Lobby({
           </button>
           <div className="flex items-center gap-4">
             <button
+              onClick={() => window.location.reload()}
+              title="Reload if the room stops updating (e.g. after switching apps)"
+              className="text-sm text-neutral-500 hover:text-green-600 dark:hover:text-green-400"
+            >
+              Refresh
+            </button>
+            <button
               onClick={() => setShowRules(true)}
               className="text-sm text-neutral-500 hover:text-green-600 dark:hover:text-green-400"
             >

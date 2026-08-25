@@ -65,6 +65,15 @@ export function Celebration({ onViewStandings }: { onViewStandings: () => void }
       </div>
 
       <div className="relative z-10 max-w-lg w-full text-center space-y-8">
+        <button
+          type="button"
+          onClick={() => window.location.reload()}
+          title="Reload if the game stops updating (e.g. after switching apps)"
+          className="text-xs text-neutral-500 hover:text-white"
+        >
+          Refresh
+        </button>
+
         {round.holeInOnePlayer && (
           <div className="text-amber-400 font-bold text-sm tracking-widest uppercase">
             Match won on a hole in one!

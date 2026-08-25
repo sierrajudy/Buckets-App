@@ -60,7 +60,6 @@ export function RoomProvider({ children }: { children: ReactNode }) {
   const [playerId, setPlayerId] = useState<string | null>(null);
   const [connecting, setConnecting] = useState(true);
   const [reactions, setReactions] = useState<Reaction[]>([]);
-  const attemptedRejoin = useRef(false);
   const reactionId = useRef(0);
 
   useEffect(() => {
@@ -74,9 +73,14 @@ export function RoomProvider({ children }: { children: ReactNode }) {
       setReactions((r) => [...r, { id, emoji: payload.emoji, name: payload.name }]);
     }
 
+    /** Re-runs on every "connect" event, not just the first — a mobile
+     * socket disconnects and auto-reconnects constantly (locking the
+     * phone, a weak signal, backgrounding the tab), and each reconnect is
+     * a brand-new server-side socket with no idea what room it belongs
+     * to until this fires again. Without re-running here, the client
+     * looks alive (it's still showing the last state it had) but every
+     * action silently goes nowhere. */
     function attemptRejoin() {
-      if (attemptedRejoin.current) return;
-      attemptedRejoin.current = true;
       const raw = localStorage.getItem(SESSION_KEY);
       if (!raw) {
         setConnecting(false);
