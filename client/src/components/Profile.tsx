@@ -5,7 +5,7 @@ import { RoundHistoryTable } from "./RoundHistoryTable";
 import { EmailPreferences } from "./EmailPreferences";
 import type { RoundHistoryRow } from "../types";
 
-export function Profile({ onBack }: { onBack: () => void }) {
+export function Profile({ onBack, autoOpenEmailPrefs = false }: { onBack: () => void; autoOpenEmailPrefs?: boolean }) {
   const { user } = useAuth();
   const [rows, setRows] = useState<RoundHistoryRow[] | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -46,7 +46,7 @@ export function Profile({ onBack }: { onBack: () => void }) {
           )}
         </div>
 
-        <EmailPreferences />
+        <EmailPreferences autoOpen={autoOpenEmailPrefs} />
 
         <div>
           <div className="text-sm font-semibold text-neutral-500 mb-2">Every round you've played</div>

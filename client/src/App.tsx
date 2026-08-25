@@ -22,6 +22,7 @@ function AppShell() {
   const [showSplash, setShowSplash] = useState(true);
   const [showStandings, setShowStandings] = useState(false);
   const [showProfile, setShowProfile] = useState(false);
+  const [autoOpenEmailPrefs, setAutoOpenEmailPrefs] = useState(false);
   const [showAceIntro, setShowAceIntro] = useState(false);
   const [showPartyIntro, setShowPartyIntro] = useState(false);
   const aceShownRef = useRef(false);
@@ -56,7 +57,16 @@ function AppShell() {
 
   if (connecting) return <LoadingScreen message="Reconnecting…" />;
 
-  if (showProfile) return <Profile onBack={() => setShowProfile(false)} />;
+  if (showProfile)
+    return (
+      <Profile
+        onBack={() => {
+          setShowProfile(false);
+          setAutoOpenEmailPrefs(false);
+        }}
+        autoOpenEmailPrefs={autoOpenEmailPrefs}
+      />
+    );
 
   if (showStandings) return <Standings onBack={() => setShowStandings(false)} />;
 
@@ -104,7 +114,13 @@ function AppShell() {
       return (
         <>
           <ReactionOverlay />
-          <Celebration onViewStandings={() => setShowStandings(true)} />
+          <Celebration
+            onViewStandings={() => setShowStandings(true)}
+            onViewProfile={() => {
+              setAutoOpenEmailPrefs(true);
+              setShowProfile(true);
+            }}
+          />
         </>
       );
     default:

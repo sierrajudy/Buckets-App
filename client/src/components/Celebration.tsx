@@ -32,7 +32,13 @@ function useConfetti(count = 140): ConfettiPiece[] {
   );
 }
 
-export function Celebration({ onViewStandings }: { onViewStandings: () => void }) {
+export function Celebration({
+  onViewStandings,
+  onViewProfile,
+}: {
+  onViewStandings: () => void;
+  onViewProfile: () => void;
+}) {
   const { state, isHost, isSpectator, newRound } = useRoom();
   const confetti = useConfetti();
 
@@ -147,6 +153,15 @@ export function Celebration({ onViewStandings }: { onViewStandings: () => void }
             Send Feedback
           </a>
         </div>
+
+        <button
+          type="button"
+          onClick={onViewProfile}
+          className="w-full rounded-2xl p-4 bg-neutral-900 border border-neutral-800 text-center hover:border-neutral-700"
+        >
+          <div className="text-sm font-semibold text-white">📧 Want an email when the next round starts?</div>
+          <div className="text-xs text-neutral-400 mt-1">Tap to manage your notification settings</div>
+        </button>
 
         {isSpectator && <EmojiReactionBar dark />}
 

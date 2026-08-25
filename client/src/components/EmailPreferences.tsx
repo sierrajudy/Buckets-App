@@ -1,9 +1,9 @@
 import { useState } from "react";
 import { useAuth } from "../authStore";
 
-export function EmailPreferences() {
+export function EmailPreferences({ autoOpen = false }: { autoOpen?: boolean }) {
   const { user, updateEmailPreferences } = useAuth();
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(autoOpen);
   const [roundStart, setRoundStart] = useState(user?.emailRoundStart ?? false);
   const [standings, setStandings] = useState(user?.emailStandings ?? false);
   const [saving, setSaving] = useState(false);
