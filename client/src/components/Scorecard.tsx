@@ -426,6 +426,14 @@ export function Scorecard() {
         )}
 
         <div className="flex gap-2 pb-6">
+          <button
+            type="button"
+            disabled={stepIndex === 0}
+            onClick={() => setStepIndex((i) => Math.max(0, i - 1))}
+            className="flex-1 rounded-lg border border-neutral-300 dark:border-neutral-700 py-2.5 font-semibold text-sm disabled:opacity-40"
+          >
+            Back
+          </button>
           {isHost && (
             <button
               type="button"
@@ -437,11 +445,11 @@ export function Scorecard() {
           )}
           <button
             type="button"
-            disabled={stepIndex === 0}
-            onClick={() => setStepIndex((i) => Math.max(0, i - 1))}
-            className="flex-1 rounded-lg border border-neutral-300 dark:border-neutral-700 py-2.5 font-semibold text-sm disabled:opacity-40"
+            onClick={() => window.location.reload()}
+            title="Reload if the game stops updating (e.g. after switching apps)"
+            className="shrink-0 rounded-lg border border-neutral-300 dark:border-neutral-700 px-3 py-2.5 font-semibold text-sm hover:bg-neutral-50 dark:hover:bg-neutral-800"
           >
-            Back
+            Refresh
           </button>
           {isLastHole ? (
             holeComplete ? (
