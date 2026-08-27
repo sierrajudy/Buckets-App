@@ -7,7 +7,7 @@ export type RoomPhase = "lobby" | "playing" | "puttoff" | "celebration";
  * "highlow" needed something to be named against). More modes land here
  * over time — each one is a distinct scoring engine in gameLogic.ts, kept
  * behind this single discriminant so the room/round shape stays uniform. */
-export type GameMode = "standard" | "highlow" | "wolf";
+export type GameMode = "standard" | "highlow" | "wolf" | "baseball";
 
 /** Exactly two teams of two player names, fixed for the whole round. Only
  * meaningful when gameMode is "highlow". */
@@ -96,6 +96,18 @@ export interface WolfHoleOutcome {
   points: Record<string, number>;
 }
 
+/** Per-hole Baseball detail: 9 points split 5/3/1 across 1st/2nd/3rd, with
+ * ties pooling and splitting the points for whichever positions they
+ * jointly occupy (a 2-way tie for 1st splits the 5+3=8 point pool for
+ * 1st-and-2nd evenly; a 3-way tie splits all 9 three ways; and so on).
+ * outcome is null until all three strokes are in — there's no partial
+ * ranking to show before that. rankGroups lists the tie groups themselves,
+ * best group first (e.g. [[a], [b, c]] for a solo winner and a tied 2nd). */
+export interface BaseballHoleOutcome {
+  points: Record<string, number>;
+  rankGroups: string[][] | null;
+}
+
 export interface HoleResult {
   holeNumber: number;
   par: number;
@@ -118,6 +130,8 @@ export interface HoleResult {
   highLow?: HighLowHoleOutcome;
   /** Only present when the room's gameMode is "wolf". */
   wolf?: WolfHoleOutcome;
+  /** Only present when the room's gameMode is "baseball". */
+  baseball?: BaseballHoleOutcome;
 }
 
 /** Front 9 / back 9 / overall are three separate matches in High Low —

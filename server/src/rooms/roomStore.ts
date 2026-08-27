@@ -13,6 +13,7 @@ import {
 import { getCourse, isValidCourseId } from "./courses.js";
 import {
   buildHolesOrder,
+  computeBaseballHoleResult,
   computeHighLowHoleResult,
   computeHoleResult,
   computeRunningTotals,
@@ -189,7 +190,7 @@ export function setCourse(room: Room, courseId: string): boolean {
  * mode (or roster) it was never validated against. */
 export function setGameMode(room: Room, mode: GameMode): boolean {
   if (room.phase !== "lobby") return false;
-  if (mode !== "standard" && mode !== "highlow" && mode !== "wolf") return false;
+  if (mode !== "standard" && mode !== "highlow" && mode !== "wolf" && mode !== "baseball") return false;
   room.gameMode = mode;
   room.teams = null;
   return true;
@@ -218,6 +219,9 @@ export function canStart(room: Room): boolean {
   }
   if (room.gameMode === "wolf") {
     return room.players.length === 4;
+  }
+  if (room.gameMode === "baseball") {
+    return room.players.length === 3;
   }
   return room.players.length >= 2 && room.players.length <= 4;
 }
@@ -279,6 +283,9 @@ function orderedResults(room: Room) {
   if (room.gameMode === "wolf" && room.wolfOrder) {
     const wolfOrder = room.wolfOrder;
     return order.map((holeNumber, i) => computeWolfHoleResult(room.entries[holeNumber], wolfOrder[i % 4], names));
+  }
+  if (room.gameMode === "baseball") {
+    return order.map((holeNumber) => computeBaseballHoleResult(room.entries[holeNumber], names));
   }
   return order.map((holeNumber) => computeHoleResult(room.entries[holeNumber], names));
 }

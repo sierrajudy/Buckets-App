@@ -24,7 +24,7 @@ export function RulesModal({ onClose }: { onClose: () => void }) {
           <section className="space-y-1.5">
             <h3 className="font-bold text-neutral-900 dark:text-white">The basics</h3>
             <ul className="list-disc pl-5 space-y-1">
-              <li>2-4 players (or exactly 4 for High Low — see below), one round covering all 18 holes of whichever course the host picks.</li>
+              <li>2-4 players for Buckets, exactly 4 for High Low or Wolf, exactly 3 for Baseball (see below for each) — one round covering all 18 holes of whichever course the host picks.</li>
               <li>One person hosts each round and enters everyone's strokes as you play — ideally the host rotates each time you golf, so everyone gets a turn.</li>
               <li>Everyone else can watch the scorecard live on their own phone as the host updates it.</li>
               <li>Whoever has the most points after 18 holes wins the match. If it's tied, it's settled with a putt-off — closest to the hole wins. (High Low handles ties differently — see below.)</li>
@@ -129,6 +129,29 @@ export function RulesModal({ onClose }: { onClose: () => void }) {
                 <span className="font-semibold">Birdie</span> doubles and <span className="font-semibold">eagle</span>{" "}
                 triples whatever points that individual player earned on the hole — it's personal, not shared with
                 teammates, and only multiplies points actually won (a birdie on a lost hole is still 0).
+              </li>
+              <li>Most points after 18 holes wins, same as Buckets — ties go to a putt-off.</li>
+            </ul>
+          </section>
+
+          <section className="space-y-1.5">
+            <h3 className="font-bold text-neutral-900 dark:text-white">⚾ Baseball (mode)</h3>
+            <ul className="list-disc pl-5 space-y-1">
+              <li>
+                Exactly 3 players. No buckets or PG&amp;E, no teams — every hole is a flat-out race between the
+                three of you, decided by gross strokes.
+              </li>
+              <li>
+                Each hole is worth a flat <span className="font-semibold">9 points</span>, split by finish:{" "}
+                <span className="font-semibold">5</span> for 1st, <span className="font-semibold">3</span> for 2nd,{" "}
+                <span className="font-semibold">1</span> for 3rd.
+              </li>
+              <li>
+                Ties pool the points for whichever places they cover and split them evenly. Two players tied for
+                1st share the 5+3=8 point pool for 1st and 2nd (4 each), leaving the solo 3rd place the last point.
+                One clear winner with the other two tied for 2nd/3rd means the winner takes their 5, and the tied
+                pair split the remaining 3+1=4 (2 each). All three tied splits the whole 9-point pot three ways (3
+                each).
               </li>
               <li>Most points after 18 holes wins, same as Buckets — ties go to a putt-off.</li>
             </ul>

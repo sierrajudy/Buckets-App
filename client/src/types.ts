@@ -3,7 +3,7 @@ export type AvatarKey = (typeof AVATAR_KEYS)[number];
 
 export type RoomPhase = "lobby" | "playing" | "puttoff" | "celebration";
 
-export type GameMode = "standard" | "highlow" | "wolf";
+export type GameMode = "standard" | "highlow" | "wolf" | "baseball";
 
 /** Exactly two teams of two player names, fixed for the whole round. */
 export type Teams = [[string, string], [string, string]];
@@ -44,6 +44,11 @@ export interface WolfHoleOutcome {
   points: Record<string, number>;
 }
 
+export interface BaseballHoleOutcome {
+  points: Record<string, number>;
+  rankGroups: string[][] | null;
+}
+
 export interface HoleResult {
   holeNumber: number;
   par: number;
@@ -64,6 +69,7 @@ export interface HoleResult {
   totalPoints: Record<string, number>;
   highLow?: HighLowHoleOutcome;
   wolf?: WolfHoleOutcome;
+  baseball?: BaseballHoleOutcome;
 }
 
 export interface HighLowMatchResult {

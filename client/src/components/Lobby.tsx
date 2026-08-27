@@ -7,12 +7,14 @@ import { TeamPicker } from "./TeamPicker";
 import { WolfBackdrop } from "./WolfBackdrop";
 import { HighLowBackdrop } from "./HighLowBackdrop";
 import { BucketsBackdrop } from "./BucketsBackdrop";
+import { BaseballBackdrop } from "./BaseballBackdrop";
 import type { GameMode } from "../types";
 
 const GAME_MODES: { key: GameMode; label: string; blurb: string }[] = [
   { key: "standard", label: "Buckets", blurb: "2-4 players, free-for-all points" },
   { key: "highlow", label: "High Low", blurb: "4 players, 2v2 team match play" },
   { key: "wolf", label: "🐺 Wolf", blurb: "4 players, a rotating wolf, beware!" },
+  { key: "baseball", label: "⚾ Baseball", blurb: "3 players, 5-3-1 points per hole" },
 ];
 
 export function Lobby({
@@ -44,19 +46,19 @@ export function Lobby({
   const isHighLow = state?.gameMode === "highlow";
   const isWolf = state?.gameMode === "wolf";
   const isBuckets = state?.gameMode === "standard";
-  const needsFourPlayers = isHighLow || isWolf;
+  const isBaseball = state?.gameMode === "baseball";
+  // How many players this mode needs exactly before it can start — null
+  // for Buckets, which just needs 2-4 and has no single magic number.
+  const requiredPlayers = isHighLow || isWolf ? 4 : isBaseball ? 3 : null;
+  const requiredPlayersLabel = isHighLow ? "High Low" : isWolf ? "Wolf" : "Baseball";
   const highLowReady = isHighLow && state?.players.length === 4;
   // Every mode now has its own fixed background scene, so cards go
-  // translucent everywhere to let it show through — a light blur keeps
-  // text legible over it. Wolf's night sky and Buckets' driving-range-at-
-  // night are both uniformly dark, so a lighter touch (and white labels)
-  // work throughout; High Low's sky swings from bright blue to dark
-  // mountain silhouette, so its cards stay a bit more opaque to keep the
-  // normal dark/muted-gray text readable no matter what's behind them.
-  const cardBgCls = isHighLow
-    ? "bg-white/45 backdrop-blur-sm"
-    : "bg-white/25 dark:bg-neutral-900/25 backdrop-blur-sm";
-  const labelCls = isHighLow ? "text-neutral-500" : "text-white";
+  // translucent everywhere to let it show through — a dark glass tint (not
+  // a light one) keeps white title text legible no matter what's behind
+  // it, including High Low's sky swinging from bright blue to dark
+  // mountain silhouette.
+  const cardBgCls = "bg-black/30 backdrop-blur-sm";
+  const labelCls = "text-white";
 
   // High Low always needs a valid 2v2 split to start. Rather than make the
   // host explicitly assign teams before they can do anything else, seed a
@@ -80,8 +82,8 @@ export function Lobby({
     state.players.every((p) => p.avatar) &&
     (isHighLow
       ? state.players.length === 4 && state.teams !== null
-      : isWolf
-        ? state.players.length === 4
+      : requiredPlayers !== null
+        ? state.players.length === requiredPlayers
         : state.players.length >= 2 && state.players.length <= 4);
 
   async function handleStart() {
@@ -110,12 +112,15 @@ export function Lobby({
           ? "bg-gradient-to-b from-sky-400 via-amber-200 to-orange-400"
           : isWolf
             ? "bg-gradient-to-b from-slate-950 via-indigo-950 to-indigo-900"
-            : "bg-gradient-to-b from-slate-950 via-emerald-950 to-green-950"
+            : isBaseball
+              ? "bg-gradient-to-b from-slate-950 via-blue-950 to-slate-900"
+              : "bg-gradient-to-b from-slate-950 via-emerald-950 to-green-950"
       }`}
     >
       {isWolf && <WolfBackdrop />}
       {isHighLow && <HighLowBackdrop />}
       {isBuckets && <BucketsBackdrop />}
+      {isBaseball && <BaseballBackdrop />}
       <div className="max-w-lg mx-auto space-y-4 relative z-10">
         <div className="flex items-center justify-between">
           <button onClick={leaveRoom} className="text-sm text-neutral-500 hover:text-red-500">
@@ -252,7 +257,7 @@ export function Lobby({
 
         <div className={`${cardBgCls} rounded-2xl border border-neutral-200 dark:border-neutral-800 p-4`}>
           <div className={`text-sm font-semibold ${labelCls} mb-3`}>
-            Players ({state.players.length}/4)
+            Players ({state.players.length}/{requiredPlayers ?? 4})
           </div>
           <div className="space-y-2">
             {state.players.map((p, i) => (
@@ -299,7 +304,7 @@ export function Lobby({
                     }`}
                   >
                     <AvatarIcon avatar={key as AvatarKey} className="w-12 h-12" />
-                    <span className={`text-[10px] font-medium ${!isHighLow ? "text-white/70" : "text-neutral-500 dark:text-neutral-400"}`}>
+                    <span className="text-[10px] font-medium text-white/70">
                       {AVATAR_META[key as AvatarKey].label}
                     </span>
                   </button>
@@ -323,9 +328,10 @@ export function Lobby({
               </button>
               {!state.courseId ? (
                 <p className="text-center text-xs text-neutral-500 mt-2">Pick a course above to continue</p>
-              ) : needsFourPlayers && state.players.length !== 4 ? (
+              ) : requiredPlayers !== null && state.players.length !== requiredPlayers ? (
                 <p className="text-center text-xs text-neutral-500 mt-2">
-                  {isHighLow ? "High Low" : "Wolf"} needs exactly 4 players ({state.players.length}/4 so far)
+                  {requiredPlayersLabel} needs exactly {requiredPlayers} players ({state.players.length}/{requiredPlayers}{" "}
+                  so far)
                 </p>
               ) : null}
             </div>
@@ -333,8 +339,8 @@ export function Lobby({
             <p className="text-center text-sm text-neutral-500 py-2">
               {!state.courseId
                 ? "Waiting for the host to pick a course…"
-                : needsFourPlayers && state.players.length !== 4
-                  ? `${isHighLow ? "High Low" : "Wolf"} needs exactly 4 players (${state.players.length}/4 so far)`
+                : requiredPlayers !== null && state.players.length !== requiredPlayers
+                  ? `${requiredPlayersLabel} needs exactly ${requiredPlayers} players (${state.players.length}/${requiredPlayers} so far)`
                   : canStart
                     ? "Waiting for the host to start the round…"
                     : "Waiting for everyone to pick an avatar…"}

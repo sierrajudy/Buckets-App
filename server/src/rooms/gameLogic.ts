@@ -1,5 +1,15 @@
 import { v4 as uuid } from "uuid";
-import type { GameMode, HighLowHoleOutcome, HighLowMatchResult, HoleEntry, HoleResult, RoundSummary, Teams, WolfHoleOutcome } from "./types.js";
+import type {
+  BaseballHoleOutcome,
+  GameMode,
+  HighLowHoleOutcome,
+  HighLowMatchResult,
+  HoleEntry,
+  HoleResult,
+  RoundSummary,
+  Teams,
+  WolfHoleOutcome,
+} from "./types.js";
 
 const BASE_HOLE_POINTS = 2;
 const BIRDIE_BONUS = 1;
@@ -15,6 +25,9 @@ const WOLF_LONE_WOLF_WIN_POINTS = 3; // the wolf alone, beating the other three
 const WOLF_LONE_WOLF_LOSS_POINTS = 1; // each of the three beating a lone wolf
 const WOLF_BIRDIE_MULTIPLIER = 2;
 const WOLF_EAGLE_MULTIPLIER = 3;
+
+// 1st/2nd/3rd place, indexed by (rank - 1) — sums to 9, the hole's full pot.
+const BASEBALL_PLACE_POINTS = [5, 3, 1];
 
 function round2(n: number): number {
   return Math.round(n * 100) / 100;
@@ -327,6 +340,92 @@ export function computeWolfHoleResult(entry: HoleEntry, wolfName: string, player
     pgePoints,
     totalPoints,
     wolf: { wolfName, partner, alone: entry.wolfAlone, teamA, teamB, bestA, bestB, outcome, points },
+  };
+}
+
+/** Groups players by tied gross score (best/lowest first) and pays out the
+ * hole's 9-point pot 5/3/1 by place — a tied group pools the points for
+ * every place it occupies and splits them evenly, so e.g. a 2-way tie for
+ * 1st shares the 5+3=8 point pool 4-and-4, leaving the solo 3rd place with
+ * the last point untouched. */
+function rankBaseballGroups(strokes: Record<string, number>, players: string[]): string[][] {
+  const sorted = [...players].sort((a, b) => strokes[a] - strokes[b]);
+  const groups: string[][] = [];
+  for (const p of sorted) {
+    const current = groups[groups.length - 1];
+    if (current && strokes[current[0]] === strokes[p]) current.push(p);
+    else groups.push([p]);
+  }
+  return groups;
+}
+
+/**
+ * Baseball: exactly 3 players, gross strokes only (no handicap). The hole
+ * is worth a flat 9 points, split 5/3/1 by finish — see rankBaseballGroups
+ * for how ties pool and split that pot. Nothing else (no birdie/eagle
+ * bonus, no buckets, no PG&E) factors into the points here.
+ */
+export function computeBaseballHoleResult(entry: HoleEntry, players: string[]): HoleResult {
+  const strokes: Record<string, number> = {};
+  for (const p of players) {
+    const v = entry.strokes[p];
+    strokes[p] = typeof v === "number" && v > 0 ? v : 0;
+  }
+
+  const validPlayers = players.filter((p) => strokes[p] > 0);
+  const underPar = (p: string) => entry.par - strokes[p];
+  const birdiePlayers = validPlayers.filter((p) => underPar(p) === 1);
+  const eaglePlayers = validPlayers.filter((p) => underPar(p) >= 2);
+  const isBirdie = birdiePlayers.length > 0;
+  const isEagle = eaglePlayers.length > 0;
+
+  const holeInOnePlayers = validPlayers.filter((p) => strokes[p] === 1);
+  const isHoleInOne = holeInOnePlayers.length > 0;
+
+  const allScored = players.every((p) => strokes[p] > 0);
+
+  const points: Record<string, number> = Object.fromEntries(players.map((p) => [p, 0]));
+  let rankGroups: string[][] | null = null;
+
+  if (allScored) {
+    rankGroups = rankBaseballGroups(strokes, players);
+    let placeIndex = 0;
+    for (const group of rankGroups) {
+      const pot = BASEBALL_PLACE_POINTS.slice(placeIndex, placeIndex + group.length).reduce((a, b) => a + b, 0);
+      const share = round2(pot / group.length);
+      for (const p of group) points[p] = share;
+      placeIndex += group.length;
+    }
+  }
+
+  const holeWinners = rankGroups ? [...rankGroups[0]] : [];
+
+  const bucketPoints = splitPool(BUCKET_POINTS, entry.bucketWinners, players);
+  const pgePoints = entry.pgeEnabled
+    ? splitPool(PGE_POINTS, entry.pgeWinners, players)
+    : Object.fromEntries(players.map((p) => [p, 0]));
+
+  const totalPoints = sumRecords([points, bucketPoints, pgePoints], players);
+
+  return {
+    holeNumber: entry.holeNumber,
+    par: entry.par,
+    yardage: entry.yardage,
+    handicap: entry.handicap,
+    strokes,
+    isBirdie,
+    isEagle,
+    isHoleInOne,
+    holeInOnePlayers,
+    holeWinners,
+    holePoints: points,
+    bucketWinners: entry.bucketWinners,
+    bucketPoints,
+    pgeEnabled: entry.pgeEnabled,
+    pgeWinners: entry.pgeWinners,
+    pgePoints,
+    totalPoints,
+    baseball: { points, rankGroups },
   };
 }
 

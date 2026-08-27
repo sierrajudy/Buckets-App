@@ -34,7 +34,7 @@ export function TeamPicker({
 
   if (state.players.length !== 4) {
     return (
-      <div className="bg-white/45 backdrop-blur-sm rounded-2xl border border-neutral-200 dark:border-neutral-800 p-4 text-center text-sm text-neutral-600">
+      <div className="bg-black/30 backdrop-blur-sm rounded-2xl border border-neutral-200 dark:border-neutral-800 p-4 text-center text-sm text-white">
         Waiting for 4 players to set teams ({state.players.length}/4)
       </div>
     );
@@ -66,17 +66,17 @@ export function TeamPicker({
   }
 
   return (
-    <div className="bg-white/45 backdrop-blur-sm rounded-2xl border border-neutral-200 dark:border-neutral-800 p-4">
-      <div className="text-sm font-semibold text-neutral-700 mb-1">Teams</div>
+    <div className="bg-black/30 backdrop-blur-sm rounded-2xl border border-neutral-200 dark:border-neutral-800 p-4">
+      <div className="text-sm font-semibold text-white mb-1">Teams</div>
       {isHost && (
-        <div className="text-xs text-neutral-600 mb-3">
+        <div className="text-xs text-white/70 mb-3">
           Tap a player, then tap someone on the other team to swap them. Set each player's handicap on the right.
         </div>
       )}
       <div className="space-y-3">
         {teams.map((team, i) => (
           <div key={i} className="rounded-xl border border-neutral-200 dark:border-neutral-800 p-3">
-            <div className="text-xs font-bold uppercase tracking-wide text-neutral-600 mb-2">Team {i + 1}</div>
+            <div className="text-xs font-bold uppercase tracking-wide text-white/70 mb-2">Team {i + 1}</div>
             <div className="space-y-2">
               {team.map((name) => {
                 const player = playerFor(name);
@@ -96,9 +96,9 @@ export function TeamPicker({
                       }`}
                     >
                       <AvatarIcon avatar={player?.avatar ?? null} className="w-7 h-7 shrink-0" />
-                      <span className="text-sm font-medium truncate">{name}</span>
+                      <span className="text-sm font-medium text-white truncate">{name}</span>
                     </button>
-                    <label className="flex items-center gap-1.5 shrink-0 text-xs text-neutral-500">
+                    <label className="flex items-center gap-1.5 shrink-0 text-xs text-white/70">
                       Hcp
                       <input
                         type="number"
@@ -109,7 +109,7 @@ export function TeamPicker({
                         onClick={(e) => e.stopPropagation()}
                         onChange={(e) => player && onSetHandicap(player.id, Number(e.target.value) || 0)}
                         title="Handicap"
-                        className="w-12 text-center rounded-md border border-neutral-300 dark:border-neutral-700 bg-transparent text-sm py-1 disabled:opacity-60 focus:outline-none focus:ring-2 focus:ring-green-500"
+                        className="w-12 text-center rounded-md border border-neutral-300 dark:border-neutral-700 bg-transparent text-sm text-white py-1 disabled:opacity-60 focus:outline-none focus:ring-2 focus:ring-green-500"
                       />
                     </label>
                   </div>

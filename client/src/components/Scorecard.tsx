@@ -10,6 +10,7 @@ import { PredictionPicker } from "./PredictionPicker";
 import { WolfBackdrop } from "./WolfBackdrop";
 import { HighLowBackdrop } from "./HighLowBackdrop";
 import { BucketsBackdrop } from "./BucketsBackdrop";
+import { BaseballBackdrop } from "./BaseballBackdrop";
 import type { AvatarKey, HoleResult } from "../types";
 
 function sumTeamPoints(holes: HoleResult[]): [number, number] {
@@ -150,6 +151,7 @@ export function Scorecard() {
   const isHighLow = state.gameMode === "highlow";
   const isWolf = state.gameMode === "wolf";
   const isBuckets = state.gameMode === "standard";
+  const isBaseball = state.gameMode === "baseball";
   const result = results[stepIndex];
   const isLastHole = stepIndex === results.length - 1;
   const holeComplete = players.every((p) => (result.strokes[p.name] ?? 0) > 0);
@@ -158,8 +160,10 @@ export function Scorecard() {
   // split) — so the crown/tied-hole flourishes below are standard-mode only.
   const leader = isHighLow ? null : computeLeader(totals, players);
   const tiedHole = isHighLow ? false : isWolf ? result.wolf?.outcome === "tie" : result.holeWinners.length > 1;
-  const birdieBonusLabel = isHighLow ? "+0.5 pt" : isWolf ? "×2 pts" : "+1 pt";
-  const eagleBonusLabel = isHighLow ? "+1 pt" : isWolf ? "×3 pts" : "+2 pts";
+  // Baseball has no birdie/eagle bonus at all — the badge still shows for
+  // the flair, just without a point value that would otherwise be a lie.
+  const birdieBonusLabel = isHighLow ? "+0.5 pt" : isWolf ? "×2 pts" : isBaseball ? "" : "+1 pt";
+  const eagleBonusLabel = isHighLow ? "+1 pt" : isWolf ? "×3 pts" : isBaseball ? "" : "+2 pts";
   // Every mode gets its own bolder, high-contrast card look — a solid
   // color border instead of a plain neutral gray — so all three read as
   // visually distinct at a glance.
@@ -167,17 +171,17 @@ export function Scorecard() {
     ? "border-black"
     : isWolf
       ? "border-indigo-700 dark:border-indigo-400"
-      : "border-emerald-700 dark:border-emerald-400";
+      : isBaseball
+        ? "border-red-700 dark:border-red-400"
+        : "border-emerald-700 dark:border-emerald-400";
   // Every mode now has its own fixed background scene, so cards go
-  // translucent everywhere to let it show through — a light blur keeps
-  // text legible over it. Wolf's night sky and Buckets' driving-range-at-
-  // night are both uniformly dark, so a lighter touch (and white text)
-  // work throughout; High Low's sky swings from bright blue to dark
-  // mountain silhouette, so its cards stay a bit more opaque to keep the
-  // normal dark/muted-gray text readable no matter what's behind them.
-  const cardBgCls = isHighLow ? "bg-white/45 backdrop-blur-sm" : "bg-white/25 dark:bg-neutral-900/25 backdrop-blur-sm";
-  const themedTitleCls = isHighLow ? "" : "text-white";
-  const themedSubCls = isHighLow ? "text-neutral-500" : "text-white/70";
+  // translucent everywhere to let it show through — a dark glass tint (not
+  // a light one) keeps white title text legible no matter what's behind
+  // it, including High Low's sky swinging from bright blue to dark
+  // mountain silhouette.
+  const cardBgCls = "bg-black/30 backdrop-blur-sm";
+  const themedTitleCls = "text-white";
+  const themedSubCls = "text-white/70";
   const wolfName = result.wolf?.wolfName;
 
   function statusBadgeFor(name: string): string | undefined {
@@ -204,12 +208,15 @@ export function Scorecard() {
           ? "bg-gradient-to-b from-sky-400 via-amber-200 to-orange-400"
           : isWolf
             ? "bg-gradient-to-b from-slate-950 via-indigo-950 to-indigo-900"
-            : "bg-gradient-to-b from-slate-950 via-emerald-950 to-green-950"
+            : isBaseball
+              ? "bg-gradient-to-b from-slate-950 via-blue-950 to-slate-900"
+              : "bg-gradient-to-b from-slate-950 via-emerald-950 to-green-950"
       }`}
     >
       {isWolf && <WolfBackdrop />}
       {isHighLow && <HighLowBackdrop />}
       {isBuckets && <BucketsBackdrop />}
+      {isBaseball && <BaseballBackdrop />}
       {showBallRoll && (
         <div
           className="fixed inset-0 z-40 overflow-hidden flex items-center justify-center"
@@ -353,12 +360,12 @@ export function Scorecard() {
             <div className="flex gap-2 text-xs font-semibold">
               {result.isEagle && (
                 <span className="px-2 py-1 rounded-full bg-purple-100 text-purple-700 dark:bg-purple-900 dark:text-purple-300">
-                  Eagle — {eagleBonusLabel}
+                  Eagle{eagleBonusLabel && ` — ${eagleBonusLabel}`}
                 </span>
               )}
               {result.isBirdie && (
                 <span className="px-2 py-1 rounded-full bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300">
-                  Birdie — {birdieBonusLabel}
+                  Birdie{birdieBonusLabel && ` — ${birdieBonusLabel}`}
                 </span>
               )}
               {result.holeInOnePlayers.length > 0 && (
@@ -380,7 +387,7 @@ export function Scorecard() {
 
         {isHighLow && result.highLow && (
           <div className={`${cardBgCls} rounded-xl border ${cardBorderCls} p-4 space-y-3`}>
-            <div className="text-sm font-extrabold text-neutral-700 dark:text-neutral-200">High Low matchups</div>
+            <div className="text-sm font-extrabold text-white">High Low matchups</div>
             {(
               [
                 { label: "Low", pair: result.highLow.lowPlayers, outcome: result.highLow.lowWinner },
@@ -389,34 +396,34 @@ export function Scorecard() {
             ).map(({ label, pair: [p0, p1], outcome }) => (
               <div key={label}>
                 <div className="flex items-center justify-between text-sm">
-                  <span className="text-xs font-semibold uppercase tracking-wide text-neutral-500 w-10 shrink-0">
+                  <span className="text-xs font-semibold uppercase tracking-wide text-white/70 w-10 shrink-0">
                     {label}
                   </span>
                   <span
-                    className={`flex-1 text-right truncate ${outcome === "team0" ? "font-bold text-green-700" : "text-neutral-600"}`}
+                    className={`flex-1 text-right truncate ${outcome === "team0" ? "font-bold text-green-300" : "text-white/70"}`}
                   >
                     {p0} ({formatMatchupScore(p0)})
                   </span>
-                  <span className="text-neutral-400 px-2 text-xs shrink-0">vs</span>
+                  <span className="text-white/60 px-2 text-xs shrink-0">vs</span>
                   <span
-                    className={`flex-1 truncate ${outcome === "team1" ? "font-bold text-green-700" : "text-neutral-600"}`}
+                    className={`flex-1 truncate ${outcome === "team1" ? "font-bold text-green-300" : "text-white/70"}`}
                   >
                     {p1} ({formatMatchupScore(p1)})
                   </span>
                 </div>
-                {outcome === "tie" && <div className="text-center text-xs text-neutral-400 mt-0.5">🙌 No blood</div>}
+                {outcome === "tie" && <div className="text-center text-xs text-white/60 mt-0.5">🙌 No blood</div>}
               </div>
             ))}
-            <div className="grid grid-cols-2 gap-3 pt-2 border-t border-neutral-800/10">
+            <div className="grid grid-cols-2 gap-3 pt-2 border-t border-white/20">
               {result.highLow.teamPoints.map((pts, i) => (
                 <div key={i} className="flex items-center justify-between text-sm">
-                  <span className="font-semibold">
+                  <span className="font-semibold text-white">
                     Team {i + 1}
                     {result.highLow!.bonusPoints[i] > 0 && (
-                      <span className="text-xs font-normal text-neutral-500"> (+{result.highLow!.bonusPoints[i]} bonus)</span>
+                      <span className="text-xs font-normal text-white/70"> (+{result.highLow!.bonusPoints[i]} bonus)</span>
                     )}
                   </span>
-                  <span className="font-mono font-bold text-green-700">+{pts}</span>
+                  <span className="font-mono font-bold text-green-300">+{pts}</span>
                 </div>
               ))}
             </div>
@@ -425,9 +432,7 @@ export function Scorecard() {
 
         {isWolf && result.wolf && (
           <div className={`${cardBgCls} rounded-xl border ${cardBorderCls} p-4 space-y-3`}>
-            <div className={`text-sm font-extrabold ${isWolf ? "text-white" : "text-neutral-700 dark:text-neutral-200"}`}>
-              🐺 {result.wolf.wolfName} is the wolf this hole
-            </div>
+            <div className="text-sm font-extrabold text-white">🐺 {result.wolf.wolfName} is the wolf this hole</div>
 
             {isHost && (
               <div className="flex flex-wrap gap-2">
@@ -441,7 +446,7 @@ export function Scorecard() {
                       className={`rounded-full border px-3 py-1.5 text-xs font-semibold ${
                         result.wolf!.partner === p.name
                           ? "border-indigo-600 bg-indigo-100 text-indigo-800 dark:bg-indigo-900 dark:text-indigo-200"
-                          : "border-neutral-300 dark:border-neutral-700 text-neutral-600 dark:text-neutral-300"
+                          : "border-white/30 text-white/70"
                       }`}
                     >
                       Partner {p.name}
@@ -453,7 +458,7 @@ export function Scorecard() {
                   className={`rounded-full border px-3 py-1.5 text-xs font-semibold ${
                     result.wolf.alone
                       ? "border-indigo-600 bg-indigo-100 text-indigo-800 dark:bg-indigo-900 dark:text-indigo-200"
-                      : "border-neutral-300 dark:border-neutral-700 text-neutral-600 dark:text-neutral-300"
+                      : "border-white/30 text-white/70"
                   }`}
                 >
                   Go alone
@@ -462,7 +467,7 @@ export function Scorecard() {
             )}
 
             {!isHost && (
-              <div className="text-sm text-neutral-500">
+              <div className="text-sm text-white/70">
                 {result.wolf.alone
                   ? "Going alone against the other three."
                   : result.wolf.partner
@@ -472,25 +477,46 @@ export function Scorecard() {
             )}
 
             {result.wolf.outcome && (
-              <div className="pt-2 border-t border-neutral-100 dark:border-neutral-800">
+              <div className="pt-2 border-t border-white/20">
                 <div className="flex items-center justify-between text-sm">
                   <span
-                    className={`truncate ${result.wolf.outcome === "teamA" ? "font-bold text-green-700 dark:text-green-400" : "text-neutral-500"}`}
+                    className={`truncate ${result.wolf.outcome === "teamA" ? "font-bold text-green-300" : "text-white/70"}`}
                   >
                     {result.wolf.teamA.join(" & ")} ({result.wolf.bestA})
                   </span>
-                  <span className="text-neutral-400 px-2 text-xs shrink-0">vs</span>
+                  <span className="text-white/60 px-2 text-xs shrink-0">vs</span>
                   <span
-                    className={`text-right truncate ${result.wolf.outcome === "teamB" ? "font-bold text-green-700 dark:text-green-400" : "text-neutral-500"}`}
+                    className={`text-right truncate ${result.wolf.outcome === "teamB" ? "font-bold text-green-300" : "text-white/70"}`}
                   >
                     ({result.wolf.bestB}) {result.wolf.teamB.join(" & ")}
                   </span>
                 </div>
                 {result.wolf.outcome === "tie" && (
-                  <div className="text-center text-xs text-neutral-400 mt-1">🙌 No blood</div>
+                  <div className="text-center text-xs text-white/60 mt-1">🙌 No blood</div>
                 )}
               </div>
             )}
+          </div>
+        )}
+
+        {isBaseball && result.baseball?.rankGroups && (
+          <div className={`${cardBgCls} rounded-xl border ${cardBorderCls} p-4 space-y-2`}>
+            <div className="text-sm font-extrabold text-white">⚾ Hole results</div>
+            {result.baseball.rankGroups.map((group, i) => {
+              const medal = ["🥇", "🥈", "🥉"][i] ?? "";
+              const pts = result.baseball!.points[group[0]];
+              return (
+                <div key={i} className="flex items-center justify-between text-sm text-white">
+                  <span className="truncate">
+                    {medal} {group.join(" & ")}
+                    {group.length > 1 && <span className="text-white/60"> (tied)</span>}
+                  </span>
+                  <span className="font-mono font-bold text-green-300 shrink-0">
+                    {group.length > 1 ? `${pts} pts each` : `+${pts} pts`}
+                  </span>
+                </div>
+              );
+            })}
           </div>
         )}
 
@@ -510,7 +536,7 @@ export function Scorecard() {
                     <StatusAvatar avatar={p.avatar} className="w-8 h-8 shrink-0" badge={statusBadgeFor(p.name)} />
                     <span className={`font-semibold ${themedTitleCls}`}>
                       {p.name}
-                      {p.id === me?.id && <span className={`font-normal ${isWolf ? "text-white/60" : "text-neutral-400"}`}> (you)</span>}
+                      {p.id === me?.id && <span className="font-normal text-white/60"> (you)</span>}
                     </span>
                     {tiedThisHole && (
                       <span className="text-base" style={{ animation: "high-five-pop 0.5s ease-out" }}>
@@ -518,7 +544,7 @@ export function Scorecard() {
                       </span>
                     )}
                   </div>
-                  <span className={`text-sm font-semibold ${!isHighLow ? "text-green-300" : "text-green-700 dark:text-green-400"}`}>
+                  <span className="text-sm font-semibold text-green-300">
                     +{result.totalPoints[p.name] ?? 0} pts
                   </span>
                 </div>
@@ -530,7 +556,7 @@ export function Scorecard() {
                       type="button"
                       disabled={!isHost}
                       onClick={() => setStrokes(result.holeNumber, p.name, Math.max(1, (strokes || result.par) - 1))}
-                      className={`w-8 h-8 rounded-full border text-lg leading-none disabled:opacity-30 ${!isHighLow ? "border-white/40 text-white" : "border-neutral-300 dark:border-neutral-700"}`}
+                      className="w-8 h-8 rounded-full border border-white/40 text-white text-lg leading-none disabled:opacity-30"
                     >
                       –
                     </button>
@@ -541,20 +567,20 @@ export function Scorecard() {
                       value={strokes || ""}
                       onChange={(e) => setStrokes(result.holeNumber, p.name, Number(e.target.value) || null)}
                       placeholder={String(result.par)}
-                      className={`w-14 text-center rounded-lg border bg-transparent py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-green-500 disabled:opacity-50 ${!isHighLow ? "border-white/40 text-white placeholder:text-white/40" : "border-neutral-300 dark:border-neutral-700"}`}
+                      className="w-14 text-center rounded-lg border border-white/40 bg-transparent text-white placeholder:text-white/40 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-green-500 disabled:opacity-50"
                     />
                     <button
                       type="button"
                       disabled={!isHost}
                       onClick={() => setStrokes(result.holeNumber, p.name, (strokes || result.par) + 1)}
-                      className={`w-8 h-8 rounded-full border text-lg leading-none disabled:opacity-30 ${!isHighLow ? "border-white/40 text-white" : "border-neutral-300 dark:border-neutral-700"}`}
+                      className="w-8 h-8 rounded-full border border-white/40 text-white text-lg leading-none disabled:opacity-30"
                     >
                       +
                     </button>
                   </div>
                 </div>
 
-                {!isHighLow && !isWolf && (
+                {isBuckets && (
                   <div className="flex flex-wrap gap-4">
                     <label
                       className={`flex items-center gap-2 text-sm text-white ${isHost ? "cursor-pointer" : "cursor-default opacity-70"}`}
@@ -601,7 +627,7 @@ export function Scorecard() {
           })}
         </div>
 
-        {!isHighLow && !isWolf && (
+        {isBuckets && (
           <label
             className={`flex items-center gap-2 text-sm text-white px-1 ${isHost ? "cursor-pointer" : "cursor-default opacity-70"}`}
           >
@@ -618,20 +644,20 @@ export function Scorecard() {
 
         {isHighLow && state.teams ? (
           <div className={`${cardBgCls} rounded-xl border ${cardBorderCls} p-4`}>
-            <div className="text-sm font-extrabold text-neutral-700 dark:text-neutral-200 mb-2">
+            <div className="text-sm font-extrabold text-white mb-2">
               Match score{stepIndex >= 9 ? " · overall" : " · front 9"}
             </div>
             <div className="grid grid-cols-2 gap-4">
               {state.teams.map((team, i) => (
                 <div key={i}>
-                  <div className="text-xs font-semibold uppercase tracking-wide text-neutral-400">Team {i + 1}</div>
-                  <div className="text-sm text-neutral-600 dark:text-neutral-300 truncate">{team.join(" & ")}</div>
+                  <div className="text-xs font-semibold uppercase tracking-wide text-white/70">Team {i + 1}</div>
+                  <div className="text-sm text-white/70 truncate">{team.join(" & ")}</div>
                   <div className="text-lg font-extrabold text-green-700 dark:text-green-400">{sumTeamPoints(results)[i]}</div>
                 </div>
               ))}
             </div>
             {stepIndex >= 9 && (
-              <div className="mt-3 pt-3 border-t border-neutral-100 dark:border-neutral-800 flex items-center justify-between text-xs text-neutral-500">
+              <div className="mt-3 pt-3 border-t border-white/20 flex items-center justify-between text-xs text-white/70">
                 <span>Front 9</span>
                 <span className="font-mono">
                   {sumTeamPoints(results.slice(0, 9)).join(" – ")}
@@ -646,8 +672,8 @@ export function Scorecard() {
               {players.map((p) => (
                 <div key={p.id} className="flex items-center gap-1.5">
                   <StatusAvatar avatar={p.avatar} className="w-6 h-6 shrink-0" badge={statusBadgeFor(p.name)} />
-                  <span className={`text-sm ${!isHighLow ? "text-white" : "text-neutral-600 dark:text-neutral-300"}`}>{p.name}</span>
-                  <span className={`text-lg font-extrabold ${!isHighLow ? "text-green-300" : "text-green-700 dark:text-green-400"}`}>
+                  <span className="text-sm text-white">{p.name}</span>
+                  <span className="text-lg font-extrabold text-green-300">
                     {totals[p.name] ?? 0}
                   </span>
                 </div>
@@ -670,7 +696,7 @@ export function Scorecard() {
             type="button"
             disabled={stepIndex === 0}
             onClick={() => setStepIndex((i) => Math.max(0, i - 1))}
-            className={`flex-1 rounded-lg border ${cardBorderCls} py-2.5 font-semibold text-sm disabled:opacity-40`}
+            className={`flex-1 rounded-lg border ${cardBorderCls} text-white py-2.5 font-semibold text-sm disabled:opacity-40`}
           >
             Back
           </button>
@@ -687,7 +713,7 @@ export function Scorecard() {
             type="button"
             onClick={() => window.location.reload()}
             title="Reload if the game stops updating (e.g. after switching apps)"
-            className={`shrink-0 rounded-lg border ${cardBorderCls} px-3 py-2.5 font-semibold text-sm hover:bg-neutral-50 dark:hover:bg-neutral-800`}
+            className={`shrink-0 rounded-lg border ${cardBorderCls} text-white px-3 py-2.5 font-semibold text-sm hover:bg-white/10`}
           >
             Refresh
           </button>
