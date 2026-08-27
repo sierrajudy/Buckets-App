@@ -1,7 +1,15 @@
 @import "tailwindcss";
 
+/* Without this, Tailwind's `dark:` variant defaults to following the OS's
+ * prefers-color-scheme, so anyone with system dark mode on saw the dark
+ * theme regardless of anything in the app. Redefining it to only match a
+ * `.dark` ancestor class — which nothing in this app currently sets — makes
+ * light mode the actual default; a real toggle could flip it later by
+ * adding that class to <html>. */
+@custom-variant dark (&:where(.dark, .dark *));
+
 :root {
-  color-scheme: light dark;
+  color-scheme: light;
 }
 
 html, body, #root {

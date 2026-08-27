@@ -154,6 +154,10 @@ export function Scorecard() {
   const tiedHole = isHighLow ? false : result.holeWinners.length > 1;
   const birdieBonusLabel = isHighLow ? "+0.5 pt" : "+1 pt";
   const eagleBonusLabel = isHighLow ? "+1 pt" : "+2 pts";
+  // High Low gets its own bolder, high-contrast look — solid black card
+  // borders instead of the subtle standard-mode gray — as another part of
+  // making the two modes read as visually distinct at a glance.
+  const cardBorderCls = isHighLow ? "border-black" : "border-neutral-200 dark:border-neutral-800";
 
   function statusBadgeFor(name: string): string | undefined {
     if (name === leader) return "👑";
@@ -172,7 +176,11 @@ export function Scorecard() {
   }
 
   return (
-    <div className="min-h-screen bg-neutral-50 dark:bg-neutral-950 flex flex-col overflow-hidden relative">
+    <div
+      className={`min-h-screen flex flex-col overflow-hidden relative ${
+        isHighLow ? "bg-purple-100 dark:bg-purple-950" : "bg-neutral-50 dark:bg-neutral-950"
+      }`}
+    >
       {showBallRoll && (
         <div
           className="fixed inset-0 z-40 overflow-hidden flex items-center justify-center"
@@ -283,7 +291,7 @@ export function Scorecard() {
       </header>
 
       <div className="flex-1 max-w-2xl w-full mx-auto p-4 space-y-4">
-        <div className="bg-white dark:bg-neutral-900 rounded-xl border border-neutral-200 dark:border-neutral-800 p-4 flex items-center justify-between">
+        <div className={`bg-white dark:bg-neutral-900 rounded-xl border ${cardBorderCls} p-4 flex items-center justify-between`}>
           <div className="flex items-center gap-2">
             <FlagIcon className="w-6 h-8 shrink-0" />
             <div>
@@ -325,8 +333,8 @@ export function Scorecard() {
         </div>
 
         {isHighLow && result.highLow && (
-          <div className="bg-white dark:bg-neutral-900 rounded-xl border border-neutral-200 dark:border-neutral-800 p-4 space-y-3">
-            <div className="text-sm font-bold text-neutral-500">High Low matchups</div>
+          <div className={`bg-white dark:bg-neutral-900 rounded-xl border ${cardBorderCls} p-4 space-y-3`}>
+            <div className="text-sm font-extrabold text-neutral-700 dark:text-neutral-200">High Low matchups</div>
             {(
               [
                 { label: "Low", pair: result.highLow.lowPlayers, outcome: result.highLow.lowWinner },
@@ -378,7 +386,7 @@ export function Scorecard() {
             return (
               <div
                 key={p.id}
-                className="bg-white dark:bg-neutral-900 rounded-xl border border-neutral-200 dark:border-neutral-800 p-4"
+                className={`bg-white dark:bg-neutral-900 rounded-xl border ${cardBorderCls} p-4`}
               >
                 <div className="flex items-center justify-between mb-3">
                   <div className="flex items-center gap-2">
@@ -492,8 +500,8 @@ export function Scorecard() {
         )}
 
         {isHighLow && state.teams ? (
-          <div className="bg-white dark:bg-neutral-900 rounded-xl border border-neutral-200 dark:border-neutral-800 p-4">
-            <div className="text-sm font-bold text-neutral-500 mb-2">
+          <div className={`bg-white dark:bg-neutral-900 rounded-xl border ${cardBorderCls} p-4`}>
+            <div className="text-sm font-extrabold text-neutral-700 dark:text-neutral-200 mb-2">
               Match score{stepIndex >= 9 ? " · overall" : " · front 9"}
             </div>
             <div className="grid grid-cols-2 gap-4">
@@ -517,7 +525,7 @@ export function Scorecard() {
             )}
           </div>
         ) : (
-          <div className="bg-white dark:bg-neutral-900 rounded-xl border border-neutral-200 dark:border-neutral-800 p-4">
+          <div className={`bg-white dark:bg-neutral-900 rounded-xl border ${cardBorderCls} p-4`}>
             <div className="text-sm font-bold text-neutral-500 mb-2">Running score</div>
             <div className="flex flex-wrap gap-4">
               {players.map((p) => (
@@ -545,7 +553,7 @@ export function Scorecard() {
             type="button"
             disabled={stepIndex === 0}
             onClick={() => setStepIndex((i) => Math.max(0, i - 1))}
-            className="flex-1 rounded-lg border border-neutral-300 dark:border-neutral-700 py-2.5 font-semibold text-sm disabled:opacity-40"
+            className={`flex-1 rounded-lg border ${cardBorderCls} py-2.5 font-semibold text-sm disabled:opacity-40`}
           >
             Back
           </button>
@@ -553,7 +561,7 @@ export function Scorecard() {
             <button
               type="button"
               onClick={() => setShowEndConfirm(true)}
-              className="shrink-0 rounded-lg border border-red-300 dark:border-red-900 text-red-600 dark:text-red-400 px-3 py-2.5 font-semibold text-sm hover:bg-red-50 dark:hover:bg-red-950/40"
+              className={`shrink-0 rounded-lg border ${isHighLow ? "border-red-600" : "border-red-300 dark:border-red-900"} text-red-600 dark:text-red-400 px-3 py-2.5 font-semibold text-sm hover:bg-red-50 dark:hover:bg-red-950/40`}
             >
               End Game
             </button>
@@ -562,7 +570,7 @@ export function Scorecard() {
             type="button"
             onClick={() => window.location.reload()}
             title="Reload if the game stops updating (e.g. after switching apps)"
-            className="shrink-0 rounded-lg border border-neutral-300 dark:border-neutral-700 px-3 py-2.5 font-semibold text-sm hover:bg-neutral-50 dark:hover:bg-neutral-800"
+            className={`shrink-0 rounded-lg border ${cardBorderCls} px-3 py-2.5 font-semibold text-sm hover:bg-neutral-50 dark:hover:bg-neutral-800`}
           >
             Refresh
           </button>
@@ -576,7 +584,7 @@ export function Scorecard() {
                     setConfirming(true);
                     confirmFinishRound();
                   }}
-                  className="flex-1 rounded-lg bg-green-600 hover:bg-green-700 disabled:opacity-60 text-white py-2.5 font-semibold text-sm"
+                  className={`flex-1 rounded-lg border bg-green-600 hover:bg-green-700 disabled:opacity-60 text-white py-2.5 font-semibold text-sm ${isHighLow ? "border-green-800" : "border-transparent"}`}
                 >
                   {confirming ? "Finishing…" : "Confirm & Finish Round"}
                 </button>
@@ -599,7 +607,7 @@ export function Scorecard() {
                 setStepIndex(next);
                 if (isHost) setCurrentStep(next);
               }}
-              className="flex-1 rounded-lg bg-green-600 hover:bg-green-700 disabled:opacity-40 text-white py-2.5 font-semibold text-sm"
+              className={`flex-1 rounded-lg border bg-green-600 hover:bg-green-700 disabled:opacity-40 text-white py-2.5 font-semibold text-sm ${isHighLow ? "border-green-800" : "border-transparent"}`}
             >
               Next hole
             </button>

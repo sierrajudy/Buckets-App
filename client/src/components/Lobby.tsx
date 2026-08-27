@@ -7,7 +7,7 @@ import { TeamPicker } from "./TeamPicker";
 import type { GameMode } from "../types";
 
 const GAME_MODES: { key: GameMode; label: string; blurb: string }[] = [
-  { key: "standard", label: "Standard", blurb: "2-4 players, free-for-all points" },
+  { key: "standard", label: "Buckets", blurb: "2-4 players, free-for-all points" },
   { key: "highlow", label: "High Low", blurb: "4 players, 2v2 team match play" },
 ];
 
@@ -82,7 +82,7 @@ export function Lobby({
   }
 
   return (
-    <div className="min-h-screen bg-neutral-50 dark:bg-neutral-950 p-4">
+    <div className={`min-h-screen p-4 ${isHighLow ? "bg-purple-100 dark:bg-purple-950" : "bg-neutral-50 dark:bg-neutral-950"}`}>
       <div className="max-w-lg mx-auto space-y-4">
         <div className="flex items-center justify-between">
           <button onClick={leaveRoom} className="text-sm text-neutral-500 hover:text-red-500">
