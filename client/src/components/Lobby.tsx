@@ -5,6 +5,8 @@ import { RulesModal } from "./RulesModal";
 import { CourseSearch } from "./CourseSearch";
 import { TeamPicker } from "./TeamPicker";
 import { WolfBackdrop } from "./WolfBackdrop";
+import { HighLowBackdrop } from "./HighLowBackdrop";
+import { BucketsBackdrop } from "./BucketsBackdrop";
 import type { GameMode } from "../types";
 
 const GAME_MODES: { key: GameMode; label: string; blurb: string }[] = [
@@ -41,14 +43,20 @@ export function Lobby({
 
   const isHighLow = state?.gameMode === "highlow";
   const isWolf = state?.gameMode === "wolf";
+  const isBuckets = state?.gameMode === "standard";
   const needsFourPlayers = isHighLow || isWolf;
   const highLowReady = isHighLow && state?.players.length === 4;
-  // Wolf's cards go translucent so the starry night background shows
-  // through — a light blur keeps text legible over the busy sky. Section
-  // labels switch to white since the usual muted gray reads too faint
-  // against the dark sky bleeding through.
-  const cardBgCls = isWolf ? "bg-white/25 dark:bg-neutral-900/25 backdrop-blur-sm" : "bg-white dark:bg-neutral-900";
-  const labelCls = isWolf ? "text-white" : "text-neutral-500";
+  // Every mode now has its own fixed background scene, so cards go
+  // translucent everywhere to let it show through — a light blur keeps
+  // text legible over it. Wolf's night sky and Buckets' driving-range-at-
+  // night are both uniformly dark, so a lighter touch (and white labels)
+  // work throughout; High Low's sky swings from bright blue to dark
+  // mountain silhouette, so its cards stay a bit more opaque to keep the
+  // normal dark/muted-gray text readable no matter what's behind them.
+  const cardBgCls = isHighLow
+    ? "bg-white/45 backdrop-blur-sm"
+    : "bg-white/25 dark:bg-neutral-900/25 backdrop-blur-sm";
+  const labelCls = isHighLow ? "text-neutral-500" : "text-white";
 
   // High Low always needs a valid 2v2 split to start. Rather than make the
   // host explicitly assign teams before they can do anything else, seed a
@@ -97,15 +105,17 @@ export function Lobby({
 
   return (
     <div
-      className={`min-h-screen p-4 relative ${isWolf ? "pb-36 sm:pb-52" : ""} ${
+      className={`min-h-screen p-4 relative pb-36 sm:pb-52 ${
         isHighLow
-          ? "bg-purple-100 dark:bg-purple-950"
+          ? "bg-gradient-to-b from-sky-400 via-amber-200 to-orange-400"
           : isWolf
             ? "bg-gradient-to-b from-slate-950 via-indigo-950 to-indigo-900"
-            : "bg-neutral-50 dark:bg-neutral-950"
+            : "bg-gradient-to-b from-slate-950 via-emerald-950 to-green-950"
       }`}
     >
       {isWolf && <WolfBackdrop />}
+      {isHighLow && <HighLowBackdrop />}
+      {isBuckets && <BucketsBackdrop />}
       <div className="max-w-lg mx-auto space-y-4 relative z-10">
         <div className="flex items-center justify-between">
           <button onClick={leaveRoom} className="text-sm text-neutral-500 hover:text-red-500">
@@ -250,7 +260,7 @@ export function Lobby({
                 <span className="avatar-idle" style={{ animationDelay: `${i * 0.35}s` }}>
                   <AvatarIcon avatar={p.avatar} className="w-10 h-10 shrink-0" />
                 </span>
-                <span className="font-medium">{p.name}</span>
+                <span className={`font-medium ${labelCls}`}>{p.name}</span>
                 {p.id === state.hostId && (
                   <span className="text-[10px] font-bold uppercase tracking-wide bg-amber-100 text-amber-700 dark:bg-amber-900 dark:text-amber-300 px-1.5 py-0.5 rounded">
                     Host
@@ -289,7 +299,7 @@ export function Lobby({
                     }`}
                   >
                     <AvatarIcon avatar={key as AvatarKey} className="w-12 h-12" />
-                    <span className="text-[10px] font-medium text-neutral-500 dark:text-neutral-400">
+                    <span className={`text-[10px] font-medium ${!isHighLow ? "text-white/70" : "text-neutral-500 dark:text-neutral-400"}`}>
                       {AVATAR_META[key as AvatarKey].label}
                     </span>
                   </button>

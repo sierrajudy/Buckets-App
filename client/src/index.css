@@ -287,3 +287,8 @@ body {
   50% { opacity: 1; }
 }
 
+@keyframes cloud-drift {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(140vw); }
+}
+
