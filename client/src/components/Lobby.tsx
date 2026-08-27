@@ -237,21 +237,21 @@ export function Lobby({
           {state.courseId &&
             (isHost ? (
               <div className="mt-3">
-                <label className="block text-sm font-medium mb-1">Starting hole</label>
+                <label className="block text-sm font-medium text-white mb-1">Starting hole</label>
                 <select
                   value={state.startingHole}
                   onChange={(e) => setConfig(Number(e.target.value))}
-                  className="w-full rounded-lg border border-neutral-300 dark:border-neutral-700 bg-transparent px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
+                  className="w-full rounded-lg border border-white/40 bg-transparent text-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
                 >
                   {Array.from({ length: state.results.length }, (_, i) => i + 1).map((h) => (
-                    <option key={h} value={h}>
+                    <option key={h} value={h} className="text-black">
                       Hole {h}
                     </option>
                   ))}
                 </select>
               </div>
             ) : (
-              <div className="text-sm text-neutral-500 mt-1">Starting hole {state.startingHole}</div>
+              <div className="text-sm text-white/70 mt-1">Starting hole {state.startingHole}</div>
             ))}
         </div>
 

@@ -114,14 +114,14 @@ export function CourseSearch({
         {!editingCourse ? (
           <div className="flex items-center justify-between gap-2">
             {displayName ? (
-              <div className="font-semibold text-sm">{displayName}</div>
+              <div className="font-semibold text-sm text-white">{displayName}</div>
             ) : (
-              <div className="font-semibold text-sm italic text-neutral-400">No course selected</div>
+              <div className="font-semibold text-sm italic text-white/60">No course selected</div>
             )}
             <button
               type="button"
               onClick={() => setEditingCourse(true)}
-              className="text-xs text-neutral-500 hover:text-green-600 dark:hover:text-green-400 shrink-0"
+              className="text-xs text-white/70 hover:text-green-400 shrink-0"
             >
               Change course
             </button>
@@ -134,39 +134,39 @@ export function CourseSearch({
                   value={query}
                   onChange={(e) => setQuery(e.target.value)}
                   placeholder="Search any course (e.g. Pebble Beach)"
-                  className="w-full rounded-lg border border-neutral-300 dark:border-neutral-700 bg-transparent px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
+                  className="w-full rounded-lg border border-white/40 bg-transparent text-white placeholder:text-white/40 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
                 />
                 {searching && (
-                  <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-neutral-400">…</span>
+                  <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-white/60">…</span>
                 )}
               </div>
               {hasSelection && (
                 <button
                   type="button"
                   onClick={cancelEditing}
-                  className="text-xs text-neutral-500 hover:text-red-500 shrink-0"
+                  className="text-xs text-white/70 hover:text-red-400 shrink-0"
                 >
                   Cancel
                 </button>
               )}
             </div>
 
-            {error && <p className="text-xs text-red-500">{error}</p>}
+            {error && <p className="text-xs text-red-400">{error}</p>}
 
             {results &&
               (results.length === 0 ? (
-                <p className="text-xs text-neutral-500">No courses found — try a different spelling or add a city.</p>
+                <p className="text-xs text-white/70">No courses found — try a different spelling or add a city.</p>
               ) : (
-                <div className="max-h-56 overflow-y-auto rounded-lg border border-neutral-200 dark:border-neutral-800 divide-y divide-neutral-100 dark:divide-neutral-800">
+                <div className="max-h-56 overflow-y-auto rounded-lg border border-white/20 divide-y divide-white/10">
                   {results.map((r) => (
                     <button
                       key={r.id}
                       type="button"
                       onClick={() => handlePickCourse(r)}
-                      className="w-full text-left px-3 py-2 text-sm hover:bg-neutral-50 dark:hover:bg-neutral-800"
+                      className="w-full text-left px-3 py-2 text-sm text-white hover:bg-white/10"
                     >
                       <div className="font-semibold">{r.name}</div>
-                      {r.location && <div className="text-xs text-neutral-500">{r.location}</div>}
+                      {r.location && <div className="text-xs text-white/60">{r.location}</div>}
                     </button>
                   ))}
                 </div>
@@ -176,7 +176,7 @@ export function CourseSearch({
       </div>
 
       {!pendingCourse && confirmedCourseStats && (
-        <div className="text-xs text-neutral-500 mt-0.5">
+        <div className="text-xs text-white/70 mt-0.5">
           {confirmedCourseStats.teeLabel} tees · {confirmedCourseStats.totalYards} yds · Rating{" "}
           {confirmedCourseStats.courseRating.toFixed(1)} · Slope {confirmedCourseStats.slopeRating}
         </div>
@@ -184,25 +184,25 @@ export function CourseSearch({
 
       {!editingCourse && (pendingCourse || confirmedCourseStats) && (
         <div className="mt-3">
-          <label className="block text-sm font-medium mb-1">Tee</label>
+          <label className="block text-sm font-medium text-white mb-1">Tee</label>
           {pendingCourse ? (
             <select
               value={selectedTeeKey}
               disabled={loadingTees || resolvingTee}
               onChange={(e) => handlePickTee(e.target.value)}
-              className="w-full rounded-lg border border-neutral-300 dark:border-neutral-700 bg-transparent px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500 disabled:opacity-50"
+              className="w-full rounded-lg border border-white/40 bg-transparent text-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500 disabled:opacity-50"
             >
-              <option value="" disabled>
+              <option value="" disabled className="text-black">
                 {loadingTees ? "Loading tees…" : resolvingTee ? "Loading course…" : "Pick a tee"}
               </option>
               {pendingCourse.tees.map((t) => (
-                <option key={t.key} value={t.key}>
+                <option key={t.key} value={t.key} className="text-black">
                   {t.label} — Par {t.parTotal}, {t.totalYards} yds
                 </option>
               ))}
             </select>
           ) : (
-            <div className="text-sm text-neutral-500">{confirmedCourseStats!.teeLabel}</div>
+            <div className="text-sm text-white/70">{confirmedCourseStats!.teeLabel}</div>
           )}
         </div>
       )}

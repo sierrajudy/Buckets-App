@@ -4,6 +4,10 @@ import { AvatarIcon } from "./Avatars";
 import { EmojiReactionBar } from "./EmojiReactionBar";
 import { joinNames } from "../lib/format";
 import { deleteRound } from "../lib/api";
+import { WolfBackdrop } from "./WolfBackdrop";
+import { HighLowBackdrop } from "./HighLowBackdrop";
+import { BaseballBackdrop } from "./BaseballBackdrop";
+import { BucketsBackdrop } from "./BucketsBackdrop";
 
 const CONFETTI_COLORS = ["#facc15", "#22c55e", "#3b82f6", "#ef4444", "#a855f7", "#f97316"];
 
@@ -49,6 +53,11 @@ export function Celebration({
 
   if (!state || !state.finishedRound) return null;
   const round = state.finishedRound;
+  const isHighLow = round.gameMode === "highlow";
+  const isWolf = round.gameMode === "wolf";
+  const isBaseball = round.gameMode === "baseball";
+  const isBuckets = round.gameMode === "standard";
+  const cardBgCls = "bg-black/30 backdrop-blur-sm";
 
   const grossTotals: Record<string, number> = {};
   const netTotals: Record<string, number> = {};
@@ -81,7 +90,21 @@ export function Celebration({
   }
 
   return (
-    <div className="min-h-screen bg-neutral-950 relative overflow-hidden flex items-center justify-center p-4">
+    <div
+      className={`min-h-screen relative overflow-hidden flex items-center justify-center p-4 pb-36 sm:pb-52 ${
+        isHighLow
+          ? "bg-gradient-to-b from-sky-400 via-amber-200 to-orange-400"
+          : isWolf
+            ? "bg-gradient-to-b from-slate-950 via-indigo-950 to-indigo-900"
+            : isBaseball
+              ? "bg-gradient-to-b from-slate-950 via-blue-950 to-slate-900"
+              : "bg-gradient-to-b from-slate-950 via-emerald-950 to-green-950"
+      }`}
+    >
+      {isWolf && <WolfBackdrop />}
+      {isHighLow && <HighLowBackdrop />}
+      {isBaseball && <BaseballBackdrop />}
+      {isBuckets && <BucketsBackdrop />}
       <div className="absolute inset-0 pointer-events-none">
         {confetti.map((c) => (
           <div
@@ -149,7 +172,7 @@ export function Celebration({
                   { label: "Overall", match: round.highLow.overall },
                 ] as const
               ).map(({ label, match }) => (
-                <div key={label} className="bg-neutral-900 border border-neutral-800 rounded-xl px-3 py-2.5 text-sm">
+                <div key={label} className={`${cardBgCls} border border-neutral-800 rounded-xl px-3 py-2.5 text-sm`}>
                   <div className="flex items-center justify-between">
                     <span className="text-xs font-semibold uppercase tracking-wide text-neutral-400">{label}</span>
                     <span className="font-mono font-bold text-white">
@@ -170,7 +193,7 @@ export function Celebration({
             <div className="mt-3 space-y-2">
               <div className="text-xs font-semibold uppercase tracking-wide text-neutral-400 px-1">Scores</div>
               {round.teams.map((team, i) => (
-                <div key={i} className="bg-neutral-900 border border-neutral-800 rounded-xl px-3 py-2.5 text-sm space-y-1.5">
+                <div key={i} className={`${cardBgCls} border border-neutral-800 rounded-xl px-3 py-2.5 text-sm space-y-1.5`}>
                   {team.map((p) => (
                     <div key={p} className="flex items-center justify-between">
                       <span className="flex items-center gap-2 text-neutral-300">
@@ -207,7 +230,7 @@ export function Celebration({
         )}
 
         {isHost && (
-          <div className="rounded-2xl border border-neutral-800 bg-neutral-900 p-3 text-center">
+          <div className={`rounded-2xl border border-neutral-800 ${cardBgCls} p-3 text-center`}>
             {deleted ? (
               <p className="text-sm text-neutral-400">This round won't count in anyone's standings.</p>
             ) : (
@@ -223,7 +246,7 @@ export function Celebration({
           </div>
         )}
 
-        <div className="bg-neutral-900 border border-neutral-800 rounded-2xl p-5">
+        <div className={`${cardBgCls} border border-neutral-800 rounded-2xl p-5`}>
           <div className="text-sm text-neutral-400 mb-3">Final scores</div>
           <div className="space-y-1.5">
             {[...round.players]
@@ -254,7 +277,7 @@ export function Celebration({
           </div>
         )}
 
-        <div className="rounded-2xl p-4 bg-neutral-900 border border-neutral-800 text-center space-y-3">
+        <div className={`rounded-2xl p-4 ${cardBgCls} border border-neutral-800 text-center space-y-3`}>
           <p className="text-sm text-neutral-300">
             Enjoying Buckets? Venmo{" "}
             <a
@@ -279,7 +302,7 @@ export function Celebration({
         <button
           type="button"
           onClick={onViewProfile}
-          className="w-full rounded-2xl p-4 bg-neutral-900 border border-neutral-800 text-center hover:border-neutral-700"
+          className={`w-full rounded-2xl p-4 ${cardBgCls} border border-neutral-800 text-center hover:border-neutral-700`}
         >
           <div className="text-sm font-semibold text-white">📧 Want an email when the next round starts?</div>
           <div className="text-xs text-neutral-400 mt-1">Tap to manage your notification settings</div>
