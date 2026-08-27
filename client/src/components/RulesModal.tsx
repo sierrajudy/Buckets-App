@@ -81,10 +81,19 @@ export function RulesModal({ onClose }: { onClose: () => void }) {
                 1, or 2 total points depending on how many matchups have a clear winner.
               </li>
               <li>
+                <span className="font-semibold">Handicaps</span> are optional — the host sets one for each player
+                before starting. Low/high is decided by <span className="font-semibold">net</span> score (after
+                handicap strokes), so a worse gross score can still end up as your team's "low" once a stroke is
+                applied. All four net scores are worked out first, then sorted into low/high — nobody's role is
+                locked in before the strokes are applied.
+              </li>
+              <li>
                 <span className="font-semibold">Birdie</span> is worth a{" "}
                 <span className="font-semibold">0.5 bonus point</span> and{" "}
                 <span className="font-semibold">eagle</span> a <span className="font-semibold">1 bonus point</span>{" "}
-                to your team, whether or not you won your matchup that hole.
+                to your team, whether or not you won your matchup that hole — always based on your{" "}
+                <span className="font-semibold">gross</span> score, so a net birdie from a handicap stroke doesn't
+                count.
               </li>
               <li>
                 Front 9, back 9, and the overall 18 are three separate matches — a team can win the front and lose

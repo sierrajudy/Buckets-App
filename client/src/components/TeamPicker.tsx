@@ -23,10 +23,12 @@ export function TeamPicker({
   state,
   isHost,
   onSetTeams,
+  onSetHandicap,
 }: {
   state: RoomState;
   isHost: boolean;
   onSetTeams: (teams: Teams) => void;
+  onSetHandicap: (playerId: string, handicap: number) => void;
 }) {
   const [selected, setSelected] = useState<string | null>(null);
 
@@ -41,8 +43,8 @@ export function TeamPicker({
   const names = state.players.map((p) => p.name);
   const teams = state.teams ?? defaultTeams(names);
 
-  function avatarFor(name: string) {
-    return state.players.find((p) => p.name === name)?.avatar ?? null;
+  function playerFor(name: string) {
+    return state.players.find((p) => p.name === name) ?? null;
   }
 
   function teamIndexOf(name: string): 0 | 1 {
@@ -68,32 +70,51 @@ export function TeamPicker({
       <div className="text-sm font-semibold text-neutral-500 mb-1">Teams</div>
       {isHost && (
         <div className="text-xs text-neutral-400 mb-3">
-          Tap a player, then tap someone on the other team to swap them.
+          Tap a player, then tap someone on the other team to swap them. Set each player's handicap on the right.
         </div>
       )}
-      <div className="grid grid-cols-2 gap-3">
+      <div className="space-y-3">
         {teams.map((team, i) => (
           <div key={i} className="rounded-xl border border-neutral-200 dark:border-neutral-800 p-3">
             <div className="text-xs font-bold uppercase tracking-wide text-neutral-400 mb-2">Team {i + 1}</div>
             <div className="space-y-2">
-              {team.map((name) => (
-                <button
-                  key={name}
-                  type="button"
-                  disabled={!isHost}
-                  onClick={() => handleClick(name)}
-                  className={`w-full flex items-center gap-2 rounded-lg px-2 py-1.5 text-left transition-colors ${
-                    selected === name
-                      ? "bg-green-100 dark:bg-green-900 ring-2 ring-green-500"
-                      : isHost
-                        ? "hover:bg-neutral-100 dark:hover:bg-neutral-800"
-                        : ""
-                  }`}
-                >
-                  <AvatarIcon avatar={avatarFor(name)} className="w-7 h-7 shrink-0" />
-                  <span className="text-sm font-medium truncate">{name}</span>
-                </button>
-              ))}
+              {team.map((name) => {
+                const player = playerFor(name);
+                return (
+                  <div
+                    key={name}
+                    className={`flex items-center gap-2 rounded-lg pl-2 pr-2 py-1.5 transition-colors ${
+                      selected === name ? "bg-green-100 dark:bg-green-900 ring-2 ring-green-500" : ""
+                    }`}
+                  >
+                    <button
+                      type="button"
+                      disabled={!isHost}
+                      onClick={() => handleClick(name)}
+                      className={`flex items-center gap-2 flex-1 min-w-0 text-left ${
+                        isHost && selected !== name ? "hover:opacity-70" : ""
+                      }`}
+                    >
+                      <AvatarIcon avatar={player?.avatar ?? null} className="w-7 h-7 shrink-0" />
+                      <span className="text-sm font-medium truncate">{name}</span>
+                    </button>
+                    <label className="flex items-center gap-1.5 shrink-0 text-xs text-neutral-400">
+                      Hcp
+                      <input
+                        type="number"
+                        min={0}
+                        max={54}
+                        disabled={!isHost}
+                        value={player?.handicap ?? 0}
+                        onClick={(e) => e.stopPropagation()}
+                        onChange={(e) => player && onSetHandicap(player.id, Number(e.target.value) || 0)}
+                        title="Handicap"
+                        className="w-12 text-center rounded-md border border-neutral-300 dark:border-neutral-700 bg-transparent text-sm py-1 disabled:opacity-60 focus:outline-none focus:ring-2 focus:ring-green-500"
+                      />
+                    </label>
+                  </div>
+                );
+              })}
             </div>
           </div>
         ))}

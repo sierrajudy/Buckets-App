@@ -19,6 +19,9 @@ export interface Player {
   avatar: AvatarKey | null;
   connected: boolean;
   socketId: string | null;
+  /** Only meaningful in "highlow" mode — the host sets this in the lobby
+   * for each player before starting. 0 (scratch) otherwise. */
+  handicap: number;
 }
 
 export interface Spectator {
@@ -43,7 +46,14 @@ export interface HoleEntry {
  * low scorer for 1 point, same for the high scorers — a tie on either
  * matchup ("no blood") pays out nothing for that matchup rather than
  * splitting it. Birdie/eagle bonus points are separate, paid to a team
- * whenever either of its members earns one, win or lose their matchup. */
+ * whenever either of its members earns one, win or lose their matchup.
+ *
+ * Low/high is decided by NET score (gross minus any handicap strokes the
+ * player receives on this hole) — the four net scores are computed first,
+ * then sorted into low/high per team, so a higher gross score can still
+ * end up as a team's "low" player once a handicap stroke is applied. The
+ * birdie/eagle bonus, in contrast, is always judged on the GROSS score —
+ * a net birdie manufactured by a handicap stroke doesn't earn it. */
 export interface HighLowHoleOutcome {
   lowPlayers: [string, string]; // [team0's low player, team1's low player]
   lowWinner: "team0" | "team1" | "tie";
@@ -52,6 +62,10 @@ export interface HighLowHoleOutcome {
   matchPoints: [number, number]; // 0-2 total across both teams, from the two matchups
   bonusPoints: [number, number]; // birdie/eagle bonus, per team
   teamPoints: [number, number]; // matchPoints + bonusPoints — the hole's full team result
+  /** Net strokes (gross minus handicap strokes received) per player name,
+   * for the four players on the two teams. Equal to gross when a player
+   * has a 0 handicap or doesn't receive a stroke on this hole. */
+  netStrokes: Record<string, number>;
 }
 
 export interface HoleResult {

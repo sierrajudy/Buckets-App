@@ -28,6 +28,7 @@ export function Lobby({
     setCourse,
     setGameMode,
     setTeams,
+    setHandicap,
     startGame,
     leaveRoom,
   } = useRoom();
@@ -166,6 +167,7 @@ export function Lobby({
             state={state}
             isHost={isHost}
             onSetTeams={(teams) => setTeams(teams)}
+            onSetHandicap={(playerId, handicap) => setHandicap(playerId, handicap)}
           />
         )}
 

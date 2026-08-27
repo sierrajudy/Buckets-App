@@ -13,6 +13,7 @@ export interface Player {
   name: string;
   avatar: AvatarKey | null;
   connected: boolean;
+  handicap: number;
 }
 
 export interface Spectator {
@@ -28,6 +29,7 @@ export interface HighLowHoleOutcome {
   matchPoints: [number, number];
   bonusPoints: [number, number];
   teamPoints: [number, number];
+  netStrokes: Record<string, number>;
 }
 
 export interface HoleResult {

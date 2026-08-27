@@ -16,6 +16,7 @@ import {
   setCourse,
   setGameMode,
   setPlayerAvatar,
+  setPlayerHandicap,
   setPrediction,
   setTeams,
   spectateRoom,
@@ -144,6 +145,12 @@ export function registerRoomHandlers(io: Server) {
       if (!setTeams(room, payload?.teams)) return ack?.({ ok: false, error: "Teams must be the room's 4 current players, split 2 and 2." });
       broadcast(io, room);
       ack?.({ ok: true });
+    });
+
+    socket.on("room:setHandicap", (payload: { playerId: string; handicap: number }) => {
+      const room = data.roomCode ? getRoom(data.roomCode) : undefined;
+      if (!room || !isHost(room, data.playerId)) return;
+      if (setPlayerHandicap(room, payload?.playerId, Number(payload?.handicap))) broadcast(io, room);
     });
 
     socket.on("room:start", (_payload: unknown, ack?: Ack) => {

@@ -63,7 +63,7 @@ export function getRoom(code: string): Room | undefined {
 
 export function createRoom(hostName: string): { room: Room; player: Player } {
   const code = generateRoomCode();
-  const player: Player = { id: uuid(), name: hostName.trim(), avatar: null, connected: true, socketId: null };
+  const player: Player = { id: uuid(), name: hostName.trim(), avatar: null, connected: true, socketId: null, handicap: 0 };
   const room: Room = {
     code,
     hostId: player.id,
@@ -100,7 +100,7 @@ export function joinRoom(room: Room, name: string): Player | { error: string } {
   const trimmed = name.trim();
   if (!trimmed) return { error: "Name is required." };
   if (isNameTaken(room, trimmed)) return { error: "That name is already taken in this room." };
-  const player: Player = { id: uuid(), name: trimmed, avatar: null, connected: true, socketId: null };
+  const player: Player = { id: uuid(), name: trimmed, avatar: null, connected: true, socketId: null, handicap: 0 };
   room.players.push(player);
   room.teams = null; // a new roster invalidates any prior team pairing
   return player;
@@ -142,6 +142,18 @@ export function setPlayerAvatar(room: Room, playerId: string, avatar: AvatarKey)
   const player = room.players.find((p) => p.id === playerId);
   if (!player) return false;
   player.avatar = avatar;
+  return true;
+}
+
+/** Host-only, set in the lobby before starting — the player's own handicap
+ * doesn't require a self-service control the way avatar does. Clamped to a
+ * sane range and rounded to a whole number of strokes. */
+export function setPlayerHandicap(room: Room, playerId: string, handicap: number): boolean {
+  if (room.phase !== "lobby") return false;
+  if (!Number.isFinite(handicap)) return false;
+  const player = room.players.find((p) => p.id === playerId);
+  if (!player) return false;
+  player.handicap = Math.max(0, Math.min(54, Math.round(handicap)));
   return true;
 }
 
@@ -240,7 +252,10 @@ function orderedResults(room: Room) {
   const names = playerNames(room);
   if (room.gameMode === "highlow" && room.teams) {
     const teams = room.teams;
-    return order.map((holeNumber) => computeHighLowHoleResult(room.entries[holeNumber], teams, names));
+    const playerHandicaps = Object.fromEntries(room.players.map((p) => [p.name, p.handicap]));
+    return order.map((holeNumber) =>
+      computeHighLowHoleResult(room.entries[holeNumber], teams, names, playerHandicaps, holeCount),
+    );
   }
   return order.map((holeNumber) => computeHoleResult(room.entries[holeNumber], names));
 }

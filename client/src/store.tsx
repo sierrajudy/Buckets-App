@@ -38,6 +38,7 @@ interface RoomContextValue {
   setCourse: (courseId: string) => void;
   setGameMode: (mode: GameMode) => void;
   setTeams: (teams: Teams) => Promise<AckResponse>;
+  setHandicap: (playerId: string, handicap: number) => void;
   startGame: () => Promise<AckResponse>;
   newRound: () => void;
   leaveRoom: () => void;
@@ -171,6 +172,10 @@ export function RoomProvider({ children }: { children: ReactNode }) {
     return emitWithAck("room:setTeams", { teams });
   }
 
+  function setHandicap(playerId: string, handicap: number) {
+    socket.emit("room:setHandicap", { playerId, handicap });
+  }
+
   function startGame(): Promise<AckResponse> {
     return emitWithAck("room:start", {});
   }
@@ -251,6 +256,7 @@ export function RoomProvider({ children }: { children: ReactNode }) {
         setCourse,
         setGameMode,
         setTeams,
+        setHandicap,
         startGame,
         newRound,
         leaveRoom,

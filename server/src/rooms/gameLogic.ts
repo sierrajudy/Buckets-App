@@ -28,6 +28,20 @@ function sumRecords(records: Record<string, number>[], players: string[]): Recor
 }
 
 /**
+ * Standard handicap stroke allocation: a player gets one stroke on every
+ * hole whose stroke-index (difficulty ranking, 1 = hardest) falls within
+ * their handicap, wrapping around for handicaps above the hole count (e.g.
+ * a 20-handicap on an 18-hole course gets a stroke on every hole, plus a
+ * second stroke on the 2 hardest).
+ */
+function strokesReceivedOnHole(handicap: number, holeStrokeIndex: number, holeCount: number): number {
+  if (handicap <= 0 || holeCount <= 0) return 0;
+  const fullRounds = Math.floor(handicap / holeCount);
+  const remainder = handicap % holeCount;
+  return fullRounds + (holeStrokeIndex <= remainder ? 1 : 0);
+}
+
+/**
  * A tie for lowest score splits the hole-win pool evenly among however many
  * players tied, which works the same way regardless of room size (2-4).
  * Birdie/eagle are flat bonus points paid to every player who earns them on
@@ -95,8 +109,21 @@ export function computeHoleResult(entry: HoleEntry, players: string[]): HoleResu
  * does. Birdie/eagle bonus points are paid to a team whenever either
  * member earns one, independent of who wins their individual matchup.
  * Buckets and PG&E stay individual side games, exactly like standard mode.
+ *
+ * Handicaps: low/high is decided by NET score, not gross — all four net
+ * scores are computed first, and only then sorted into low/high per team,
+ * so a player who shot the higher gross score can still end up as their
+ * team's low if a handicap stroke pulls their net score under. The
+ * birdie/eagle bonus stays gross-only: a net birdie from a handicap stroke
+ * doesn't earn it, only an actual gross birdie does.
  */
-export function computeHighLowHoleResult(entry: HoleEntry, teams: Teams, players: string[]): HoleResult {
+export function computeHighLowHoleResult(
+  entry: HoleEntry,
+  teams: Teams,
+  players: string[],
+  playerHandicaps: Record<string, number>,
+  holeCount: number,
+): HoleResult {
   const strokes: Record<string, number> = {};
   for (const p of players) {
     const v = entry.strokes[p];
@@ -115,9 +142,17 @@ export function computeHighLowHoleResult(entry: HoleEntry, teams: Teams, players
 
   const allScored = teams.flat().every((p) => strokes[p] > 0);
 
+  // All four net scores, computed up front — before anyone is labeled
+  // "low" or "high" — so handicap strokes are applied uniformly first.
+  const netStrokes: Record<string, number> = {};
+  for (const p of players) {
+    const strokesGiven = strokesReceivedOnHole(playerHandicaps[p] ?? 0, entry.handicap, holeCount);
+    netStrokes[p] = strokes[p] > 0 ? strokes[p] - strokesGiven : 0;
+  }
+
   function lowHigh(team: [string, string]): { low: string; high: string } {
     const [p1, p2] = team;
-    return strokes[p1] <= strokes[p2] ? { low: p1, high: p2 } : { low: p2, high: p1 };
+    return netStrokes[p1] <= netStrokes[p2] ? { low: p1, high: p2 } : { low: p2, high: p1 };
   }
 
   let lowPlayers: [string, string] = [teams[0][0], teams[1][0]];
@@ -132,18 +167,18 @@ export function computeHighLowHoleResult(entry: HoleEntry, teams: Teams, players
     lowPlayers = [a.low, b.low];
     highPlayers = [a.high, b.high];
 
-    if (strokes[a.low] < strokes[b.low]) {
+    if (netStrokes[a.low] < netStrokes[b.low]) {
       lowWinner = "team0";
       matchPoints[0] += 1;
-    } else if (strokes[b.low] < strokes[a.low]) {
+    } else if (netStrokes[b.low] < netStrokes[a.low]) {
       lowWinner = "team1";
       matchPoints[1] += 1;
     }
 
-    if (strokes[a.high] < strokes[b.high]) {
+    if (netStrokes[a.high] < netStrokes[b.high]) {
       highWinner = "team0";
       matchPoints[0] += 1;
-    } else if (strokes[b.high] < strokes[a.high]) {
+    } else if (netStrokes[b.high] < netStrokes[a.high]) {
       highWinner = "team1";
       matchPoints[1] += 1;
     }
@@ -192,7 +227,7 @@ export function computeHighLowHoleResult(entry: HoleEntry, teams: Teams, players
     pgeWinners: entry.pgeWinners,
     pgePoints,
     totalPoints,
-    highLow: { lowPlayers, lowWinner, highPlayers, highWinner, matchPoints, bonusPoints, teamPoints },
+    highLow: { lowPlayers, lowWinner, highPlayers, highWinner, matchPoints, bonusPoints, teamPoints, netStrokes },
   };
 }
 

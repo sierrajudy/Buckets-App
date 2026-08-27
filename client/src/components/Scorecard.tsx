@@ -154,6 +154,17 @@ export function Scorecard() {
     return undefined;
   }
 
+  /** Gross score, plus the net (after handicap strokes) when it differs —
+   * so a stroke actually taken is visible right where the matchup is
+   * decided, instead of the net swap looking unexplained. */
+  function formatMatchupScore(name: string): string {
+    const gross = result.strokes[name];
+    if (!gross) return "–";
+    const net = result.highLow?.netStrokes[name];
+    if (net !== undefined && net !== gross) return `${gross} → ${net}`;
+    return `${gross}`;
+  }
+
   return (
     <div className="min-h-screen bg-neutral-50 dark:bg-neutral-950 flex flex-col overflow-hidden relative">
       {showBallRoll && (
@@ -318,13 +329,13 @@ export function Scorecard() {
                   <span
                     className={`flex-1 text-right truncate ${outcome === "team0" ? "font-bold text-green-700 dark:text-green-400" : "text-neutral-500"}`}
                   >
-                    {p0} ({result.strokes[p0] || "–"})
+                    {p0} ({formatMatchupScore(p0)})
                   </span>
                   <span className="text-neutral-400 px-2 text-xs shrink-0">vs</span>
                   <span
                     className={`flex-1 truncate ${outcome === "team1" ? "font-bold text-green-700 dark:text-green-400" : "text-neutral-500"}`}
                   >
-                    {p1} ({result.strokes[p1] || "–"})
+                    {p1} ({formatMatchupScore(p1)})
                   </span>
                 </div>
                 {outcome === "tie" && <div className="text-center text-xs text-neutral-400 mt-0.5">🙌 No blood</div>}
