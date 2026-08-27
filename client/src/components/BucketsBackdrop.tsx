@@ -12,7 +12,6 @@
 interface Mound {
   x: number;
   h: number;
-  w: number;
 }
 
 /** One continuous rolling-fairway silhouette rather than separate hills, so
