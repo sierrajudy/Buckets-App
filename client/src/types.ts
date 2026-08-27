@@ -3,7 +3,7 @@ export type AvatarKey = (typeof AVATAR_KEYS)[number];
 
 export type RoomPhase = "lobby" | "playing" | "puttoff" | "celebration";
 
-export type GameMode = "standard" | "highlow";
+export type GameMode = "standard" | "highlow" | "wolf";
 
 /** Exactly two teams of two player names, fixed for the whole round. */
 export type Teams = [[string, string], [string, string]];
@@ -32,6 +32,18 @@ export interface HighLowHoleOutcome {
   netStrokes: Record<string, number>;
 }
 
+export interface WolfHoleOutcome {
+  wolfName: string;
+  partner: string | null;
+  alone: boolean;
+  teamA: string[];
+  teamB: string[];
+  bestA: number | null;
+  bestB: number | null;
+  outcome: "teamA" | "teamB" | "tie" | null;
+  points: Record<string, number>;
+}
+
 export interface HoleResult {
   holeNumber: number;
   par: number;
@@ -51,6 +63,7 @@ export interface HoleResult {
   pgePoints: Record<string, number>;
   totalPoints: Record<string, number>;
   highLow?: HighLowHoleOutcome;
+  wolf?: WolfHoleOutcome;
 }
 
 export interface HighLowMatchResult {

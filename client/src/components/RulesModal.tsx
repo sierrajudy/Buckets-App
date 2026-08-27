@@ -104,6 +104,37 @@ export function RulesModal({ onClose }: { onClose: () => void }) {
           </section>
 
           <section className="space-y-1.5">
+            <h3 className="font-bold text-neutral-900 dark:text-white">🐺 Wolf (mode)</h3>
+            <ul className="list-disc pl-5 space-y-1">
+              <li>
+                4 players only. There are no fixed teams — instead, the{" "}
+                <span className="font-semibold">wolf</span> rotates every hole: assigned randomly on the first hole,
+                then in order after that. No buckets or PG&amp;E in this mode.
+              </li>
+              <li>
+                The wolf hits last, then decides whether to{" "}
+                <span className="font-semibold">partner up</span> with one other player for the hole, or{" "}
+                <span className="font-semibold">go alone</span> against the other three.
+              </li>
+              <li>
+                <span className="font-semibold">Gross</span> strokes only — no handicap in this mode. Whichever side
+                has the better best-ball score wins the hole; a tie is "no blood," worth nothing.
+              </li>
+              <li>
+                A <span className="font-semibold">2v2 win</span> pays 1 point to each player on the winning side. A{" "}
+                <span className="font-semibold">lone wolf win</span> pays the wolf 3 points. A{" "}
+                <span className="font-semibold">lone wolf loss</span> pays 1 point to each of the three opponents.
+              </li>
+              <li>
+                <span className="font-semibold">Birdie</span> doubles and <span className="font-semibold">eagle</span>{" "}
+                triples whatever points that individual player earned on the hole — it's personal, not shared with
+                teammates, and only multiplies points actually won (a birdie on a lost hole is still 0).
+              </li>
+              <li>Most points after 18 holes wins, same as Buckets — ties go to a putt-off.</li>
+            </ul>
+          </section>
+
+          <section className="space-y-1.5">
             <h3 className="font-bold text-neutral-900 dark:text-white">Ideas for extra challenges</h3>
             <p className="text-neutral-500 dark:text-neutral-400">
               Since the bucket and PG&amp;E challenges are whatever the host dreams up, here are some ideas to keep

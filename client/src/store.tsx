@@ -46,6 +46,7 @@ interface RoomContextValue {
   toggleBucket: (holeNumber: number, targetName: string) => void;
   setPgeEnabled: (holeNumber: number, enabled: boolean) => void;
   togglePgeWinner: (holeNumber: number, targetName: string) => void;
+  setWolfChoice: (holeNumber: number, partner: string | null, alone: boolean) => void;
   resolvePuttOff: (winner: string) => void;
   confirmFinishRound: () => void;
   endGame: () => void;
@@ -207,6 +208,10 @@ export function RoomProvider({ children }: { children: ReactNode }) {
     socket.emit("hole:togglePgeWinner", { holeNumber, targetName });
   }
 
+  function setWolfChoice(holeNumber: number, partner: string | null, alone: boolean) {
+    socket.emit("hole:setWolfChoice", { holeNumber, partner, alone });
+  }
+
   function resolvePuttOff(winner: string) {
     socket.emit("puttoff:resolve", { winner });
   }
@@ -264,6 +269,7 @@ export function RoomProvider({ children }: { children: ReactNode }) {
         toggleBucket,
         setPgeEnabled,
         togglePgeWinner,
+        setWolfChoice,
         resolvePuttOff,
         confirmFinishRound,
         endGame,

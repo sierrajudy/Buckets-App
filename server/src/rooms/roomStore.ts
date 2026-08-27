@@ -16,6 +16,7 @@ import {
   computeHighLowHoleResult,
   computeHoleResult,
   computeRunningTotals,
+  computeWolfHoleResult,
   findHoleInOneWinner,
   findTiedLeaders,
   finalizeHighLowRound,
@@ -52,6 +53,8 @@ function initEntries(courseId: string | null): Record<number, HoleEntry> {
       bucketWinners: [],
       pgeEnabled: false,
       pgeWinners: [],
+      wolfPartner: null,
+      wolfAlone: false,
     };
   }
   return entries;
@@ -81,6 +84,7 @@ export function createRoom(hostName: string): { room: Room; player: Player } {
     currentStep: 0,
     gameMode: "standard",
     teams: null,
+    wolfOrder: null,
   };
   rooms.set(code, room);
   return { room, player };
@@ -185,7 +189,7 @@ export function setCourse(room: Room, courseId: string): boolean {
  * mode (or roster) it was never validated against. */
 export function setGameMode(room: Room, mode: GameMode): boolean {
   if (room.phase !== "lobby") return false;
-  if (mode !== "standard" && mode !== "highlow") return false;
+  if (mode !== "standard" && mode !== "highlow" && mode !== "wolf") return false;
   room.gameMode = mode;
   room.teams = null;
   return true;
@@ -212,7 +216,20 @@ export function canStart(room: Room): boolean {
   if (room.gameMode === "highlow") {
     return room.players.length === 4 && room.teams !== null;
   }
+  if (room.gameMode === "wolf") {
+    return room.players.length === 4;
+  }
   return room.players.length >= 2 && room.players.length <= 4;
+}
+
+/** Wolf's rotation is fixed for the whole round: a random player for the
+ * first hole played, then the room's other three in roster order after
+ * that — decided once here so it stays stable across every re-render and
+ * reconnect instead of being re-rolled on each state computation. */
+function buildWolfOrder(room: Room): [string, string, string, string] {
+  const names = playerNames(room);
+  const offset = Math.floor(Math.random() * 4);
+  return [0, 1, 2, 3].map((i) => names[(offset + i) % 4]) as [string, string, string, string];
 }
 
 export function startGame(room: Room): boolean {
@@ -223,6 +240,7 @@ export function startGame(room: Room): boolean {
   room.predictions = {};
   room.phase = "playing";
   room.currentStep = 0;
+  room.wolfOrder = room.gameMode === "wolf" ? buildWolfOrder(room) : null;
   return true;
 }
 
@@ -233,6 +251,7 @@ export function startNewRound(room: Room): void {
   room.predictions = {};
   room.phase = "lobby";
   room.currentStep = 0;
+  room.wolfOrder = null;
 }
 
 export function removePlayer(room: Room, playerId: string): void {
@@ -257,7 +276,48 @@ function orderedResults(room: Room) {
       computeHighLowHoleResult(room.entries[holeNumber], teams, names, playerHandicaps, holeCount),
     );
   }
+  if (room.gameMode === "wolf" && room.wolfOrder) {
+    const wolfOrder = room.wolfOrder;
+    return order.map((holeNumber, i) => computeWolfHoleResult(room.entries[holeNumber], wolfOrder[i % 4], names));
+  }
   return order.map((holeNumber) => computeHoleResult(room.entries[holeNumber], names));
+}
+
+/** The wolf's name for a given hole number, derived from the round's fixed
+ * rotation and that hole's position in play order — used to validate a
+ * wolf-choice mutation without trusting the client to say who the wolf is. */
+function wolfNameForHole(room: Room, holeNumber: number): string | null {
+  if (room.gameMode !== "wolf" || !room.wolfOrder) return null;
+  const holeCount = getCourse(room.courseId)?.pars.length ?? 0;
+  const order = buildHolesOrder(room.startingHole, holeCount);
+  const i = order.indexOf(holeNumber);
+  if (i === -1) return null;
+  return room.wolfOrder[i % 4];
+}
+
+/** Host-only, "wolf" mode only: records the wolf's choice for a hole —
+ * either a specific partner or going alone. Setting one clears the other. */
+export function setWolfChoice(room: Room, holeNumber: number, partner: string | null, alone: boolean): boolean {
+  if (room.phase !== "playing" || room.gameMode !== "wolf") return false;
+  const entry = room.entries[holeNumber];
+  if (!entry) return false;
+  const wolfName = wolfNameForHole(room, holeNumber);
+  if (!wolfName) return false;
+
+  if (alone) {
+    entry.wolfAlone = true;
+    entry.wolfPartner = null;
+    return true;
+  }
+  if (partner === null) {
+    entry.wolfAlone = false;
+    entry.wolfPartner = null;
+    return true;
+  }
+  if (partner === wolfName || !playerNames(room).includes(partner)) return false;
+  entry.wolfAlone = false;
+  entry.wolfPartner = partner;
+  return true;
 }
 
 /** Recomputes results after a scoring mutation. A hole-in-one no longer
@@ -310,6 +370,7 @@ async function finalizeAndPersist(
           holes: results,
           holeInOnePlayer: opts.holeInOnePlayer,
           puttOffWinner: opts.puttOffWinner,
+          gameMode: room.gameMode,
         });
   room.finishedRound = round;
   room.phase = "celebration";

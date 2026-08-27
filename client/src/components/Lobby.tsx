@@ -4,11 +4,13 @@ import { AVATAR_KEYS, AVATAR_META, AvatarIcon, type AvatarKey } from "./Avatars"
 import { RulesModal } from "./RulesModal";
 import { CourseSearch } from "./CourseSearch";
 import { TeamPicker } from "./TeamPicker";
+import { WolfBackdrop } from "./WolfBackdrop";
 import type { GameMode } from "../types";
 
 const GAME_MODES: { key: GameMode; label: string; blurb: string }[] = [
   { key: "standard", label: "Buckets", blurb: "2-4 players, free-for-all points" },
   { key: "highlow", label: "High Low", blurb: "4 players, 2v2 team match play" },
+  { key: "wolf", label: "🐺 Wolf", blurb: "4 players, a rotating wolf, beware!" },
 ];
 
 export function Lobby({
@@ -38,7 +40,15 @@ export function Lobby({
   const [showRules, setShowRules] = useState(false);
 
   const isHighLow = state?.gameMode === "highlow";
+  const isWolf = state?.gameMode === "wolf";
+  const needsFourPlayers = isHighLow || isWolf;
   const highLowReady = isHighLow && state?.players.length === 4;
+  // Wolf's cards go translucent so the starry night background shows
+  // through — a light blur keeps text legible over the busy sky. Section
+  // labels switch to white since the usual muted gray reads too faint
+  // against the dark sky bleeding through.
+  const cardBgCls = isWolf ? "bg-white/25 dark:bg-neutral-900/25 backdrop-blur-sm" : "bg-white dark:bg-neutral-900";
+  const labelCls = isWolf ? "text-white" : "text-neutral-500";
 
   // High Low always needs a valid 2v2 split to start. Rather than make the
   // host explicitly assign teams before they can do anything else, seed a
@@ -60,7 +70,11 @@ export function Lobby({
   const canStart =
     Boolean(state.courseId) &&
     state.players.every((p) => p.avatar) &&
-    (isHighLow ? state.players.length === 4 && state.teams !== null : state.players.length >= 2 && state.players.length <= 4);
+    (isHighLow
+      ? state.players.length === 4 && state.teams !== null
+      : isWolf
+        ? state.players.length === 4
+        : state.players.length >= 2 && state.players.length <= 4);
 
   async function handleStart() {
     setStarting(true);
@@ -82,8 +96,17 @@ export function Lobby({
   }
 
   return (
-    <div className={`min-h-screen p-4 ${isHighLow ? "bg-purple-100 dark:bg-purple-950" : "bg-neutral-50 dark:bg-neutral-950"}`}>
-      <div className="max-w-lg mx-auto space-y-4">
+    <div
+      className={`min-h-screen p-4 relative ${isWolf ? "pb-36 sm:pb-52" : ""} ${
+        isHighLow
+          ? "bg-purple-100 dark:bg-purple-950"
+          : isWolf
+            ? "bg-gradient-to-b from-slate-950 via-indigo-950 to-indigo-900"
+            : "bg-neutral-50 dark:bg-neutral-950"
+      }`}
+    >
+      {isWolf && <WolfBackdrop />}
+      <div className="max-w-lg mx-auto space-y-4 relative z-10">
         <div className="flex items-center justify-between">
           <button onClick={leaveRoom} className="text-sm text-neutral-500 hover:text-red-500">
             Leave
@@ -117,8 +140,8 @@ export function Lobby({
           </div>
         </div>
 
-        <div className="bg-white dark:bg-neutral-900 rounded-2xl border border-neutral-200 dark:border-neutral-800 p-5 text-center">
-          <div className="text-xs font-semibold text-neutral-500 uppercase tracking-widest mb-1">Room code</div>
+        <div className={`${cardBgCls} rounded-2xl border border-neutral-200 dark:border-neutral-800 p-5 text-center`}>
+          <div className={`text-xs font-semibold ${labelCls} uppercase tracking-widest mb-1`}>Room code</div>
           <button
             onClick={copyCode}
             className="text-4xl font-black tracking-[0.25em] text-green-700 dark:text-green-400 font-mono"
@@ -132,13 +155,13 @@ export function Lobby({
         </div>
 
         {isSpectator && (
-          <div className="bg-white dark:bg-neutral-900 rounded-2xl border border-neutral-200 dark:border-neutral-800 p-4 text-center text-sm text-neutral-500 dark:text-neutral-400">
+          <div className={`${cardBgCls} rounded-2xl border border-neutral-200 dark:border-neutral-800 p-4 text-center text-sm text-neutral-500 dark:text-neutral-400`}>
             You're spectating — sit back and watch, no avatar needed. Waiting for the host to start the round…
           </div>
         )}
 
-        <div className="bg-white dark:bg-neutral-900 rounded-2xl border border-neutral-200 dark:border-neutral-800 p-4">
-          <div className="text-sm font-semibold text-neutral-500 mb-3">Game mode</div>
+        <div className={`${cardBgCls} rounded-2xl border border-neutral-200 dark:border-neutral-800 p-4`}>
+          <div className={`text-sm font-semibold ${labelCls} mb-3`}>Game mode</div>
           {isHost ? (
             <div className="grid grid-cols-2 gap-2">
               {GAME_MODES.map((mode) => (
@@ -171,8 +194,8 @@ export function Lobby({
           />
         )}
 
-        <div className="bg-white dark:bg-neutral-900 rounded-2xl border border-neutral-200 dark:border-neutral-800 p-4">
-          <div className="text-sm font-semibold text-neutral-500 mb-1">Course</div>
+        <div className={`${cardBgCls} rounded-2xl border border-neutral-200 dark:border-neutral-800 p-4`}>
+          <div className={`text-sm font-semibold ${labelCls} mb-1`}>Course</div>
 
           {isHost ? (
             <CourseSearch
@@ -217,8 +240,8 @@ export function Lobby({
             ))}
         </div>
 
-        <div className="bg-white dark:bg-neutral-900 rounded-2xl border border-neutral-200 dark:border-neutral-800 p-4">
-          <div className="text-sm font-semibold text-neutral-500 mb-3">
+        <div className={`${cardBgCls} rounded-2xl border border-neutral-200 dark:border-neutral-800 p-4`}>
+          <div className={`text-sm font-semibold ${labelCls} mb-3`}>
             Players ({state.players.length}/4)
           </div>
           <div className="space-y-2">
@@ -245,8 +268,8 @@ export function Lobby({
         </div>
 
         {!isSpectator && (
-          <div className="bg-white dark:bg-neutral-900 rounded-2xl border border-neutral-200 dark:border-neutral-800 p-4">
-            <div className="text-sm font-semibold text-neutral-500 mb-3">Pick your avatar</div>
+          <div className={`${cardBgCls} rounded-2xl border border-neutral-200 dark:border-neutral-800 p-4`}>
+            <div className={`text-sm font-semibold ${labelCls} mb-3`}>Pick your avatar</div>
             <div className="grid grid-cols-4 gap-2">
               {AVATAR_KEYS.map((key) => {
                 const takenByOther = takenAvatars.has(key) && me?.avatar !== key;
@@ -290,9 +313,9 @@ export function Lobby({
               </button>
               {!state.courseId ? (
                 <p className="text-center text-xs text-neutral-500 mt-2">Pick a course above to continue</p>
-              ) : isHighLow && state.players.length !== 4 ? (
+              ) : needsFourPlayers && state.players.length !== 4 ? (
                 <p className="text-center text-xs text-neutral-500 mt-2">
-                  High Low needs exactly 4 players ({state.players.length}/4 so far)
+                  {isHighLow ? "High Low" : "Wolf"} needs exactly 4 players ({state.players.length}/4 so far)
                 </p>
               ) : null}
             </div>
@@ -300,8 +323,8 @@ export function Lobby({
             <p className="text-center text-sm text-neutral-500 py-2">
               {!state.courseId
                 ? "Waiting for the host to pick a course…"
-                : isHighLow && state.players.length !== 4
-                  ? `High Low needs exactly 4 players (${state.players.length}/4 so far)`
+                : needsFourPlayers && state.players.length !== 4
+                  ? `${isHighLow ? "High Low" : "Wolf"} needs exactly 4 players (${state.players.length}/4 so far)`
                   : canStart
                     ? "Waiting for the host to start the round…"
                     : "Waiting for everyone to pick an avatar…"}

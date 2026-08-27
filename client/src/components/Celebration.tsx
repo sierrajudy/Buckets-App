@@ -50,6 +50,19 @@ export function Celebration({
   if (!state || !state.finishedRound) return null;
   const round = state.finishedRound;
 
+  const grossTotals: Record<string, number> = {};
+  const netTotals: Record<string, number> = {};
+  for (const p of round.players) {
+    grossTotals[p] = 0;
+    netTotals[p] = 0;
+  }
+  for (const h of round.holes) {
+    for (const p of round.players) {
+      grossTotals[p] += h.strokes[p] ?? 0;
+      netTotals[p] += h.highLow?.netStrokes[p] ?? h.strokes[p] ?? 0;
+    }
+  }
+
   async function handleDeleteRound() {
     setDeleting(true);
     setDeleteError(null);
@@ -151,6 +164,28 @@ export function Celebration({
                       {round.teams![1].join(" & ")}
                     </span>
                   </div>
+                </div>
+              ))}
+            </div>
+            <div className="mt-3 space-y-2">
+              <div className="text-xs font-semibold uppercase tracking-wide text-neutral-400 px-1">Scores</div>
+              {round.teams.map((team, i) => (
+                <div key={i} className="bg-neutral-900 border border-neutral-800 rounded-xl px-3 py-2.5 text-sm space-y-1.5">
+                  {team.map((p) => (
+                    <div key={p} className="flex items-center justify-between">
+                      <span className="flex items-center gap-2 text-neutral-300">
+                        <AvatarIcon avatar={avatarFor(p)} className="w-5 h-5" />
+                        {p}
+                      </span>
+                      <span className="font-mono">
+                        <span className="text-white font-semibold">{grossTotals[p]}</span>
+                        <span className="text-neutral-500"> gross</span>
+                        <span className="mx-1.5 text-neutral-600">/</span>
+                        <span className="text-white font-semibold">{netTotals[p]}</span>
+                        <span className="text-neutral-500"> net</span>
+                      </span>
+                    </div>
+                  ))}
                 </div>
               ))}
             </div>

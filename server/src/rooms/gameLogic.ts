@@ -1,5 +1,5 @@
 import { v4 as uuid } from "uuid";
-import type { GameMode, HighLowHoleOutcome, HighLowMatchResult, HoleEntry, HoleResult, RoundSummary, Teams } from "./types.js";
+import type { GameMode, HighLowHoleOutcome, HighLowMatchResult, HoleEntry, HoleResult, RoundSummary, Teams, WolfHoleOutcome } from "./types.js";
 
 const BASE_HOLE_POINTS = 2;
 const BIRDIE_BONUS = 1;
@@ -9,6 +9,12 @@ const PGE_POINTS = 1;
 
 const HIGHLOW_BIRDIE_BONUS = 0.5;
 const HIGHLOW_EAGLE_BONUS = 1;
+
+const WOLF_TEAM_WIN_POINTS = 1; // each player on a winning 2v2 side
+const WOLF_LONE_WOLF_WIN_POINTS = 3; // the wolf alone, beating the other three
+const WOLF_LONE_WOLF_LOSS_POINTS = 1; // each of the three beating a lone wolf
+const WOLF_BIRDIE_MULTIPLIER = 2;
+const WOLF_EAGLE_MULTIPLIER = 3;
 
 function round2(n: number): number {
   return Math.round(n * 100) / 100;
@@ -231,6 +237,99 @@ export function computeHighLowHoleResult(
   };
 }
 
+/**
+ * Wolf: the wolf (rotates every hole — see Room.wolfOrder) either partners
+ * with one other player or goes it alone against the other three. Whichever
+ * side has the lower best gross score (no handicap in this mode) wins the
+ * hole: 1 point each for a winning 2v2 side, 3 points for a lone wolf who
+ * wins outright, or 1 point each for the three who beat a lone wolf. A tie
+ * pays nothing. Birdie/eagle bonuses are individual, not team-wide — they
+ * multiply (not add to) whatever points that specific player already earned
+ * from the hole's outcome, ×2 for a birdie and ×3 for an eagle, so a birdie
+ * on a hole that player's side lost is still worth 0.
+ */
+export function computeWolfHoleResult(entry: HoleEntry, wolfName: string, players: string[]): HoleResult {
+  const strokes: Record<string, number> = {};
+  for (const p of players) {
+    const v = entry.strokes[p];
+    strokes[p] = typeof v === "number" && v > 0 ? v : 0;
+  }
+
+  const validPlayers = players.filter((p) => strokes[p] > 0);
+  const underPar = (p: string) => entry.par - strokes[p];
+  const birdiePlayers = validPlayers.filter((p) => underPar(p) === 1);
+  const eaglePlayers = validPlayers.filter((p) => underPar(p) >= 2);
+  const isBirdie = birdiePlayers.length > 0;
+  const isEagle = eaglePlayers.length > 0;
+
+  const holeInOnePlayers = validPlayers.filter((p) => strokes[p] === 1);
+  const isHoleInOne = holeInOnePlayers.length > 0;
+
+  const partner = entry.wolfAlone ? null : (entry.wolfPartner ?? null);
+  const teamA = partner ? [wolfName, partner] : [wolfName];
+  const teamB = players.filter((p) => !teamA.includes(p));
+
+  const decided = entry.wolfAlone || Boolean(entry.wolfPartner);
+  const allScored = players.every((p) => strokes[p] > 0);
+
+  const points: Record<string, number> = Object.fromEntries(players.map((p) => [p, 0]));
+  let bestA: number | null = null;
+  let bestB: number | null = null;
+  let outcome: WolfHoleOutcome["outcome"] = null;
+
+  if (decided && allScored) {
+    bestA = Math.min(...teamA.map((p) => strokes[p]));
+    bestB = Math.min(...teamB.map((p) => strokes[p]));
+
+    if (bestA < bestB) {
+      outcome = "teamA";
+      if (teamA.length === 1) points[teamA[0]] = WOLF_LONE_WOLF_WIN_POINTS;
+      else for (const p of teamA) points[p] = WOLF_TEAM_WIN_POINTS;
+    } else if (bestB < bestA) {
+      outcome = "teamB";
+      if (teamA.length === 1) for (const p of teamB) points[p] = WOLF_LONE_WOLF_LOSS_POINTS;
+      else for (const p of teamB) points[p] = WOLF_TEAM_WIN_POINTS;
+    } else {
+      outcome = "tie";
+    }
+  }
+
+  for (const p of players) {
+    if (birdiePlayers.includes(p)) points[p] *= WOLF_BIRDIE_MULTIPLIER;
+    else if (eaglePlayers.includes(p)) points[p] *= WOLF_EAGLE_MULTIPLIER;
+  }
+
+  const holeWinners = outcome === "teamA" ? [...teamA] : outcome === "teamB" ? [...teamB] : [];
+
+  const bucketPoints = splitPool(BUCKET_POINTS, entry.bucketWinners, players);
+  const pgePoints = entry.pgeEnabled
+    ? splitPool(PGE_POINTS, entry.pgeWinners, players)
+    : Object.fromEntries(players.map((p) => [p, 0]));
+
+  const totalPoints = sumRecords([points, bucketPoints, pgePoints], players);
+
+  return {
+    holeNumber: entry.holeNumber,
+    par: entry.par,
+    yardage: entry.yardage,
+    handicap: entry.handicap,
+    strokes,
+    isBirdie,
+    isEagle,
+    isHoleInOne,
+    holeInOnePlayers,
+    holeWinners,
+    holePoints: points,
+    bucketWinners: entry.bucketWinners,
+    bucketPoints,
+    pgeEnabled: entry.pgeEnabled,
+    pgeWinners: entry.pgeWinners,
+    pgePoints,
+    totalPoints,
+    wolf: { wolfName, partner, alone: entry.wolfAlone, teamA, teamB, bestA, bestB, outcome, points },
+  };
+}
+
 export function computeRunningTotals(holeResults: HoleResult[], players: string[]): Record<string, number> {
   return sumRecords(
     holeResults.map((h) => h.totalPoints),
@@ -273,8 +372,9 @@ export function finalizeRound(params: {
   holes: HoleResult[];
   holeInOnePlayer: string | null;
   puttOffWinner: string | null;
+  gameMode?: GameMode;
 }): RoundSummary {
-  const { course, hostName, players, startingHole, holes, holeInOnePlayer, puttOffWinner } = params;
+  const { course, hostName, players, startingHole, holes, holeInOnePlayer, puttOffWinner, gameMode = "standard" } = params;
   const totals = computeRunningTotals(holes, players);
 
   let winner: string;
@@ -308,7 +408,7 @@ export function finalizeRound(params: {
     winner,
     losers: losers.length > 0 ? losers : players.filter((p) => p !== winner),
     winners: [winner],
-    gameMode: "standard",
+    gameMode,
     teams: null,
     highLow: null,
   };

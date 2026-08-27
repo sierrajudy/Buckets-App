@@ -19,6 +19,7 @@ import {
   setPlayerHandicap,
   setPrediction,
   setTeams,
+  setWolfChoice,
   spectateRoom,
   startGame,
   startNewRound,
@@ -231,6 +232,14 @@ export function registerRoomHandlers(io: Server) {
         ? entry.pgeWinners.filter((n) => n !== payload.targetName)
         : [...entry.pgeWinners, payload.targetName];
       recomputeAndMaybeFinish(room).then(() => broadcast(io, room));
+    });
+
+    socket.on("hole:setWolfChoice", (payload: { holeNumber: number; partner: string | null; alone: boolean }) => {
+      const room = data.roomCode ? getRoom(data.roomCode) : undefined;
+      if (!room || !isHost(room, data.playerId) || room.phase !== "playing") return;
+      if (setWolfChoice(room, Number(payload?.holeNumber), payload?.partner ?? null, Boolean(payload?.alone))) {
+        recomputeAndMaybeFinish(room).then(() => broadcast(io, room));
+      }
     });
 
     socket.on("room:confirmFinish", () => {

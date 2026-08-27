@@ -1,4 +1,5 @@
 import { AVATAR_KEYS, type AvatarKey } from "../types";
+import { useRoom } from "../store";
 
 export { AVATAR_KEYS };
 export type { AvatarKey };
@@ -194,6 +195,40 @@ function CapAvatar() {
   );
 }
 
+/** Wolf mode's fun little flourish — a pair of ears poking up from behind
+ * whatever avatar is showing, drawn in the same 120x120 space so they line
+ * up regardless of which icon is underneath. The shape is authored once
+ * centered on (60, 19) — most avatars have a roughly centered, symmetric
+ * head and just use that default — then re-anchored to (cx, cy) and
+ * rotated/scaled for the handful of avatars (Flag, Beer) whose "head" sits
+ * off-center or at an angle, via WOLF_EAR_OFFSETS below. */
+function WolfEars({ cx = 60, cy = 19, rotate = 0, scale = 1 }: { cx?: number; cy?: number; rotate?: number; scale?: number }) {
+  return (
+    <svg viewBox="0 0 120 120" className="absolute inset-0" width="100%" height="100%" aria-hidden="true">
+      <g transform={`translate(${cx} ${cy}) rotate(${rotate}) scale(${scale}) translate(-60 -19)`}>
+        <path d="M30 36 L10 2 L46 24 Z" fill="#78716c" stroke="#0f172a" strokeWidth="2.5" strokeLinejoin="round" />
+        <path d="M32 30 L20 8 L42 22 Z" fill="#fbcfe8" />
+        <path d="M90 36 L110 2 L74 24 Z" fill="#78716c" stroke="#0f172a" strokeWidth="2.5" strokeLinejoin="round" />
+        <path d="M88 30 L100 8 L78 22 Z" fill="#fbcfe8" />
+      </g>
+    </svg>
+  );
+}
+
+/** Per-avatar ear placement overrides, matching each avatar's own Face(x, y,
+ * rotate) call above — only needed for the avatars whose head isn't roughly
+ * centered on (60, 19) at scale 1. */
+const WOLF_EAR_OFFSETS: Partial<Record<AvatarKey, { cx?: number; cy?: number; rotate?: number; scale?: number }>> = {
+  // Anchored right at the pole/pennant corner, tilted to match the flag's
+  // own diagonal top edge (63,20)->(110,40), and small since the pennant
+  // itself is a thin wedge, not a round head.
+  flag: { cx: 74, cy: 15, rotate: 18, scale: 0.75 },
+  beer: { cx: 54, cy: 20, scale: 0.85 },
+  // The clubhead (the big rounded blob) is the "head" here, not the grip
+  // up at the top of the shaft — ears sit just above its top edge (~y=46).
+  club: { cx: 62, cy: 48, scale: 0.85 },
+};
+
 const AVATAR_COMPONENTS: Record<AvatarKey, () => React.JSX.Element> = {
   ball: BallAvatar,
   club: ClubAvatar,
@@ -206,22 +241,29 @@ const AVATAR_COMPONENTS: Record<AvatarKey, () => React.JSX.Element> = {
 };
 
 export function AvatarIcon({ avatar, className }: { avatar: AvatarKey | null; className?: string }) {
+  // Every component that renders an avatar lives inside RoomProvider, so
+  // this can read the live game mode directly without prop-drilling it
+  // through every call site.
+  const isWolf = useRoom().state?.gameMode === "wolf";
+
   if (!avatar) {
     return (
-      <span className={`inline-block ${className ?? ""}`}>
+      <span className={`relative inline-block ${className ?? ""}`}>
         <svg viewBox="0 0 120 120" width="100%" height="100%" role="img" aria-label="No avatar chosen">
           <circle cx="60" cy="60" r="46" fill="#e2e8f0" stroke="#94a3b8" strokeWidth="3" strokeDasharray="6 6" />
           <text x="60" y="76" textAnchor="middle" fontSize="42" fill="#94a3b8" fontWeight="700">
             ?
           </text>
         </svg>
+        {isWolf && <WolfEars />}
       </span>
     );
   }
   const Cmp = AVATAR_COMPONENTS[avatar];
   return (
-    <span className={`inline-block ${className ?? ""}`}>
+    <span className={`relative inline-block ${className ?? ""}`}>
       <Cmp />
+      {isWolf && <WolfEars {...WOLF_EAR_OFFSETS[avatar]} />}
     </span>
   );
 }

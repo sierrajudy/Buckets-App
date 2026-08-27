@@ -7,7 +7,7 @@ export type RoomPhase = "lobby" | "playing" | "puttoff" | "celebration";
  * "highlow" needed something to be named against). More modes land here
  * over time — each one is a distinct scoring engine in gameLogic.ts, kept
  * behind this single discriminant so the room/round shape stays uniform. */
-export type GameMode = "standard" | "highlow";
+export type GameMode = "standard" | "highlow" | "wolf";
 
 /** Exactly two teams of two player names, fixed for the whole round. Only
  * meaningful when gameMode is "highlow". */
@@ -40,6 +40,12 @@ export interface HoleEntry {
   bucketWinners: string[];
   pgeEnabled: boolean;
   pgeWinners: string[];
+  /** "wolf" mode only — the wolf's chosen partner for this hole, or null if
+   * not yet decided (or going alone). Mutually exclusive with wolfAlone. */
+  wolfPartner: string | null;
+  /** "wolf" mode only — true once the wolf has chosen to play the hole
+   * solo against the other three. */
+  wolfAlone: boolean;
 }
 
 /** Per-hole High Low detail: each team's low scorer plays the other team's
@@ -68,6 +74,28 @@ export interface HighLowHoleOutcome {
   netStrokes: Record<string, number>;
 }
 
+/** Per-hole Wolf detail. teamA is always the wolf's side (just the wolf when
+ * going alone, wolf + partner otherwise); teamB is everyone else. outcome is
+ * null until the wolf's choice is made AND all four strokes are in — there's
+ * no partial result to show before that. points are the raw per-player Wolf
+ * payout for the hole (1 each for a 2v2 win, 3 for a lone-wolf win, 1 each
+ * for the three beating a lone wolf, 0 on a tie), already multiplied ×2 for
+ * a birdie or ×3 for an eagle — each multiplier applies only to the
+ * individual player who made it, not their whole side, and only scales
+ * whatever that player already earned (so a birdie on a losing hole is still
+ * 0 — there's nothing to double). */
+export interface WolfHoleOutcome {
+  wolfName: string;
+  partner: string | null;
+  alone: boolean;
+  teamA: string[];
+  teamB: string[];
+  bestA: number | null;
+  bestB: number | null;
+  outcome: "teamA" | "teamB" | "tie" | null;
+  points: Record<string, number>;
+}
+
 export interface HoleResult {
   holeNumber: number;
   par: number;
@@ -88,6 +116,8 @@ export interface HoleResult {
   totalPoints: Record<string, number>;
   /** Only present when the room's gameMode is "highlow". */
   highLow?: HighLowHoleOutcome;
+  /** Only present when the room's gameMode is "wolf". */
+  wolf?: WolfHoleOutcome;
 }
 
 /** Front 9 / back 9 / overall are three separate matches in High Low —
@@ -143,6 +173,11 @@ export interface Room {
    * whenever the mode changes or the roster changes, so a stale pairing
    * can never carry into a game with different players. */
   teams: Teams | null;
+  /** "wolf" mode only — the fixed 4-name rotation for the whole round,
+   * decided once when the round starts: a random player for the first hole
+   * played, then the other three in the room's roster order after that. The
+   * wolf for the Nth hole played is wolfOrder[N % 4]. */
+  wolfOrder: [string, string, string, string] | null;
 }
 
 export type PublicPlayer = Omit<Player, "socketId">;
