@@ -52,6 +52,7 @@ export async function initDb(): Promise<void> {
   await addColumnIfMissing("rounds", "teams", "TEXT"); // JSON [[p1,p2],[p3,p4]], highlow only
   await addColumnIfMissing("rounds", "winners", "TEXT NOT NULL DEFAULT '[]'"); // JSON string[]
   await addColumnIfMissing("rounds", "high_low", "TEXT"); // JSON HighLowMatchResult, highlow only
+  await addColumnIfMissing("rounds", "host_name", "TEXT NOT NULL DEFAULT ''"); // who could delete this round
 
   await db.execute(`
     CREATE TABLE IF NOT EXISTS users (

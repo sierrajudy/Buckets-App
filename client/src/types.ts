@@ -62,6 +62,7 @@ export interface HighLowMatchResult {
 export interface RoundSummary {
   id: string;
   course: string;
+  hostName: string;
   players: string[];
   startingHole: number;
   holes: HoleResult[];

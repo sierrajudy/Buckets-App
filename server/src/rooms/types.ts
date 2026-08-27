@@ -101,6 +101,9 @@ export interface HighLowMatchResult {
 export interface RoundSummary {
   id: string;
   course: string;
+  /** The host at the time this round finished — the only player allowed to
+   * delete it afterward from the celebration screen. */
+  hostName: string;
   players: string[];
   startingHole: number;
   holes: HoleResult[];

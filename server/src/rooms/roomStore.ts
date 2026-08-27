@@ -291,10 +291,12 @@ async function finalizeAndPersist(
   opts: { holeInOnePlayer: string | null; puttOffWinner: string | null },
 ): Promise<void> {
   const names = playerNames(room);
+  const hostName = room.players.find((p) => p.id === room.hostId)?.name ?? names[0];
   const round =
     room.gameMode === "highlow" && room.teams
       ? finalizeHighLowRound({
           course: room.course!,
+          hostName,
           players: names,
           startingHole: room.startingHole,
           holes: results,
@@ -302,6 +304,7 @@ async function finalizeAndPersist(
         })
       : finalizeRound({
           course: room.course!,
+          hostName,
           players: names,
           startingHole: room.startingHole,
           holes: results,

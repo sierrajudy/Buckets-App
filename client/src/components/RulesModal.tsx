@@ -70,7 +70,7 @@ export function RulesModal({ onClose }: { onClose: () => void }) {
           <section className="space-y-1.5">
             <h3 className="font-bold text-neutral-900 dark:text-white">High Low (team mode)</h3>
             <ul className="list-disc pl-5 space-y-1">
-              <li>4 players only, split into two fixed 2-person teams for the whole round. Buckets and PG&amp;E still work exactly the same as optional side games.</li>
+              <li>4 players only, split into two fixed 2-person teams for the whole round. No buckets or PG&amp;E in this mode — it's just the match play score.</li>
               <li>
                 Each hole, your team's <span className="font-semibold">low scorer</span> plays the other team's low
                 scorer for 1 point, and your <span className="font-semibold">high scorer</span> plays their high

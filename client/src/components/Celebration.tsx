@@ -171,6 +171,23 @@ export function Celebration({
           </div>
         )}
 
+        {isHost && (
+          <div className="rounded-2xl border border-neutral-800 bg-neutral-900 p-3 text-center">
+            {deleted ? (
+              <p className="text-sm text-neutral-400">This round won't count in anyone's standings.</p>
+            ) : (
+              <button
+                type="button"
+                onClick={() => setShowDeleteConfirm(true)}
+                className="text-sm font-semibold text-neutral-300 hover:text-red-400"
+              >
+                🚫 Don't count this game in the standings
+              </button>
+            )}
+            {deleteError && <p className="text-xs text-red-400 mt-1">{deleteError}</p>}
+          </div>
+        )}
+
         <div className="bg-neutral-900 border border-neutral-800 rounded-2xl p-5">
           <div className="text-sm text-neutral-400 mb-3">Final scores</div>
           <div className="space-y-1.5">
@@ -233,23 +250,6 @@ export function Celebration({
           <div className="text-xs text-neutral-400 mt-1">Tap to manage your notification settings</div>
         </button>
 
-        {!isSpectator && (
-          <div className="text-center">
-            {deleted ? (
-              <p className="text-xs text-neutral-500">This round won't be saved to anyone's history.</p>
-            ) : (
-              <button
-                type="button"
-                onClick={() => setShowDeleteConfirm(true)}
-                className="text-xs text-neutral-600 hover:text-red-400"
-              >
-                🗑 Don't save this round's data
-              </button>
-            )}
-            {deleteError && <p className="text-xs text-red-400 mt-1">{deleteError}</p>}
-          </div>
-        )}
-
         {isSpectator && <EmojiReactionBar dark />}
 
         <div className="flex gap-2">
@@ -283,7 +283,7 @@ export function Celebration({
             className="w-full max-w-sm bg-neutral-900 border border-neutral-800 rounded-2xl shadow-lg p-6 space-y-5 text-center"
             onClick={(e) => e.stopPropagation()}
           >
-            <p className="font-semibold text-white">Don't save this round's data?</p>
+            <p className="font-semibold text-white">Don't count this game in the standings?</p>
             <p className="text-sm text-neutral-400">
               This removes it from everyone's history and the standings — not just yours. This can't be undone.
             </p>
@@ -294,7 +294,7 @@ export function Celebration({
                 onClick={handleDeleteRound}
                 className="flex-1 rounded-lg bg-red-600 hover:bg-red-700 disabled:opacity-60 text-white font-semibold py-2.5"
               >
-                {deleting ? "Removing…" : "Yes, don't save it"}
+                {deleting ? "Removing…" : "Yes, don't count it"}
               </button>
               <button
                 type="button"

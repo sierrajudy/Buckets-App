@@ -267,13 +267,14 @@ export function buildHolesOrder(startingHole: number, holeCount: number): number
 
 export function finalizeRound(params: {
   course: string;
+  hostName: string;
   players: string[];
   startingHole: number;
   holes: HoleResult[];
   holeInOnePlayer: string | null;
   puttOffWinner: string | null;
 }): RoundSummary {
-  const { course, players, startingHole, holes, holeInOnePlayer, puttOffWinner } = params;
+  const { course, hostName, players, startingHole, holes, holeInOnePlayer, puttOffWinner } = params;
   const totals = computeRunningTotals(holes, players);
 
   let winner: string;
@@ -297,6 +298,7 @@ export function finalizeRound(params: {
   return {
     id: uuid(),
     course,
+    hostName,
     players,
     startingHole,
     holes,
@@ -323,12 +325,13 @@ export function finalizeRound(params: {
  */
 export function finalizeHighLowRound(params: {
   course: string;
+  hostName: string;
   players: string[];
   startingHole: number;
   holes: HoleResult[];
   teams: Teams;
 }): RoundSummary {
-  const { course, players, startingHole, holes, teams } = params;
+  const { course, hostName, players, startingHole, holes, teams } = params;
   const totals = computeRunningTotals(holes, players);
 
   const perHoleTeamPoints = holes.map((h) => h.highLow?.teamPoints ?? ([0, 0] as [number, number]));
@@ -353,6 +356,7 @@ export function finalizeHighLowRound(params: {
   return {
     id: uuid(),
     course,
+    hostName,
     players,
     startingHole,
     holes,

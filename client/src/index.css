@@ -145,6 +145,67 @@ body {
   100% { transform: translateX(110vw); opacity: 0; }
 }
 
+/* High Low's driving-range transition: all 4 golfers fire off their own
+ * ball in a rapid "cannon" succession (player 1, then 2, then 3, then 4,
+ * DrivingRange.tsx staggers each by CANNON_STAGGER_MS via animation-delay)
+ * rather than one shared shot. Each ball flies UP and AWAY, well up into
+ * the sky above the horizon — never just hovering over the grass — then
+ * drops back down small onto its OWN flag, a different one per ball, so
+ * the four paths cross in the air along the way instead of stacking on
+ * top of each other. Each one draws (bulges right of both its start and
+ * its landing point at the peak, then curls back) through the WHOLE
+ * flight, not just on the way down, and lands smoothed into a few
+ * closely-spaced final steps (60/80/100) rather than one abrupt jump —
+ * touching down early and holding perfectly still for the rest of the
+ * duration is what reads as an actual landing instead of an awkward hover
+ * just above the grass. top/left are plain percentages of the full-screen
+ * overlay (whose sky/grass gradient has its horizon at 55% down), not
+ * pixel offsets, so this holds up on any screen size instead of relying on
+ * a landscape viewBox getting cropped down on a tall portrait screen. */
+/* Just two legs each — up to a peak, straight down to the flag — on
+ * purpose: more in-between stops (an earlier version had 6) reads as a
+ * series of little hesitations rather than one continuous flight, because
+ * ease-in-out re-eases at every single keyframe boundary. The peak's
+ * `left` matches the landing flag's exactly, so the ball is already
+ * hanging directly above the flag it's about to land on at the top of its
+ * arc, then just drops straight down onto it, instead of still traveling
+ * sideways on the way down. */
+@keyframes range-ball-flight-p1 { /* player 1 → the 50-yard flag */
+  0% { top: 85%; left: 32%; transform: translate(-50%, -50%) scale(1); opacity: 0; }
+  8% { opacity: 1; }
+  45% { top: 26%; left: 15%; transform: translate(-50%, -50%) scale(0.55); }
+  100% { top: 81%; left: 15%; transform: translate(-50%, -50%) scale(0.42); opacity: 1; }
+}
+@keyframes range-ball-flight-p2 { /* player 2 → the 125-yard flag */
+  0% { top: 85%; left: 47%; transform: translate(-50%, -50%) scale(1); opacity: 0; }
+  8% { opacity: 1; }
+  45% { top: 24%; left: 38%; transform: translate(-50%, -50%) scale(0.5); }
+  100% { top: 70%; left: 38%; transform: translate(-50%, -50%) scale(0.32); opacity: 1; }
+}
+@keyframes range-ball-flight-p3 { /* player 3 → the 150-yard flag */
+  0% { top: 85%; left: 62%; transform: translate(-50%, -50%) scale(1); opacity: 0; }
+  8% { opacity: 1; }
+  45% { top: 22%; left: 65%; transform: translate(-50%, -50%) scale(0.45); }
+  100% { top: 66%; left: 65%; transform: translate(-50%, -50%) scale(0.27); opacity: 1; }
+}
+@keyframes range-ball-flight-p4 { /* player 4 → the 200-yard green flag */
+  0% { top: 85%; left: 77%; transform: translate(-50%, -50%) scale(1); opacity: 0; }
+  8% { opacity: 1; }
+  45% { top: 22%; left: 50%; transform: translate(-50%, -50%) scale(0.4); }
+  100% { top: 58%; left: 50%; transform: translate(-50%, -50%) scale(0.22); opacity: 1; }
+}
+
+/* Each golfer's club takes its backswing, then strikes right as that same
+ * golfer's ball opacity flips on (each ball's own 8% mark, since both
+ * share the same animation-delay), and follows through — then just holds
+ * the follow-through pose for the rest of the flight. */
+@keyframes club-swing {
+  0% { transform: rotate(-110deg); }
+  10% { transform: rotate(15deg); }
+  30% { transform: rotate(65deg); }
+  100% { transform: rotate(65deg); }
+}
+
 @keyframes cart-loop {
   0% { transform: translateX(-90px); }
   100% { transform: translateX(300px); }

@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { useRoom } from "../store";
 import { AvatarIcon } from "./Avatars";
 import { GolfCart } from "./GolfCart";
+import { CANNON_STAGGER_MS, DrivingRange } from "./DrivingRange";
 import { HecklerGuy } from "./HecklerGuy";
 import { RoomCodeBadge } from "./RoomCodeBadge";
 import { EmojiReactionBar } from "./EmojiReactionBar";
@@ -123,7 +124,12 @@ export function Scorecard() {
     if (stepIndex <= prev) return;
     setHeckleMessage(computeHeckle(resultsRef.current[stepIndex - 1], playersRef.current));
     setShowBallRoll(true);
-    const t = setTimeout(() => setShowBallRoll(false), CART_DURATION_MS);
+    // High Low's 4 golfers fire in a staggered "cannon" (see DrivingRange),
+    // so the last player doesn't even start their own full-length flight
+    // until 3 * CANNON_STAGGER_MS in — the overlay has to stay open that
+    // much longer than CART_DURATION_MS or it closes mid-flight for them.
+    const overlayMs = state?.gameMode === "highlow" ? CART_DURATION_MS + 3 * CANNON_STAGGER_MS : CART_DURATION_MS;
+    const t = setTimeout(() => setShowBallRoll(false), overlayMs);
     return () => clearTimeout(t);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [stepIndex]);
@@ -180,12 +186,18 @@ export function Scorecard() {
 
           {heckleMessage && <HecklerGuy message={heckleMessage} />}
 
-          <div
-            className="absolute"
-            style={{ bottom: "18%", animation: `cart-drive-across ${CART_DURATION_MS}ms ease-in-out` }}
-          >
-            <GolfCart avatars={players.map((p) => p.avatar)} size={180} />
-          </div>
+          {isHighLow ? (
+            <div className="absolute inset-0">
+              <DrivingRange avatars={players.map((p) => p.avatar)} durationMs={CART_DURATION_MS} />
+            </div>
+          ) : (
+            <div
+              className="absolute"
+              style={{ bottom: "18%", animation: `cart-drive-across ${CART_DURATION_MS}ms ease-in-out` }}
+            >
+              <GolfCart avatars={players.map((p) => p.avatar)} size={180} />
+            </div>
+          )}
 
           <div className="absolute inset-x-0 bottom-10 text-center">
             <span className="inline-block px-4 py-1.5 rounded-full bg-white/90 dark:bg-neutral-900/90 text-green-700 dark:text-green-400 font-bold text-sm shadow">
@@ -417,63 +429,67 @@ export function Scorecard() {
                   </div>
                 </div>
 
-                <div className="flex flex-wrap gap-4">
-                  <label
-                    className={`flex items-center gap-2 text-sm ${isHost ? "cursor-pointer" : "cursor-default opacity-70"}`}
-                  >
-                    <input
-                      type="checkbox"
-                      disabled={!isHost}
-                      checked={wonBucket}
-                      onChange={() => toggleBucket(result.holeNumber, p.name)}
-                      className="w-4 h-4 accent-green-600"
-                    />
-                    <span
-                      className="inline-block"
-                      style={wonBucket ? { animation: "bucket-ripple 1s ease-in-out infinite" } : undefined}
-                    >
-                      🪣
-                    </span>
-                    Won bucket
-                  </label>
-                  {result.pgeEnabled && (
+                {!isHighLow && (
+                  <div className="flex flex-wrap gap-4">
                     <label
                       className={`flex items-center gap-2 text-sm ${isHost ? "cursor-pointer" : "cursor-default opacity-70"}`}
                     >
                       <input
                         type="checkbox"
                         disabled={!isHost}
-                        checked={wonPge}
-                        onChange={() => togglePgeWinner(result.holeNumber, p.name)}
-                        className="w-4 h-4 accent-yellow-500"
+                        checked={wonBucket}
+                        onChange={() => toggleBucket(result.holeNumber, p.name)}
+                        className="w-4 h-4 accent-green-600"
                       />
                       <span
                         className="inline-block"
-                        style={wonPge ? { animation: "pge-flicker 1.4s ease-in-out infinite" } : undefined}
+                        style={wonBucket ? { animation: "bucket-ripple 1s ease-in-out infinite" } : undefined}
                       >
-                        ⚡
+                        🪣
                       </span>
-                      Won PG&E
+                      Won bucket
                     </label>
-                  )}
-                </div>
+                    {result.pgeEnabled && (
+                      <label
+                        className={`flex items-center gap-2 text-sm ${isHost ? "cursor-pointer" : "cursor-default opacity-70"}`}
+                      >
+                        <input
+                          type="checkbox"
+                          disabled={!isHost}
+                          checked={wonPge}
+                          onChange={() => togglePgeWinner(result.holeNumber, p.name)}
+                          className="w-4 h-4 accent-yellow-500"
+                        />
+                        <span
+                          className="inline-block"
+                          style={wonPge ? { animation: "pge-flicker 1.4s ease-in-out infinite" } : undefined}
+                        >
+                          ⚡
+                        </span>
+                        Won PG&E
+                      </label>
+                    )}
+                  </div>
+                )}
               </div>
             );
           })}
         </div>
 
-        <label
-          className={`flex items-center gap-2 text-sm text-neutral-600 dark:text-neutral-300 px-1 ${isHost ? "cursor-pointer" : "cursor-default opacity-70"}`}
-        >
-          <input
-            type="checkbox"
-            disabled={!isHost}
-            checked={result.pgeEnabled}
-            onChange={(e) => setPgeEnabled(result.holeNumber, e.target.checked)}
-            className="w-4 h-4 accent-yellow-500"
-          />
-          ⚡ PG&E special challenge on this hole (optional)
-        </label>
+        {!isHighLow && (
+          <label
+            className={`flex items-center gap-2 text-sm text-neutral-600 dark:text-neutral-300 px-1 ${isHost ? "cursor-pointer" : "cursor-default opacity-70"}`}
+          >
+            <input
+              type="checkbox"
+              disabled={!isHost}
+              checked={result.pgeEnabled}
+              onChange={(e) => setPgeEnabled(result.holeNumber, e.target.checked)}
+              className="w-4 h-4 accent-yellow-500"
+            />
+            ⚡ PG&E special challenge on this hole (optional)
+          </label>
+        )}
 
         {isHighLow && state.teams ? (
           <div className="bg-white dark:bg-neutral-900 rounded-xl border border-neutral-200 dark:border-neutral-800 p-4">

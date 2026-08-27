@@ -4,11 +4,12 @@ import type { RoundSummary } from "../rooms/types.js";
 export async function persistRound(round: RoundSummary): Promise<void> {
   await db.execute({
     sql: `INSERT INTO rounds
-      (id, course, starting_hole, players, holes, totals, hole_in_one_player, putt_off_used, putt_off_winner, winner, losers, game_mode, teams, winners, high_low)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      (id, course, host_name, starting_hole, players, holes, totals, hole_in_one_player, putt_off_used, putt_off_winner, winner, losers, game_mode, teams, winners, high_low)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     args: [
       round.id,
       round.course,
+      round.hostName,
       round.startingHole,
       JSON.stringify(round.players),
       JSON.stringify(round.holes),
