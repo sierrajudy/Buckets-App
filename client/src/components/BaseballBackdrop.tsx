@@ -1,17 +1,17 @@
-/** Baseball mode's own theme: a big stitched baseball and a crossed bat
- * sitting low and centered in the background, over a dirt infield diamond
- * with the bases laid out in the foreground. Everything here is pinned to
- * the browser viewport (position: fixed) rather than the page, so the
- * whole scene stays frozen in place at the same spot on screen as the page
- * scrolls past underneath it. Callers pair this with a dark navy gradient
- * on their own root element (see Lobby / Scorecard) and add a little extra
- * bottom padding of their own so the infield never fights for legibility
- * with real controls near the bottom of the page. */
+/** Baseball mode's own theme: a big stitched baseball sitting low and
+ * centered in the background, over a dirt infield diamond with the bases
+ * laid out in the foreground. Everything here is pinned to the browser
+ * viewport (position: fixed) rather than the page, so the whole scene
+ * stays frozen in place at the same spot on screen as the page scrolls
+ * past underneath it. Callers pair this with a dark navy gradient on their
+ * own root element (see Lobby / Scorecard) and add a little extra bottom
+ * padding of their own so the infield never fights for legibility with
+ * real controls near the bottom of the page. */
 
-/** A big stitched baseball with a bat laid across it, low-opacity so it
- * reads as a background watermark behind the (mostly opaque) cards rather
- * than competing with them. */
-function BaseballAndBat() {
+/** A big stitched baseball, low-opacity so it reads as a background
+ * watermark behind the (mostly opaque) cards rather than competing with
+ * them. */
+function BigBaseball() {
   return (
     <div className="absolute inset-0 flex items-center justify-center opacity-20">
       <svg viewBox="0 0 300 300" className="w-[85vw] max-w-[420px] h-auto">
@@ -24,11 +24,6 @@ function BaseballAndBat() {
             <line x1={i < 2 ? 45 : 255} y1={y + 7} x2={i < 2 ? 65 : 275} y2={y - 7} stroke="#dc2626" strokeWidth="3.5" />
           </g>
         ))}
-        {/* bat, laid diagonally across the ball */}
-        <g transform="rotate(-38 150 150)">
-          <rect x="15" y="140" width="270" height="20" rx="10" className="fill-amber-700" stroke="#78350f" strokeWidth="2" />
-          <rect x="15" y="140" width="46" height="20" rx="10" className="fill-amber-900" />
-        </g>
       </svg>
     </div>
   );
@@ -54,7 +49,7 @@ function InfieldDiamond() {
 export function BaseballBackdrop() {
   return (
     <div className="fixed inset-0 pointer-events-none overflow-hidden" aria-hidden="true">
-      <BaseballAndBat />
+      <BigBaseball />
 
       <div className="absolute inset-x-0 bottom-0 h-36 sm:h-52">
         <InfieldDiamond />
