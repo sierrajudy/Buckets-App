@@ -3,6 +3,11 @@ export type AvatarKey = (typeof AVATAR_KEYS)[number];
 
 export type RoomPhase = "lobby" | "playing" | "puttoff" | "celebration";
 
+export type GameMode = "standard" | "highlow";
+
+/** Exactly two teams of two player names, fixed for the whole round. */
+export type Teams = [[string, string], [string, string]];
+
 export interface Player {
   id: string;
   name: string;
@@ -13,6 +18,16 @@ export interface Player {
 export interface Spectator {
   id: string;
   name: string;
+}
+
+export interface HighLowHoleOutcome {
+  lowPlayers: [string, string];
+  lowWinner: "team0" | "team1" | "tie";
+  highPlayers: [string, string];
+  highWinner: "team0" | "team1" | "tie";
+  matchPoints: [number, number];
+  bonusPoints: [number, number];
+  teamPoints: [number, number];
 }
 
 export interface HoleResult {
@@ -33,6 +48,13 @@ export interface HoleResult {
   pgeWinners: string[];
   pgePoints: Record<string, number>;
   totalPoints: Record<string, number>;
+  highLow?: HighLowHoleOutcome;
+}
+
+export interface HighLowMatchResult {
+  front: { points: [number, number]; winner: 0 | 1 | null };
+  back: { points: [number, number]; winner: 0 | 1 | null };
+  overall: { points: [number, number]; winner: 0 | 1 | null };
 }
 
 export interface RoundSummary {
@@ -46,6 +68,10 @@ export interface RoundSummary {
   puttOff: { used: boolean; winner: string | null };
   winner: string;
   losers: string[];
+  winners: string[];
+  gameMode: GameMode;
+  teams: Teams | null;
+  highLow: HighLowMatchResult | null;
 }
 
 export interface CourseStats {
@@ -72,6 +98,8 @@ export interface RoomState {
   puttOffWinner: string | null;
   finishedRound: RoundSummary | null;
   currentStep: number;
+  gameMode: GameMode;
+  teams: Teams | null;
 }
 
 export interface StandingsRow {

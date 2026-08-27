@@ -2,19 +2,23 @@ import { v4 as uuid } from "uuid";
 import {
   AVATAR_KEYS,
   type AvatarKey,
+  type GameMode,
   type HoleEntry,
   type Player,
   type Room,
   type RoomStateForClient,
   type Spectator,
+  type Teams,
 } from "./types.js";
 import { getCourse, isValidCourseId } from "./courses.js";
 import {
   buildHolesOrder,
+  computeHighLowHoleResult,
   computeHoleResult,
   computeRunningTotals,
   findHoleInOneWinner,
   findTiedLeaders,
+  finalizeHighLowRound,
   finalizeRound,
 } from "./gameLogic.js";
 import { persistRound } from "../lib/persistRound.js";
@@ -75,6 +79,8 @@ export function createRoom(hostName: string): { room: Room; player: Player } {
     finishedRound: null,
     createdAt: Date.now(),
     currentStep: 0,
+    gameMode: "standard",
+    teams: null,
   };
   rooms.set(code, room);
   return { room, player };
@@ -96,6 +102,7 @@ export function joinRoom(room: Room, name: string): Player | { error: string } {
   if (isNameTaken(room, trimmed)) return { error: "That name is already taken in this room." };
   const player: Player = { id: uuid(), name: trimmed, avatar: null, connected: true, socketId: null };
   room.players.push(player);
+  room.teams = null; // a new roster invalidates any prior team pairing
   return player;
 }
 
@@ -161,14 +168,39 @@ export function setCourse(room: Room, courseId: string): boolean {
   return true;
 }
 
+/** Host-only: switches the game mode. Teams are cleared on any change,
+ * since a pairing from before could otherwise silently carry over into a
+ * mode (or roster) it was never validated against. */
+export function setGameMode(room: Room, mode: GameMode): boolean {
+  if (room.phase !== "lobby") return false;
+  if (mode !== "standard" && mode !== "highlow") return false;
+  room.gameMode = mode;
+  room.teams = null;
+  return true;
+}
+
+/** Host-only, "highlow" mode only: pairs up the room's 4 players into two
+ * fixed teams. Rejects anything that isn't exactly those 4 names split
+ * 2-and-2 with no repeats — a partial or stale roster just doesn't set. */
+export function setTeams(room: Room, teams: Teams): boolean {
+  if (room.phase !== "lobby" || room.gameMode !== "highlow") return false;
+  const flat = teams.flat();
+  if (flat.length !== 4) return false;
+  if (new Set(flat).size !== 4) return false;
+  const roster = new Set(playerNames(room));
+  if (roster.size !== 4 || !flat.every((n) => roster.has(n))) return false;
+  room.teams = teams;
+  return true;
+}
+
 export function canStart(room: Room): boolean {
-  return (
-    room.phase === "lobby" &&
-    room.courseId !== null &&
-    room.players.length >= 2 &&
-    room.players.length <= 4 &&
-    room.players.every((p) => p.avatar !== null)
-  );
+  if (room.phase !== "lobby" || room.courseId === null || !room.players.every((p) => p.avatar !== null)) {
+    return false;
+  }
+  if (room.gameMode === "highlow") {
+    return room.players.length === 4 && room.teams !== null;
+  }
+  return room.players.length >= 2 && room.players.length <= 4;
 }
 
 export function startGame(room: Room): boolean {
@@ -193,6 +225,9 @@ export function startNewRound(room: Room): void {
 
 export function removePlayer(room: Room, playerId: string): void {
   room.players = room.players.filter((p) => p.id !== playerId);
+  // Only invalidate teams pre-game — nulling them out from under an
+  // in-progress highlow round would break its scoring outright.
+  if (room.phase === "lobby") room.teams = null;
 }
 
 function playerNames(room: Room): string[] {
@@ -203,6 +238,10 @@ function orderedResults(room: Room) {
   const holeCount = getCourse(room.courseId)?.pars.length ?? 0;
   const order = buildHolesOrder(room.startingHole, holeCount);
   const names = playerNames(room);
+  if (room.gameMode === "highlow" && room.teams) {
+    const teams = room.teams;
+    return order.map((holeNumber) => computeHighLowHoleResult(room.entries[holeNumber], teams, names));
+  }
   return order.map((holeNumber) => computeHoleResult(room.entries[holeNumber], names));
 }
 
@@ -213,6 +252,8 @@ function orderedResults(room: Room) {
  * putt-off (itself still waiting on the host to resolve it). */
 export async function recomputeAndMaybeFinish(room: Room): Promise<void> {
   if (room.phase !== "playing") return;
+  if (room.gameMode === "highlow") return; // no putt-off in this mode — a tied overall match just stays tied
+
   const names = playerNames(room);
   const results = orderedResults(room);
 
@@ -226,6 +267,38 @@ export async function recomputeAndMaybeFinish(room: Room): Promise<void> {
   }
 }
 
+/** Builds the finished RoundSummary for whichever mode the room is in and
+ * persists/notifies it — shared by every "the round just ended" call site
+ * below so they don't each have to know how to branch by gameMode. */
+async function finalizeAndPersist(
+  room: Room,
+  results: ReturnType<typeof orderedResults>,
+  opts: { holeInOnePlayer: string | null; puttOffWinner: string | null },
+): Promise<void> {
+  const names = playerNames(room);
+  const round =
+    room.gameMode === "highlow" && room.teams
+      ? finalizeHighLowRound({
+          course: room.course!,
+          players: names,
+          startingHole: room.startingHole,
+          holes: results,
+          teams: room.teams,
+        })
+      : finalizeRound({
+          course: room.course!,
+          players: names,
+          startingHole: room.startingHole,
+          holes: results,
+          holeInOnePlayer: opts.holeInOnePlayer,
+          puttOffWinner: opts.puttOffWinner,
+        });
+  room.finishedRound = round;
+  room.phase = "celebration";
+  await persistRound(round);
+  notifyStandings(round);
+}
+
 /** Host-only: moves the room's shared "current hole" pointer forward, which
  * drives guests' auto-follow view and lets a reconnecting client resume at
  * the host's real position instead of always restarting at hole 1.
@@ -233,27 +306,17 @@ export async function recomputeAndMaybeFinish(room: Room): Promise<void> {
  * If the hole being left had a hole-in-one, this is also where the match
  * actually ends — the host confirms it by advancing past it, rather than
  * the round finishing the instant the ace is entered (which could fire
- * before the other players even had a turn on that hole). */
+ * before the other players even had a turn on that hole). High Low has no
+ * such instant-win rule: an ace there just counts toward that hole's
+ * low-matchup and bonus points like any other great score. */
 export async function advanceCurrentStep(room: Room, stepIndex: number): Promise<boolean> {
   if (room.phase !== "playing") return false;
-  const names = playerNames(room);
   const results = orderedResults(room);
   if (!Number.isInteger(stepIndex) || stepIndex < 0 || stepIndex >= results.length) return false;
 
   const justLeft = results[stepIndex - 1];
-  if (justLeft && justLeft.holeInOnePlayers.length > 0) {
-    const round = finalizeRound({
-      course: room.course!,
-      players: names,
-      startingHole: room.startingHole,
-      holes: results,
-      holeInOnePlayer: justLeft.holeInOnePlayers[0],
-      puttOffWinner: null,
-    });
-    room.finishedRound = round;
-    room.phase = "celebration";
-    await persistRound(round);
-    notifyStandings(round);
+  if (room.gameMode !== "highlow" && justLeft && justLeft.holeInOnePlayers.length > 0) {
+    await finalizeAndPersist(room, results, { holeInOnePlayer: justLeft.holeInOnePlayers[0], puttOffWinner: null });
     return true;
   }
 
@@ -263,7 +326,9 @@ export async function advanceCurrentStep(room: Room, stepIndex: number): Promise
 
 /** Host-only explicit confirmation that locks in a completed round once
  * there's a clear winner. Returns false if the round isn't actually ready
- * to finish yet (a hole still missing scores, or a tie with no winner). */
+ * to finish yet (a hole still missing scores, or — standard mode only — a
+ * tie with no winner; High Low has no such requirement since a tied match
+ * is a valid final result there). */
 export async function confirmFinishRound(room: Room): Promise<boolean> {
   if (room.phase !== "playing") return false;
   const names = playerNames(room);
@@ -272,21 +337,12 @@ export async function confirmFinishRound(room: Room): Promise<boolean> {
   const allComplete = results.every((h) => names.every((n) => h.strokes[n] > 0));
   if (!allComplete) return false;
 
-  const totals = computeRunningTotals(results, names);
-  if (findTiedLeaders(totals, names).length > 1) return false;
+  if (room.gameMode !== "highlow") {
+    const totals = computeRunningTotals(results, names);
+    if (findTiedLeaders(totals, names).length > 1) return false;
+  }
 
-  const round = finalizeRound({
-    course: room.course!,
-    players: names,
-    startingHole: room.startingHole,
-    holes: results,
-    holeInOnePlayer: findHoleInOneWinner(results),
-    puttOffWinner: null,
-  });
-  room.finishedRound = round;
-  room.phase = "celebration";
-  await persistRound(round);
-  notifyStandings(round);
+  await finalizeAndPersist(room, results, { holeInOnePlayer: findHoleInOneWinner(results), puttOffWinner: null });
   return true;
 }
 
@@ -298,21 +354,8 @@ export async function confirmFinishRound(room: Room): Promise<boolean> {
  * cut the round short deliberately. */
 export async function endGameEarly(room: Room): Promise<boolean> {
   if (room.phase !== "playing") return false;
-  const names = playerNames(room);
   const results = orderedResults(room);
-
-  const round = finalizeRound({
-    course: room.course!,
-    players: names,
-    startingHole: room.startingHole,
-    holes: results,
-    holeInOnePlayer: findHoleInOneWinner(results),
-    puttOffWinner: null,
-  });
-  room.finishedRound = round;
-  room.phase = "celebration";
-  await persistRound(round);
-  notifyStandings(round);
+  await finalizeAndPersist(room, results, { holeInOnePlayer: findHoleInOneWinner(results), puttOffWinner: null });
   return true;
 }
 
@@ -321,19 +364,8 @@ export async function resolvePuttOff(room: Room, winnerName: string): Promise<bo
   const names = playerNames(room);
   if (!names.includes(winnerName)) return false;
   const results = orderedResults(room);
-  const round = finalizeRound({
-    course: room.course!,
-    players: names,
-    startingHole: room.startingHole,
-    holes: results,
-    holeInOnePlayer: null,
-    puttOffWinner: winnerName,
-  });
-  room.finishedRound = round;
   room.puttOffWinner = winnerName;
-  room.phase = "celebration";
-  await persistRound(round);
-  notifyStandings(round);
+  await finalizeAndPersist(room, results, { holeInOnePlayer: null, puttOffWinner: winnerName });
   return true;
 }
 
@@ -363,5 +395,7 @@ export function serializeRoomState(room: Room): RoomStateForClient {
     puttOffWinner: room.puttOffWinner,
     finishedRound: room.finishedRound,
     currentStep: room.currentStep,
+    gameMode: room.gameMode,
+    teams: room.teams,
   };
 }

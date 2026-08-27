@@ -10,7 +10,7 @@ import type { RoomState, RoundHistoryRow, RoundPlayerSummary, StandingsRow } fro
 
 function buildCurrentGamePlayers(state: RoomState | null): RoundPlayerSummary[] {
   if (!state || state.phase === "lobby") return [];
-  const winner = state.phase === "celebration" ? state.finishedRound?.winner : undefined;
+  const winners = state.phase === "celebration" ? (state.finishedRound?.winners ?? []) : [];
 
   return state.players.map((p) => ({
     name: p.name,
@@ -18,7 +18,7 @@ function buildCurrentGamePlayers(state: RoomState | null): RoundPlayerSummary[] 
     holesWon: state.results.filter((r) => r.holeWinners.includes(p.name)).length,
     buckets: state.results.filter((r) => r.bucketWinners.includes(p.name)).length,
     pge: state.results.filter((r) => r.pgeEnabled && r.pgeWinners.includes(p.name)).length,
-    won: p.name === winner,
+    won: winners.includes(p.name),
     strokes: state.results.reduce((sum, r) => sum + (r.strokes[p.name] ?? 0), 0),
   }));
 }

@@ -20,6 +20,10 @@ function rowToRound(row: Record<string, unknown>) {
     },
     winner: row.winner as string,
     losers: JSON.parse(row.losers as string),
+    winners: row.winners ? JSON.parse(row.winners as string) : [row.winner as string],
+    gameMode: (row.game_mode as string) ?? "standard",
+    teams: row.teams ? JSON.parse(row.teams as string) : null,
+    highLow: row.high_low ? JSON.parse(row.high_low as string) : null,
   };
 }
 

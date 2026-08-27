@@ -8,6 +8,16 @@ import { EmojiReactionBar } from "./EmojiReactionBar";
 import { PredictionPicker } from "./PredictionPicker";
 import type { AvatarKey, HoleResult } from "../types";
 
+function sumTeamPoints(holes: HoleResult[]): [number, number] {
+  return holes.reduce(
+    (acc, h) => {
+      const tp = h.highLow?.teamPoints ?? [0, 0];
+      return [acc[0] + tp[0], acc[1] + tp[1]] as [number, number];
+    },
+    [0, 0] as [number, number],
+  );
+}
+
 function computeLeader(totals: Record<string, number>, players: { name: string }[]): string | null {
   if (players.length < 2) return null;
   const vals = players.map((p) => totals[p.name] ?? 0);
@@ -127,11 +137,17 @@ export function Scorecard() {
 
   if (!state) return null;
   const { totals } = state;
+  const isHighLow = state.gameMode === "highlow";
   const result = results[stepIndex];
   const isLastHole = stepIndex === results.length - 1;
   const holeComplete = players.every((p) => (result.strokes[p.name] ?? 0) > 0);
-  const leader = computeLeader(totals, players);
-  const tiedHole = result.holeWinners.length > 1;
+  // holeWinners has 2 names whenever a High Low team wins the hole outright
+  // (not a tie, unlike standard mode where >1 winner only happens on a
+  // split) — so the crown/tied-hole flourishes below are standard-mode only.
+  const leader = isHighLow ? null : computeLeader(totals, players);
+  const tiedHole = isHighLow ? false : result.holeWinners.length > 1;
+  const birdieBonusLabel = isHighLow ? "+0.5 pt" : "+1 pt";
+  const eagleBonusLabel = isHighLow ? "+1 pt" : "+2 pts";
 
   function statusBadgeFor(name: string): string | undefined {
     if (name === leader) return "👑";
@@ -260,12 +276,12 @@ export function Scorecard() {
             <div className="flex gap-2 text-xs font-semibold">
               {result.isEagle && (
                 <span className="px-2 py-1 rounded-full bg-purple-100 text-purple-700 dark:bg-purple-900 dark:text-purple-300">
-                  Eagle — +2 pts
+                  Eagle — {eagleBonusLabel}
                 </span>
               )}
               {result.isBirdie && (
                 <span className="px-2 py-1 rounded-full bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300">
-                  Birdie — +1 pt
+                  Birdie — {birdieBonusLabel}
                 </span>
               )}
               {result.holeInOnePlayers.length > 0 && (
@@ -284,6 +300,51 @@ export function Scorecard() {
             )}
           </div>
         </div>
+
+        {isHighLow && result.highLow && (
+          <div className="bg-white dark:bg-neutral-900 rounded-xl border border-neutral-200 dark:border-neutral-800 p-4 space-y-3">
+            <div className="text-sm font-bold text-neutral-500">High Low matchups</div>
+            {(
+              [
+                { label: "Low", pair: result.highLow.lowPlayers, outcome: result.highLow.lowWinner },
+                { label: "High", pair: result.highLow.highPlayers, outcome: result.highLow.highWinner },
+              ] as const
+            ).map(({ label, pair: [p0, p1], outcome }) => (
+              <div key={label}>
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-xs font-semibold uppercase tracking-wide text-neutral-400 w-10 shrink-0">
+                    {label}
+                  </span>
+                  <span
+                    className={`flex-1 text-right truncate ${outcome === "team0" ? "font-bold text-green-700 dark:text-green-400" : "text-neutral-500"}`}
+                  >
+                    {p0} ({result.strokes[p0] || "–"})
+                  </span>
+                  <span className="text-neutral-400 px-2 text-xs shrink-0">vs</span>
+                  <span
+                    className={`flex-1 truncate ${outcome === "team1" ? "font-bold text-green-700 dark:text-green-400" : "text-neutral-500"}`}
+                  >
+                    {p1} ({result.strokes[p1] || "–"})
+                  </span>
+                </div>
+                {outcome === "tie" && <div className="text-center text-xs text-neutral-400 mt-0.5">🙌 No blood</div>}
+              </div>
+            ))}
+            <div className="grid grid-cols-2 gap-3 pt-2 border-t border-neutral-100 dark:border-neutral-800">
+              {result.highLow.teamPoints.map((pts, i) => (
+                <div key={i} className="flex items-center justify-between text-sm">
+                  <span className="font-semibold">
+                    Team {i + 1}
+                    {result.highLow!.bonusPoints[i] > 0 && (
+                      <span className="text-xs font-normal text-neutral-400"> (+{result.highLow!.bonusPoints[i]} bonus)</span>
+                    )}
+                  </span>
+                  <span className="font-mono font-bold text-green-700 dark:text-green-400">+{pts}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
 
         <div className="space-y-3">
           {players.map((p) => {
@@ -403,18 +464,45 @@ export function Scorecard() {
           ⚡ PG&E special challenge on this hole (optional)
         </label>
 
-        <div className="bg-white dark:bg-neutral-900 rounded-xl border border-neutral-200 dark:border-neutral-800 p-4">
-          <div className="text-sm font-bold text-neutral-500 mb-2">Running score</div>
-          <div className="flex flex-wrap gap-4">
-            {players.map((p) => (
-              <div key={p.id} className="flex items-center gap-1.5">
-                <StatusAvatar avatar={p.avatar} className="w-6 h-6 shrink-0" badge={statusBadgeFor(p.name)} />
-                <span className="text-sm text-neutral-600 dark:text-neutral-300">{p.name}</span>
-                <span className="text-lg font-extrabold text-green-700 dark:text-green-400">{totals[p.name] ?? 0}</span>
+        {isHighLow && state.teams ? (
+          <div className="bg-white dark:bg-neutral-900 rounded-xl border border-neutral-200 dark:border-neutral-800 p-4">
+            <div className="text-sm font-bold text-neutral-500 mb-2">
+              Match score{stepIndex >= 9 ? " · overall" : " · front 9"}
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              {state.teams.map((team, i) => (
+                <div key={i}>
+                  <div className="text-xs font-semibold uppercase tracking-wide text-neutral-400">Team {i + 1}</div>
+                  <div className="text-sm text-neutral-600 dark:text-neutral-300 truncate">{team.join(" & ")}</div>
+                  <div className="text-lg font-extrabold text-green-700 dark:text-green-400">
+                    {sumTeamPoints(results)[i]}
+                  </div>
+                </div>
+              ))}
+            </div>
+            {stepIndex >= 9 && (
+              <div className="mt-3 pt-3 border-t border-neutral-100 dark:border-neutral-800 flex items-center justify-between text-xs text-neutral-500">
+                <span>Front 9</span>
+                <span className="font-mono">
+                  {sumTeamPoints(results.slice(0, 9)).join(" – ")}
+                </span>
               </div>
-            ))}
+            )}
           </div>
-        </div>
+        ) : (
+          <div className="bg-white dark:bg-neutral-900 rounded-xl border border-neutral-200 dark:border-neutral-800 p-4">
+            <div className="text-sm font-bold text-neutral-500 mb-2">Running score</div>
+            <div className="flex flex-wrap gap-4">
+              {players.map((p) => (
+                <div key={p.id} className="flex items-center gap-1.5">
+                  <StatusAvatar avatar={p.avatar} className="w-6 h-6 shrink-0" badge={statusBadgeFor(p.name)} />
+                  <span className="text-sm text-neutral-600 dark:text-neutral-300">{p.name}</span>
+                  <span className="text-lg font-extrabold text-green-700 dark:text-green-400">{totals[p.name] ?? 0}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
 
         {isSpectator ? (
           <div className="space-y-3">

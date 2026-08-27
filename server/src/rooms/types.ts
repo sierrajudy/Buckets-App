@@ -3,6 +3,16 @@ export type AvatarKey = (typeof AVATAR_KEYS)[number];
 
 export type RoomPhase = "lobby" | "playing" | "puttoff" | "celebration";
 
+/** "standard" is the original free-for-all stroke-play mode (unnamed until
+ * "highlow" needed something to be named against). More modes land here
+ * over time — each one is a distinct scoring engine in gameLogic.ts, kept
+ * behind this single discriminant so the room/round shape stays uniform. */
+export type GameMode = "standard" | "highlow";
+
+/** Exactly two teams of two player names, fixed for the whole round. Only
+ * meaningful when gameMode is "highlow". */
+export type Teams = [[string, string], [string, string]];
+
 export interface Player {
   id: string;
   name: string;
@@ -29,6 +39,21 @@ export interface HoleEntry {
   pgeWinners: string[];
 }
 
+/** Per-hole High Low detail: each team's low scorer plays the other team's
+ * low scorer for 1 point, same for the high scorers — a tie on either
+ * matchup ("no blood") pays out nothing for that matchup rather than
+ * splitting it. Birdie/eagle bonus points are separate, paid to a team
+ * whenever either of its members earns one, win or lose their matchup. */
+export interface HighLowHoleOutcome {
+  lowPlayers: [string, string]; // [team0's low player, team1's low player]
+  lowWinner: "team0" | "team1" | "tie";
+  highPlayers: [string, string]; // [team0's high player, team1's high player]
+  highWinner: "team0" | "team1" | "tie";
+  matchPoints: [number, number]; // 0-2 total across both teams, from the two matchups
+  bonusPoints: [number, number]; // birdie/eagle bonus, per team
+  teamPoints: [number, number]; // matchPoints + bonusPoints — the hole's full team result
+}
+
 export interface HoleResult {
   holeNumber: number;
   par: number;
@@ -47,6 +72,16 @@ export interface HoleResult {
   pgeWinners: string[];
   pgePoints: Record<string, number>;
   totalPoints: Record<string, number>;
+  /** Only present when the room's gameMode is "highlow". */
+  highLow?: HighLowHoleOutcome;
+}
+
+/** Front 9 / back 9 / overall are three separate matches in High Low —
+ * winner is a team index, or null when that match is tied ("push"). */
+export interface HighLowMatchResult {
+  front: { points: [number, number]; winner: 0 | 1 | null };
+  back: { points: [number, number]; winner: 0 | 1 | null };
+  overall: { points: [number, number]; winner: 0 | 1 | null };
 }
 
 export interface RoundSummary {
@@ -60,6 +95,14 @@ export interface RoundSummary {
   puttOff: { used: boolean; winner: string | null };
   winner: string;
   losers: string[];
+  /** All players who actually won — a single-element array in "standard"
+   * mode (same info as `winner`), both members of the winning team in
+   * "highlow" mode, or empty on a tie. Use this instead of `winner` for
+   * any per-player "did I win" check. */
+  winners: string[];
+  gameMode: GameMode;
+  teams: Teams | null;
+  highLow: HighLowMatchResult | null;
 }
 
 export interface Room {
@@ -78,6 +121,11 @@ export interface Room {
   finishedRound: RoundSummary | null;
   createdAt: number;
   currentStep: number;
+  gameMode: GameMode;
+  /** Set by the host in the lobby once gameMode is "highlow" — cleared
+   * whenever the mode changes or the roster changes, so a stale pairing
+   * can never carry into a game with different players. */
+  teams: Teams | null;
 }
 
 export type PublicPlayer = Omit<Player, "socketId">;
@@ -107,4 +155,6 @@ export interface RoomStateForClient {
   puttOffWinner: string | null;
   finishedRound: RoundSummary | null;
   currentStep: number;
+  gameMode: GameMode;
+  teams: Teams | null;
 }

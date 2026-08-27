@@ -29,14 +29,14 @@ export interface RoundHistoryRow {
   holes: HoleResult[];
 }
 
-function summarizePlayers(players: string[], holes: HoleResult[], totals: Record<string, number>, winner: string) {
+function summarizePlayers(players: string[], holes: HoleResult[], totals: Record<string, number>, winners: string[]) {
   return players.map((name) => ({
     name,
     total: totals[name] ?? 0,
     holesWon: holes.filter((h) => h.holeWinners.includes(name)).length,
     buckets: holes.filter((h) => h.bucketWinners.includes(name)).length,
     pge: holes.filter((h) => h.pgeEnabled && h.pgeWinners.includes(name)).length,
-    won: name === winner,
+    won: winners.includes(name),
     strokes: holes.reduce((sum, h) => sum + (h.strokes[name] ?? 0), 0),
   }));
 }
@@ -54,7 +54,7 @@ myRoundsRouter.get("/", async (req, res) => {
 
     const holes: HoleResult[] = JSON.parse(raw.holes as string);
     const totals: Record<string, number> = JSON.parse(raw.totals as string);
-    const winner = raw.winner as string;
+    const winners: string[] = raw.winners ? JSON.parse(raw.winners as string) : [raw.winner as string];
     const puttOffUsed = Boolean(raw.putt_off_used);
     const puttOffWinner = (raw.putt_off_winner as string) ?? null;
 
@@ -76,8 +76,8 @@ myRoundsRouter.get("/", async (req, res) => {
       pge,
       tiebreak,
       total: totals[user.name] ?? 0,
-      won: winner === user.name,
-      players: summarizePlayers(players, holes, totals, winner),
+      won: winners.includes(user.name),
+      players: summarizePlayers(players, holes, totals, winners),
       holes,
     });
   }

@@ -1,11 +1,14 @@
 import { v4 as uuid } from "uuid";
-import type { HoleEntry, HoleResult, RoundSummary } from "./types.js";
+import type { GameMode, HighLowHoleOutcome, HighLowMatchResult, HoleEntry, HoleResult, RoundSummary, Teams } from "./types.js";
 
 const BASE_HOLE_POINTS = 2;
 const BIRDIE_BONUS = 1;
 const EAGLE_BONUS = 2;
 const BUCKET_POINTS = 1;
 const PGE_POINTS = 1;
+
+const HIGHLOW_BIRDIE_BONUS = 0.5;
+const HIGHLOW_EAGLE_BONUS = 1;
 
 function round2(n: number): number {
   return Math.round(n * 100) / 100;
@@ -84,6 +87,115 @@ export function computeHoleResult(entry: HoleEntry, players: string[]): HoleResu
   };
 }
 
+/**
+ * High Low match play: each team's low scorer plays the other team's low
+ * scorer for 1 point, and the two high scorers play each other for the
+ * other point. A tie on either matchup ("no blood") pays out nothing for
+ * that matchup — it does NOT split like the standard mode's hole-win pool
+ * does. Birdie/eagle bonus points are paid to a team whenever either
+ * member earns one, independent of who wins their individual matchup.
+ * Buckets and PG&E stay individual side games, exactly like standard mode.
+ */
+export function computeHighLowHoleResult(entry: HoleEntry, teams: Teams, players: string[]): HoleResult {
+  const strokes: Record<string, number> = {};
+  for (const p of players) {
+    const v = entry.strokes[p];
+    strokes[p] = typeof v === "number" && v > 0 ? v : 0;
+  }
+
+  const validPlayers = players.filter((p) => strokes[p] > 0);
+  const underPar = (p: string) => entry.par - strokes[p];
+  const birdiePlayers = validPlayers.filter((p) => underPar(p) === 1);
+  const eaglePlayers = validPlayers.filter((p) => underPar(p) >= 2);
+  const isBirdie = birdiePlayers.length > 0;
+  const isEagle = eaglePlayers.length > 0;
+
+  const holeInOnePlayers = validPlayers.filter((p) => strokes[p] === 1);
+  const isHoleInOne = holeInOnePlayers.length > 0;
+
+  const allScored = teams.flat().every((p) => strokes[p] > 0);
+
+  function lowHigh(team: [string, string]): { low: string; high: string } {
+    const [p1, p2] = team;
+    return strokes[p1] <= strokes[p2] ? { low: p1, high: p2 } : { low: p2, high: p1 };
+  }
+
+  let lowPlayers: [string, string] = [teams[0][0], teams[1][0]];
+  let highPlayers: [string, string] = [teams[0][1], teams[1][1]];
+  let lowWinner: HighLowHoleOutcome["lowWinner"] = "tie";
+  let highWinner: HighLowHoleOutcome["highWinner"] = "tie";
+  const matchPoints: [number, number] = [0, 0];
+
+  if (allScored) {
+    const a = lowHigh(teams[0]);
+    const b = lowHigh(teams[1]);
+    lowPlayers = [a.low, b.low];
+    highPlayers = [a.high, b.high];
+
+    if (strokes[a.low] < strokes[b.low]) {
+      lowWinner = "team0";
+      matchPoints[0] += 1;
+    } else if (strokes[b.low] < strokes[a.low]) {
+      lowWinner = "team1";
+      matchPoints[1] += 1;
+    }
+
+    if (strokes[a.high] < strokes[b.high]) {
+      highWinner = "team0";
+      matchPoints[0] += 1;
+    } else if (strokes[b.high] < strokes[a.high]) {
+      highWinner = "team1";
+      matchPoints[1] += 1;
+    }
+  }
+
+  const bonusPoints: [number, number] = [0, 0];
+  teams.forEach((team, i) => {
+    for (const p of team) {
+      if (birdiePlayers.includes(p)) bonusPoints[i] += HIGHLOW_BIRDIE_BONUS;
+      if (eaglePlayers.includes(p)) bonusPoints[i] += HIGHLOW_EAGLE_BONUS;
+    }
+  });
+
+  const teamPoints: [number, number] = [round2(matchPoints[0] + bonusPoints[0]), round2(matchPoints[1] + bonusPoints[1])];
+
+  const bucketPoints = splitPool(BUCKET_POINTS, entry.bucketWinners, players);
+  const pgePoints = entry.pgeEnabled
+    ? splitPool(PGE_POINTS, entry.pgeWinners, players)
+    : Object.fromEntries(players.map((p) => [p, 0]));
+
+  const holePoints: Record<string, number> = {};
+  teams.forEach((team, i) => {
+    for (const p of team) holePoints[p] = teamPoints[i];
+  });
+
+  const totalPoints = sumRecords([holePoints, bucketPoints, pgePoints], players);
+
+  const holeWinners =
+    teamPoints[0] > teamPoints[1] ? [...teams[0]] : teamPoints[1] > teamPoints[0] ? [...teams[1]] : [];
+
+  return {
+    holeNumber: entry.holeNumber,
+    par: entry.par,
+    yardage: entry.yardage,
+    handicap: entry.handicap,
+    strokes,
+    isBirdie,
+    isEagle,
+    isHoleInOne,
+    holeInOnePlayers,
+    holeWinners,
+    holePoints,
+    bucketWinners: entry.bucketWinners,
+    bucketPoints,
+    pgeEnabled: entry.pgeEnabled,
+    pgeWinners: entry.pgeWinners,
+    pgePoints,
+    totalPoints,
+    highLow: { lowPlayers, lowWinner, highPlayers, highWinner, matchPoints, bonusPoints, teamPoints },
+  };
+}
+
 export function computeRunningTotals(holeResults: HoleResult[], players: string[]): Record<string, number> {
   return sumRecords(
     holeResults.map((h) => h.totalPoints),
@@ -158,5 +270,69 @@ export function finalizeRound(params: {
     puttOff: { used: puttOffUsed, winner: puttOffUsed ? puttOffWinner : null },
     winner,
     losers: losers.length > 0 ? losers : players.filter((p) => p !== winner),
+    winners: [winner],
+    gameMode: "standard",
+    teams: null,
+    highLow: null,
+  };
+}
+
+/**
+ * High Low finalization: front 9 / back 9 / overall are three separate
+ * matches, each decided purely by summed team match+bonus points (buckets
+ * and PG&E don't count toward these — they're side games). A tied match
+ * has no winner ("push") rather than forcing a decider; there's no
+ * putt-off in this mode, and a hole-in-one doesn't auto-end the match the
+ * way it does in standard mode — the ace still counts toward that hole's
+ * low-matchup and bonus points as usual, that's all.
+ */
+export function finalizeHighLowRound(params: {
+  course: string;
+  players: string[];
+  startingHole: number;
+  holes: HoleResult[];
+  teams: Teams;
+}): RoundSummary {
+  const { course, players, startingHole, holes, teams } = params;
+  const totals = computeRunningTotals(holes, players);
+
+  const perHoleTeamPoints = holes.map((h) => h.highLow?.teamPoints ?? ([0, 0] as [number, number]));
+
+  function sumPoints(range: [number, number][]): [number, number] {
+    return range.reduce((acc, p) => [round2(acc[0] + p[0]), round2(acc[1] + p[1])], [0, 0] as [number, number]);
+  }
+  function winnerOf(points: [number, number]): 0 | 1 | null {
+    if (points[0] > points[1]) return 0;
+    if (points[1] > points[0]) return 1;
+    return null;
+  }
+
+  const front = sumPoints(perHoleTeamPoints.slice(0, Math.min(9, perHoleTeamPoints.length)));
+  const back = sumPoints(perHoleTeamPoints.slice(9));
+  const overall = sumPoints(perHoleTeamPoints);
+
+  const overallWinner = winnerOf(overall);
+  const winners = overallWinner !== null ? [...teams[overallWinner]] : [];
+  const losers = overallWinner !== null ? [...teams[overallWinner === 0 ? 1 : 0]] : [];
+
+  return {
+    id: uuid(),
+    course,
+    players,
+    startingHole,
+    holes,
+    totals,
+    holeInOnePlayer: findHoleInOneWinner(holes),
+    puttOff: { used: false, winner: null },
+    winner: winners[0] ?? players[0],
+    losers,
+    winners,
+    gameMode: "highlow",
+    teams,
+    highLow: {
+      front: { points: front, winner: winnerOf(front) },
+      back: { points: back, winner: winnerOf(back) },
+      overall: { points: overall, winner: overallWinner },
+    },
   };
 }

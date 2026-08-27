@@ -14,13 +14,15 @@ import {
   serializeRoomState,
   setConfig,
   setCourse,
+  setGameMode,
   setPlayerAvatar,
   setPrediction,
+  setTeams,
   spectateRoom,
   startGame,
   startNewRound,
 } from "./roomStore.js";
-import type { AvatarKey, Room } from "./types.js";
+import type { AvatarKey, GameMode, Room, Teams } from "./types.js";
 import type { AuthUser } from "../lib/auth.js";
 import { notifyRoundStarted } from "../lib/notifications.js";
 
@@ -130,11 +132,31 @@ export function registerRoomHandlers(io: Server) {
       if (setCourse(room, payload?.courseId)) broadcast(io, room);
     });
 
+    socket.on("room:setGameMode", (payload: { mode: GameMode }) => {
+      const room = data.roomCode ? getRoom(data.roomCode) : undefined;
+      if (!room || !isHost(room, data.playerId)) return;
+      if (setGameMode(room, payload?.mode)) broadcast(io, room);
+    });
+
+    socket.on("room:setTeams", (payload: { teams: Teams }, ack?: Ack) => {
+      const room = data.roomCode ? getRoom(data.roomCode) : undefined;
+      if (!room || !isHost(room, data.playerId)) return ack?.({ ok: false, error: "Only the host can set teams." });
+      if (!setTeams(room, payload?.teams)) return ack?.({ ok: false, error: "Teams must be the room's 4 current players, split 2 and 2." });
+      broadcast(io, room);
+      ack?.({ ok: true });
+    });
+
     socket.on("room:start", (_payload: unknown, ack?: Ack) => {
       const room = data.roomCode ? getRoom(data.roomCode) : undefined;
       if (!room || !isHost(room, data.playerId)) return ack?.({ ok: false, error: "Only the host can start." });
       if (!room.courseId) return ack?.({ ok: false, error: "Pick a course before starting." });
-      if (!canStart(room)) return ack?.({ ok: false, error: "Need 2-4 players, each with an avatar chosen." });
+      if (!canStart(room)) {
+        const error =
+          room.gameMode === "highlow"
+            ? "High Low needs exactly 4 players with teams set and an avatar each."
+            : "Need 2-4 players, each with an avatar chosen.";
+        return ack?.({ ok: false, error });
+      }
       startGame(room);
       broadcast(io, room);
       ack?.({ ok: true });

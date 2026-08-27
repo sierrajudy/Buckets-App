@@ -38,14 +38,14 @@ standingsRouter.get("/", async (_req, res) => {
     const players: string[] = JSON.parse(raw.players as string);
     const holes: HoleResult[] = JSON.parse(raw.holes as string);
     const totals: Record<string, number> = JSON.parse(raw.totals as string);
-    const winner = raw.winner as string;
+    const winners: string[] = raw.winners ? JSON.parse(raw.winners as string) : [raw.winner as string];
     const losers: string[] = JSON.parse(raw.losers as string);
 
     for (const name of players) {
       const row = rowFor(name);
       row.roundsPlayed += 1;
       row.totalPoints += totals[name] ?? 0;
-      if (name === winner) row.matchWins += 1;
+      if (winners.includes(name)) row.matchWins += 1;
       if (losers.includes(name)) row.beersOwed += 1;
       for (const hole of holes) {
         if (hole.holeWinners.includes(name)) row.holesWon += 1;

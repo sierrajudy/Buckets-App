@@ -1,6 +1,6 @@
 import { createContext, useContext, useEffect, useRef, useState, type ReactNode } from "react";
 import { socket } from "./lib/socket";
-import type { AvatarKey, RoomState } from "./types";
+import type { AvatarKey, GameMode, RoomState, Teams } from "./types";
 
 const SESSION_KEY = "buckets:session";
 
@@ -36,6 +36,8 @@ interface RoomContextValue {
   selectAvatar: (avatar: AvatarKey) => void;
   setConfig: (startingHole: number) => void;
   setCourse: (courseId: string) => void;
+  setGameMode: (mode: GameMode) => void;
+  setTeams: (teams: Teams) => Promise<AckResponse>;
   startGame: () => Promise<AckResponse>;
   newRound: () => void;
   leaveRoom: () => void;
@@ -161,6 +163,14 @@ export function RoomProvider({ children }: { children: ReactNode }) {
     socket.emit("room:setCourse", { courseId });
   }
 
+  function setGameMode(mode: GameMode) {
+    socket.emit("room:setGameMode", { mode });
+  }
+
+  function setTeams(teams: Teams): Promise<AckResponse> {
+    return emitWithAck("room:setTeams", { teams });
+  }
+
   function startGame(): Promise<AckResponse> {
     return emitWithAck("room:start", {});
   }
@@ -239,6 +249,8 @@ export function RoomProvider({ children }: { children: ReactNode }) {
         selectAvatar,
         setConfig,
         setCourse,
+        setGameMode,
+        setTeams,
         startGame,
         newRound,
         leaveRoom,

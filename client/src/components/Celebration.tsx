@@ -117,19 +117,59 @@ export function Celebration({
           <div className="text-blue-400 font-bold text-sm tracking-widest uppercase">Won in a putt-off</div>
         )}
 
-        <div>
-          <div className="text-neutral-400 text-sm tracking-[0.3em] uppercase mb-2">Champion</div>
-          <div className="flex items-center justify-center mb-2">
-            <AvatarIcon avatar={avatarFor(round.winner)} className="w-20 h-20" />
+        {round.gameMode === "highlow" && round.teams && round.highLow ? (
+          <div>
+            <div className="text-neutral-400 text-sm tracking-[0.3em] uppercase mb-2">High Low Match</div>
+            <div
+              className="text-3xl sm:text-4xl font-black text-yellow-300 mb-4"
+              style={{ animation: "lights-glow 1.4s ease-in-out infinite, pop-in 0.6s ease-out" }}
+            >
+              {round.highLow.overall.winner !== null
+                ? `${round.teams[round.highLow.overall.winner].join(" & ")} win!`
+                : "It's a tie!"}
+            </div>
+            <div className="space-y-2">
+              {(
+                [
+                  { label: "Front 9", match: round.highLow.front },
+                  { label: "Back 9", match: round.highLow.back },
+                  { label: "Overall", match: round.highLow.overall },
+                ] as const
+              ).map(({ label, match }) => (
+                <div key={label} className="bg-neutral-900 border border-neutral-800 rounded-xl px-3 py-2.5 text-sm">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-semibold uppercase tracking-wide text-neutral-400">{label}</span>
+                    <span className="font-mono font-bold text-white">
+                      {match.points[0]} – {match.points[1]}
+                    </span>
+                  </div>
+                  <div className="flex items-start justify-between mt-1 gap-2 text-xs">
+                    <span className={match.winner === 0 ? "font-bold text-yellow-300" : "text-neutral-400"}>
+                      {round.teams![0].join(" & ")}
+                    </span>
+                    <span className={`text-right ${match.winner === 1 ? "font-bold text-yellow-300" : "text-neutral-400"}`}>
+                      {round.teams![1].join(" & ")}
+                    </span>
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
-          <div
-            className="text-5xl sm:text-6xl font-black text-yellow-300"
-            style={{ animation: "lights-glow 1.4s ease-in-out infinite, pop-in 0.6s ease-out" }}
-          >
-            {round.winner}
+        ) : (
+          <div>
+            <div className="text-neutral-400 text-sm tracking-[0.3em] uppercase mb-2">Champion</div>
+            <div className="flex items-center justify-center mb-2">
+              <AvatarIcon avatar={avatarFor(round.winner)} className="w-20 h-20" />
+            </div>
+            <div
+              className="text-5xl sm:text-6xl font-black text-yellow-300"
+              style={{ animation: "lights-glow 1.4s ease-in-out infinite, pop-in 0.6s ease-out" }}
+            >
+              {round.winner}
+            </div>
+            <div className="mt-2 text-2xl font-bold text-green-400">{round.totals[round.winner]} pts</div>
           </div>
-          <div className="mt-2 text-2xl font-bold text-green-400">{round.totals[round.winner]} pts</div>
-        </div>
+        )}
 
         <div className="bg-neutral-900 border border-neutral-800 rounded-2xl p-5">
           <div className="text-sm text-neutral-400 mb-3">Final scores</div>
@@ -140,7 +180,7 @@ export function Celebration({
                 <div key={p} className="flex items-center justify-between text-sm">
                   <span className="flex items-center gap-2">
                     <AvatarIcon avatar={avatarFor(p)} className="w-6 h-6" />
-                    <span className={p === round.winner ? "text-yellow-300 font-semibold" : "text-neutral-300"}>
+                    <span className={round.winners.includes(p) ? "text-yellow-300 font-semibold" : "text-neutral-300"}>
                       {p}
                     </span>
                   </span>
@@ -150,15 +190,17 @@ export function Celebration({
           </div>
         </div>
 
-        <div
-          className="rounded-2xl p-5 bg-amber-950/40 border border-amber-800"
-          style={{ animation: "pop-in 0.6s ease-out 0.3s both" }}
-        >
-          <div className="text-2xl mb-1">🍺</div>
-          <div className="text-amber-200 font-semibold">
-            {joinNames(round.losers)} {round.losers.length > 1 ? "are" : "is"} buying the beers
+        {round.losers.length > 0 && (
+          <div
+            className="rounded-2xl p-5 bg-amber-950/40 border border-amber-800"
+            style={{ animation: "pop-in 0.6s ease-out 0.3s both" }}
+          >
+            <div className="text-2xl mb-1">🍺</div>
+            <div className="text-amber-200 font-semibold">
+              {joinNames(round.losers)} {round.losers.length > 1 ? "are" : "is"} buying the beers
+            </div>
           </div>
-        </div>
+        )}
 
         <div className="rounded-2xl p-4 bg-neutral-900 border border-neutral-800 text-center space-y-3">
           <p className="text-sm text-neutral-300">

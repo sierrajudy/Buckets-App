@@ -48,6 +48,11 @@ export async function initDb(): Promise<void> {
 
   await db.execute(`CREATE INDEX IF NOT EXISTS idx_rounds_created ON rounds(created_at)`);
 
+  await addColumnIfMissing("rounds", "game_mode", "TEXT NOT NULL DEFAULT 'standard'");
+  await addColumnIfMissing("rounds", "teams", "TEXT"); // JSON [[p1,p2],[p3,p4]], highlow only
+  await addColumnIfMissing("rounds", "winners", "TEXT NOT NULL DEFAULT '[]'"); // JSON string[]
+  await addColumnIfMissing("rounds", "high_low", "TEXT"); // JSON HighLowMatchResult, highlow only
+
   await db.execute(`
     CREATE TABLE IF NOT EXISTS users (
       id TEXT PRIMARY KEY,

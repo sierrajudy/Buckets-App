@@ -1,8 +1,15 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRoom } from "../store";
 import { AVATAR_KEYS, AVATAR_META, AvatarIcon, type AvatarKey } from "./Avatars";
 import { RulesModal } from "./RulesModal";
 import { CourseSearch } from "./CourseSearch";
+import { TeamPicker } from "./TeamPicker";
+import type { GameMode } from "../types";
+
+const GAME_MODES: { key: GameMode; label: string; blurb: string }[] = [
+  { key: "standard", label: "Standard", blurb: "2-4 players, free-for-all points" },
+  { key: "highlow", label: "High Low", blurb: "4 players, 2v2 team match play" },
+];
 
 export function Lobby({
   onViewStandings,
@@ -11,20 +18,48 @@ export function Lobby({
   onViewStandings: () => void;
   onViewProfile: () => void;
 }) {
-  const { state, isHost, isSpectator, me, selectAvatar, setConfig, setCourse, startGame, leaveRoom } = useRoom();
+  const {
+    state,
+    isHost,
+    isSpectator,
+    me,
+    selectAvatar,
+    setConfig,
+    setCourse,
+    setGameMode,
+    setTeams,
+    startGame,
+    leaveRoom,
+  } = useRoom();
   const [starting, setStarting] = useState(false);
   const [startError, setStartError] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
   const [showRules, setShowRules] = useState(false);
+
+  const isHighLow = state?.gameMode === "highlow";
+  const highLowReady = isHighLow && state?.players.length === 4;
+
+  // High Low always needs a valid 2v2 split to start. Rather than make the
+  // host explicitly assign teams before they can do anything else, seed a
+  // default pairing (join order) the moment 4 players are in — the host
+  // can still rearrange it with TeamPicker afterward.
+  useEffect(() => {
+    if (!isHost || !state || !highLowReady || state.teams) return;
+    const names = state.players.map((p) => p.name);
+    setTeams([
+      [names[0], names[1]],
+      [names[2], names[3]],
+    ]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isHost, highLowReady, state?.teams, state?.players.map((p) => p.name).join(",")]);
 
   if (!state) return null;
 
   const takenAvatars = new Set(state.players.filter((p) => p.avatar).map((p) => p.avatar));
   const canStart =
     Boolean(state.courseId) &&
-    state.players.length >= 2 &&
-    state.players.length <= 4 &&
-    state.players.every((p) => p.avatar);
+    state.players.every((p) => p.avatar) &&
+    (isHighLow ? state.players.length === 4 && state.teams !== null : state.players.length >= 2 && state.players.length <= 4);
 
   async function handleStart() {
     setStarting(true);
@@ -99,6 +134,39 @@ export function Lobby({
           <div className="bg-white dark:bg-neutral-900 rounded-2xl border border-neutral-200 dark:border-neutral-800 p-4 text-center text-sm text-neutral-500 dark:text-neutral-400">
             You're spectating — sit back and watch, no avatar needed. Waiting for the host to start the round…
           </div>
+        )}
+
+        <div className="bg-white dark:bg-neutral-900 rounded-2xl border border-neutral-200 dark:border-neutral-800 p-4">
+          <div className="text-sm font-semibold text-neutral-500 mb-3">Game mode</div>
+          {isHost ? (
+            <div className="grid grid-cols-2 gap-2">
+              {GAME_MODES.map((mode) => (
+                <button
+                  key={mode.key}
+                  type="button"
+                  onClick={() => setGameMode(mode.key)}
+                  className={`text-left rounded-xl border-2 p-3 transition-colors ${
+                    state.gameMode === mode.key
+                      ? "border-green-600 bg-green-50 dark:bg-green-950"
+                      : "border-transparent bg-neutral-50 dark:bg-neutral-800 hover:border-green-300"
+                  }`}
+                >
+                  <div className="font-semibold text-sm">{mode.label}</div>
+                  <div className="text-xs text-neutral-500 mt-0.5">{mode.blurb}</div>
+                </button>
+              ))}
+            </div>
+          ) : (
+            <div className="font-semibold">{GAME_MODES.find((m) => m.key === state.gameMode)?.label}</div>
+          )}
+        </div>
+
+        {isHighLow && (
+          <TeamPicker
+            state={state}
+            isHost={isHost}
+            onSetTeams={(teams) => setTeams(teams)}
+          />
         )}
 
         <div className="bg-white dark:bg-neutral-900 rounded-2xl border border-neutral-200 dark:border-neutral-800 p-4">
@@ -218,17 +286,23 @@ export function Lobby({
               >
                 {starting ? "Starting…" : "Start round"}
               </button>
-              {!state.courseId && (
+              {!state.courseId ? (
                 <p className="text-center text-xs text-neutral-500 mt-2">Pick a course above to continue</p>
-              )}
+              ) : isHighLow && state.players.length !== 4 ? (
+                <p className="text-center text-xs text-neutral-500 mt-2">
+                  High Low needs exactly 4 players ({state.players.length}/4 so far)
+                </p>
+              ) : null}
             </div>
           ) : (
             <p className="text-center text-sm text-neutral-500 py-2">
               {!state.courseId
                 ? "Waiting for the host to pick a course…"
-                : canStart
-                  ? "Waiting for the host to start the round…"
-                  : "Waiting for everyone to pick an avatar…"}
+                : isHighLow && state.players.length !== 4
+                  ? `High Low needs exactly 4 players (${state.players.length}/4 so far)`
+                  : canStart
+                    ? "Waiting for the host to start the round…"
+                    : "Waiting for everyone to pick an avatar…"}
             </p>
           ))}
       </div>

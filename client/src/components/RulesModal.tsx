@@ -24,10 +24,10 @@ export function RulesModal({ onClose }: { onClose: () => void }) {
           <section className="space-y-1.5">
             <h3 className="font-bold text-neutral-900 dark:text-white">The basics</h3>
             <ul className="list-disc pl-5 space-y-1">
-              <li>2-4 players, one round covering all 18 holes of whichever course the host picks.</li>
+              <li>2-4 players (or exactly 4 for High Low — see below), one round covering all 18 holes of whichever course the host picks.</li>
               <li>One person hosts each round and enters everyone's strokes as you play — ideally the host rotates each time you golf, so everyone gets a turn.</li>
               <li>Everyone else can watch the scorecard live on their own phone as the host updates it.</li>
-              <li>Whoever has the most points after 18 holes wins the match. If it's tied, it's settled with a putt-off — closest to the hole wins.</li>
+              <li>Whoever has the most points after 18 holes wins the match. If it's tied, it's settled with a putt-off — closest to the hole wins. (High Low handles ties differently — see below.)</li>
               <li>Loser (or losers, if more than one player is tied for last) buys the beers.</li>
             </ul>
           </section>
@@ -63,6 +63,33 @@ export function RulesModal({ onClose }: { onClose: () => void }) {
               <li>
                 <span className="font-semibold">Hole-in-one</span> wins the whole match on the spot — the host just
                 has to confirm it by moving on to the next hole (or finishing the round, if it's the last one).
+              </li>
+            </ul>
+          </section>
+
+          <section className="space-y-1.5">
+            <h3 className="font-bold text-neutral-900 dark:text-white">High Low (team mode)</h3>
+            <ul className="list-disc pl-5 space-y-1">
+              <li>4 players only, split into two fixed 2-person teams for the whole round. Buckets and PG&amp;E still work exactly the same as optional side games.</li>
+              <li>
+                Each hole, your team's <span className="font-semibold">low scorer</span> plays the other team's low
+                scorer for 1 point, and your <span className="font-semibold">high scorer</span> plays their high
+                scorer for the other point.
+              </li>
+              <li>
+                A tie on either of those matchups is "no blood" — nobody gets that point. So a hole can be worth 0,
+                1, or 2 total points depending on how many matchups have a clear winner.
+              </li>
+              <li>
+                <span className="font-semibold">Birdie</span> is worth a{" "}
+                <span className="font-semibold">0.5 bonus point</span> and{" "}
+                <span className="font-semibold">eagle</span> a <span className="font-semibold">1 bonus point</span>{" "}
+                to your team, whether or not you won your matchup that hole.
+              </li>
+              <li>
+                Front 9, back 9, and the overall 18 are three separate matches — a team can win the front and lose
+                the back, for instance. Whoever loses the overall match buys the beers; a tied overall match means
+                nobody has to.
               </li>
             </ul>
           </section>
