@@ -307,9 +307,22 @@ export function computeWolfHoleResult(entry: HoleEntry, wolfName: string, player
     }
   }
 
+  // Birdie/eagle bonus is shared across a whole team, not kept by whoever
+  // made it: if a player partners up and their partner cards a birdie, both
+  // of them get the doubled points for the hole (same for a 3-way team
+  // taking on a lone wolf). Eagle takes priority over birdie if a team has
+  // one of each.
+  const teamAHasEagle = teamA.some((p) => eaglePlayers.includes(p));
+  const teamAHasBirdie = teamA.some((p) => birdiePlayers.includes(p));
+  const teamBHasEagle = teamB.some((p) => eaglePlayers.includes(p));
+  const teamBHasBirdie = teamB.some((p) => birdiePlayers.includes(p));
+
   for (const p of players) {
-    if (birdiePlayers.includes(p)) points[p] *= WOLF_BIRDIE_MULTIPLIER;
-    else if (eaglePlayers.includes(p)) points[p] *= WOLF_EAGLE_MULTIPLIER;
+    const onTeamA = teamA.includes(p);
+    const hasEagle = onTeamA ? teamAHasEagle : teamBHasEagle;
+    const hasBirdie = onTeamA ? teamAHasBirdie : teamBHasBirdie;
+    if (hasEagle) points[p] *= WOLF_EAGLE_MULTIPLIER;
+    else if (hasBirdie) points[p] *= WOLF_BIRDIE_MULTIPLIER;
   }
 
   const holeWinners = outcome === "teamA" ? [...teamA] : outcome === "teamB" ? [...teamB] : [];
