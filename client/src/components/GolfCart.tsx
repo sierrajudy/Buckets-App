@@ -1,7 +1,15 @@
 import { AvatarIcon } from "./Avatars";
 import type { AvatarKey } from "../types";
 
-export function GolfCart({ avatars, size = 64 }: { avatars?: (AvatarKey | null)[]; size?: number }) {
+export function GolfCart({
+  avatars,
+  size = 64,
+  forceWolfEars,
+}: {
+  avatars?: (AvatarKey | null)[];
+  size?: number;
+  forceWolfEars?: boolean;
+}) {
   const riders = (avatars ?? []).slice(0, 4);
   // 3-4 riders wrap onto a second row inside the same seat area, sized down
   // a bit so a full foursome still fits without spilling past the cart body.
@@ -27,7 +35,7 @@ export function GolfCart({ avatars, size = 64 }: { avatars?: (AvatarKey | null)[
         >
           {riders.map((a, i) => (
             <span key={i} className="block" style={{ width: avatarSize, height: avatarSize }}>
-              <AvatarIcon avatar={a} className="w-full h-full" />
+              <AvatarIcon avatar={a} className="w-full h-full" forceWolfEars={forceWolfEars} />
             </span>
           ))}
         </div>

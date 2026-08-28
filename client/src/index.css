@@ -153,6 +153,16 @@ body {
   100% { transform: translateX(110vw); opacity: 0; }
 }
 
+/* Wolf mode's "hopping across the forest" hole-transition: each avatar gets
+ * this squash-and-stretch bounce on a loop, staggered per-player (see
+ * WolfHoppers.tsx) so the group doesn't bounce in lockstep, while the whole
+ * row travels left-to-right via cart-drive-across on the wrapping element. */
+@keyframes hop-bounce {
+  0%, 100% { transform: translateY(0) scaleY(1); }
+  35% { transform: translateY(-16px) scaleY(1.08); }
+  55% { transform: translateY(0) scaleY(0.9); }
+}
+
 /* High Low's driving-range transition: all 4 golfers fire off their own
  * ball in a rapid "cannon" succession (player 1, then 2, then 3, then 4,
  * DrivingRange.tsx staggers each by CANNON_STAGGER_MS via animation-delay)

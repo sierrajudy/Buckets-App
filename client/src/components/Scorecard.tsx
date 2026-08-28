@@ -8,6 +8,7 @@ import { RoomCodeBadge } from "./RoomCodeBadge";
 import { EmojiReactionBar } from "./EmojiReactionBar";
 import { PredictionPicker } from "./PredictionPicker";
 import { WolfBackdrop } from "./WolfBackdrop";
+import { WolfHoleTransition, pickWolfTransitionVariant, type WolfTransitionVariant } from "./WolfHoleTransition";
 import { HighLowBackdrop } from "./HighLowBackdrop";
 import { BucketsBackdrop } from "./BucketsBackdrop";
 import { BaseballBackdrop } from "./BaseballBackdrop";
@@ -106,6 +107,7 @@ export function Scorecard() {
   const [stepIndex, setStepIndex] = useState(() => hostCurrentStep);
   const [showBallRoll, setShowBallRoll] = useState(false);
   const [heckleMessage, setHeckleMessage] = useState<string | null>(null);
+  const [wolfTransitionVariant, setWolfTransitionVariant] = useState<WolfTransitionVariant>("cart-course");
   const [confirming, setConfirming] = useState(false);
   const [showEndConfirm, setShowEndConfirm] = useState(false);
   const [ending, setEnding] = useState(false);
@@ -128,6 +130,7 @@ export function Scorecard() {
     prevStepIndex.current = stepIndex;
     if (stepIndex <= prev) return;
     setHeckleMessage(computeHeckle(resultsRef.current[stepIndex - 1], playersRef.current));
+    setWolfTransitionVariant(pickWolfTransitionVariant());
     setShowBallRoll(true);
     // High Low's 4 golfers fire in a staggered "cannon" (see DrivingRange),
     // so the last player doesn't even start their own full-length flight
@@ -217,56 +220,49 @@ export function Scorecard() {
       {isHighLow && <HighLowBackdrop />}
       {isBuckets && <BucketsBackdrop />}
       {isBaseball && <BaseballBackdrop />}
-      {showBallRoll && (
-        <div
-          className="fixed inset-0 z-40 overflow-hidden flex items-center justify-center"
-          style={{
-            background: isWolf
-              ? "linear-gradient(to bottom, #1e1b4b 0%, #312e81 55%, #14532d 55%, #052e16 100%)"
-              : "linear-gradient(to bottom, #bae6fd 0%, #bae6fd 55%, #4ade80 55%, #16a34a 100%)",
-          }}
-        >
-          {isWolf ? (
-            <>
-              <div className="absolute top-8 right-14 w-14 h-14 rounded-full bg-amber-100 shadow-[0_0_40px_10px_rgba(252,211,77,0.35)]" />
-              {[...Array(20)].map((_, i) => (
-                <div
-                  key={i}
-                  className="absolute w-1 h-1 rounded-full bg-white/80"
-                  style={{ left: `${(i * 47) % 100}%`, top: `${(i * 29) % 50}%` }}
-                />
-              ))}
-            </>
-          ) : (
-            <>
-              <div className="absolute top-8 left-10 w-16 h-8 rounded-full bg-white/80" />
-              <div className="absolute top-16 left-28 w-20 h-9 rounded-full bg-white/70" />
-              <div className="absolute top-10 right-14 w-14 h-7 rounded-full bg-white/70" />
-            </>
-          )}
-
-          {heckleMessage && <HecklerGuy message={heckleMessage} />}
-
-          {isHighLow ? (
-            <div className="absolute inset-0">
-              <DrivingRange avatars={players.map((p) => p.avatar)} durationMs={CART_DURATION_MS} />
-            </div>
-          ) : (
-            <div
-              className="absolute"
-              style={{ bottom: "18%", animation: `cart-drive-across ${CART_DURATION_MS}ms ease-in-out` }}
-            >
-              <GolfCart avatars={players.map((p) => p.avatar)} size={180} />
-            </div>
-          )}
-
-          <div className="absolute inset-x-0 bottom-10 text-center">
-            <span className="inline-block px-4 py-1.5 rounded-full bg-white/90 dark:bg-neutral-900/90 text-green-700 dark:text-green-400 font-bold text-sm shadow">
-              {isWolf ? "🐺 Awoooo! Next hole" : "On to the next hole! ⛳"}
-            </span>
+      {showBallRoll &&
+        (isWolf ? (
+          <div className="fixed inset-0 z-40 overflow-hidden flex items-center justify-center">
+            <WolfHoleTransition
+              variant={wolfTransitionVariant}
+              avatars={players.map((p) => p.avatar)}
+              scoreHeckle={heckleMessage}
+              durationMs={CART_DURATION_MS}
+            />
           </div>
-        </div>
-      )}
+        ) : (
+          <div
+            className="fixed inset-0 z-40 overflow-hidden flex items-center justify-center"
+            style={{
+              background: "linear-gradient(to bottom, #bae6fd 0%, #bae6fd 55%, #4ade80 55%, #16a34a 100%)",
+            }}
+          >
+            <div className="absolute top-8 left-10 w-16 h-8 rounded-full bg-white/80" />
+            <div className="absolute top-16 left-28 w-20 h-9 rounded-full bg-white/70" />
+            <div className="absolute top-10 right-14 w-14 h-7 rounded-full bg-white/70" />
+
+            {heckleMessage && <HecklerGuy message={heckleMessage} />}
+
+            {isHighLow ? (
+              <div className="absolute inset-0">
+                <DrivingRange avatars={players.map((p) => p.avatar)} durationMs={CART_DURATION_MS} />
+              </div>
+            ) : (
+              <div
+                className="absolute"
+                style={{ bottom: "18%", animation: `cart-drive-across ${CART_DURATION_MS}ms ease-in-out` }}
+              >
+                <GolfCart avatars={players.map((p) => p.avatar)} size={180} />
+              </div>
+            )}
+
+            <div className="absolute inset-x-0 bottom-10 text-center">
+              <span className="inline-block px-4 py-1.5 rounded-full bg-white/90 dark:bg-neutral-900/90 text-green-700 dark:text-green-400 font-bold text-sm shadow">
+                On to the next hole! ⛳
+              </span>
+            </div>
+          </div>
+        ))}
 
       <header className="border-b border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 px-4 py-3 sticky top-0 z-20">
         <div className="flex items-center justify-between max-w-2xl mx-auto">

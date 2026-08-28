@@ -240,11 +240,24 @@ const AVATAR_COMPONENTS: Record<AvatarKey, () => React.JSX.Element> = {
   cap: CapAvatar,
 };
 
-export function AvatarIcon({ avatar, className }: { avatar: AvatarKey | null; className?: string }) {
+export function AvatarIcon({
+  avatar,
+  className,
+  forceWolfEars,
+}: {
+  avatar: AvatarKey | null;
+  className?: string;
+  /** Overrides the room-derived wolf check below — for spots that already
+   * know for certain they're rendering wolf mode (the hole-transition
+   * screens) without a live wolf room to read state from, namely the
+   * isolated animation lab at /dev/wolf-transitions. Leave unset anywhere
+   * a real room is available; the game itself never needs this. */
+  forceWolfEars?: boolean;
+}) {
   // Every component that renders an avatar lives inside RoomProvider, so
   // this can read the live game mode directly without prop-drilling it
   // through every call site.
-  const isWolf = useRoom().state?.gameMode === "wolf";
+  const isWolf = forceWolfEars ?? (useRoom().state?.gameMode === "wolf");
 
   if (!avatar) {
     return (

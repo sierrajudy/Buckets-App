@@ -15,6 +15,7 @@ import { AceIntro } from "./components/AceIntro";
 import { PartyIntro } from "./components/PartyIntro";
 import { LoadingScreen } from "./components/LoadingScreen";
 import { ReactionOverlay } from "./components/ReactionOverlay";
+import { WolfTransitionLab } from "./dev/WolfTransitionLab";
 
 function AppShell() {
   const { status: authStatus } = useAuth();
@@ -129,6 +130,11 @@ function AppShell() {
 }
 
 export default function App() {
+  // Isolated animation lab — bypasses auth/room entirely (no socket
+  // connect, no server, no DB) so it's a plain local component preview.
+  // See WolfTransitionLab.tsx for why this exists and when to remove it.
+  if (window.location.pathname === "/dev/wolf-transitions") return <WolfTransitionLab />;
+
   return (
     <AuthProvider>
       <RoomProvider>

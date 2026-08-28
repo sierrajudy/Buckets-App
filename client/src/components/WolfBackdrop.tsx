@@ -8,47 +8,7 @@
  * / Scorecard) and add a little extra bottom padding of their own so the
  * tree-line never fights for legibility with real controls (like a "Start
  * round" button) near the bottom of the page. */
-
-interface Tree {
-  x: number;
-  h: number;
-  w: number;
-}
-
-function pine({ x, h, w }: Tree, key: number) {
-  return (
-    <polygon
-      key={key}
-      points={`${x},${90 - h} ${x - w * 0.5},${90 - h * 0.4} ${x - w * 0.22},${90 - h * 0.4} ${x - w * 0.62},${90} ${x + w * 0.62},${90} ${x + w * 0.22},${90 - h * 0.4} ${x + w * 0.5},${90 - h * 0.4}`}
-    />
-  );
-}
-
-const BACK_ROW: Tree[] = [
-  { x: 10, h: 42, w: 30 },
-  { x: 55, h: 34, w: 24 },
-  { x: 95, h: 48, w: 32 },
-  { x: 140, h: 36, w: 26 },
-  { x: 185, h: 50, w: 34 },
-  { x: 230, h: 34, w: 24 },
-  { x: 270, h: 44, w: 30 },
-  { x: 315, h: 38, w: 26 },
-  { x: 360, h: 48, w: 32 },
-  { x: 395, h: 34, w: 24 },
-];
-
-const FRONT_ROW: Tree[] = [
-  { x: -5, h: 62, w: 40 },
-  { x: 35, h: 50, w: 34 },
-  { x: 80, h: 68, w: 46 },
-  { x: 125, h: 48, w: 32 },
-  { x: 170, h: 64, w: 44 },
-  { x: 215, h: 52, w: 36 },
-  { x: 260, h: 70, w: 46 },
-  { x: 305, h: 50, w: 34 },
-  { x: 350, h: 62, w: 40 },
-  { x: 400, h: 54, w: 36 },
-];
+import { ForestTreeLine } from "./ForestTrees";
 
 /** Deterministic pseudo-random generator (mulberry32) so the star field is
  * stable across renders/reloads instead of reshuffling every time. */
@@ -164,14 +124,7 @@ export function WolfBackdrop() {
 
       <div className="absolute top-10 right-8 w-24 h-24 sm:w-32 sm:h-32 rounded-full bg-amber-50 shadow-[0_0_70px_22px_rgba(252,211,77,0.35)]" />
 
-      <svg
-        viewBox="0 0 400 90"
-        preserveAspectRatio="none"
-        className="absolute inset-x-0 bottom-0 w-full h-32 sm:h-44"
-      >
-        <g className="fill-emerald-950/60">{BACK_ROW.map(pine)}</g>
-        <g className="fill-emerald-950 opacity-90">{FRONT_ROW.map(pine)}</g>
-      </svg>
+      <ForestTreeLine className="absolute inset-x-0 bottom-0 w-full h-32 sm:h-44" />
     </div>
   );
 }
