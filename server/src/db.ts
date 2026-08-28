@@ -66,6 +66,11 @@ export async function initDb(): Promise<void> {
 
   await addColumnIfMissing("users", "email_round_start", "INTEGER NOT NULL DEFAULT 0");
   await addColumnIfMissing("users", "email_standings", "INTEGER NOT NULL DEFAULT 0");
+  // Which costume piece (see costumes.ts on the client, achievements.ts on
+  // the server — the key strings must match between them) the user has
+  // equipped right now, one at a time. NULL until they equip something in
+  // their profile's Closet, and always one they've actually unlocked.
+  await addColumnIfMissing("users", "equipped_costume", "TEXT");
 
   await db.execute(`
     CREATE TABLE IF NOT EXISTS sessions (
@@ -81,6 +86,33 @@ export async function initDb(): Promise<void> {
       user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
       expires_at TEXT NOT NULL,
       created_at TEXT NOT NULL DEFAULT (datetime('now'))
+    )
+  `);
+
+  // One row per achievement a user has actually earned — see
+  // achievements.ts for the fixed definitions (not stored in the DB, just
+  // in code) and for how earned_at order maps to which costume piece a
+  // given unlock grants (the Nth achievement earned, chronologically,
+  // always grants costume piece N, regardless of which achievement it
+  // is — see COSTUME_SEQUENCE).
+  await db.execute(`
+    CREATE TABLE IF NOT EXISTS user_achievements (
+      user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      achievement_key TEXT NOT NULL,
+      earned_at TEXT NOT NULL DEFAULT (datetime('now')),
+      PRIMARY KEY (user_id, achievement_key)
+    )
+  `);
+
+  // One row per user per calendar day they've logged in (signup counts as
+  // day 1) — just a set of distinct days, not a count of logins, so
+  // logging in five times in one day still only ever adds one row. Powers
+  // the "Creature of Habit" achievement (3 distinct days within a week).
+  await db.execute(`
+    CREATE TABLE IF NOT EXISTS login_events (
+      user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      day TEXT NOT NULL,
+      PRIMARY KEY (user_id, day)
     )
   `);
 

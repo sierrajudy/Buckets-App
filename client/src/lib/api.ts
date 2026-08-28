@@ -1,4 +1,11 @@
-import type { CourseSearchResult, CourseSelection, CourseTees, RoundHistoryRow, StandingsRow } from "../types";
+import type {
+  AchievementsResponse,
+  CourseSearchResult,
+  CourseSelection,
+  CourseTees,
+  RoundHistoryRow,
+  StandingsRow,
+} from "../types";
 import { getStoredToken } from "./authApi";
 
 async function json<T>(res: Response): Promise<T> {
@@ -53,4 +60,22 @@ export async function fetchCourseTees(id: string): Promise<CourseTees> {
 export async function selectCourseTee(id: string, teeKey: string): Promise<CourseSelection> {
   const res = await fetch(`/api/courses/${encodeURIComponent(id)}/tee?key=${encodeURIComponent(teeKey)}`);
   return jsonOrServerError<CourseSelection>(res);
+}
+
+export async function fetchAchievements(): Promise<AchievementsResponse> {
+  const token = getStoredToken();
+  const res = await fetch("/api/achievements", {
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
+  });
+  return jsonOrServerError<AchievementsResponse>(res);
+}
+
+export async function equipCostume(costume: string | null): Promise<{ ok: true; equippedCostume: string | null }> {
+  const token = getStoredToken();
+  const res = await fetch("/api/achievements/equip", {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json", ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+    body: JSON.stringify({ costume }),
+  });
+  return jsonOrServerError<{ ok: true; equippedCostume: string | null }>(res);
 }

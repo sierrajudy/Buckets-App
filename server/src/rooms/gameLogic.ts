@@ -524,6 +524,7 @@ export function finalizeRound(params: {
     gameMode,
     teams: null,
     highLow: null,
+    newAchievements: {},
   };
 }
 
@@ -586,5 +587,6 @@ export function finalizeHighLowRound(params: {
       back: { points: back, winner: winnerOf(back) },
       overall: { points: overall, winner: overallWinner },
     },
+    newAchievements: {},
   };
 }

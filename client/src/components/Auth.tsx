@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { useAuth } from "../authStore";
 import { forgotPassword } from "../lib/authApi";
-import { RulesModal } from "./RulesModal";
 
 export function Auth() {
   const { signup, login } = useAuth();
@@ -13,7 +12,6 @@ export function Auth() {
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [forgotSent, setForgotSent] = useState(false);
-  const [showRules, setShowRules] = useState(false);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -58,15 +56,10 @@ export function Auth() {
         <div className="text-center space-y-1">
           <h1 className="text-3xl font-extrabold text-green-700 dark:text-green-400 tracking-tight">Buckets</h1>
           <p className="text-sm text-neutral-500 dark:text-neutral-400">
-            {mode === "forgot" ? "Reset your password" : "Sign in to play and keep your stats across every round"}
+            {mode === "forgot"
+              ? "Reset your password"
+              : "Sign in to play and keep your stats across every round — for degenerate golfers"}
           </p>
-          <button
-            type="button"
-            onClick={() => setShowRules(true)}
-            className="text-xs font-semibold text-green-700 dark:text-green-400 hover:underline"
-          >
-            Rules
-          </button>
         </div>
 
         {mode !== "forgot" && (
@@ -192,8 +185,6 @@ export function Auth() {
           </>
         )}
       </form>
-
-      {showRules && <RulesModal onClose={() => setShowRules(false)} />}
     </div>
   );
 }

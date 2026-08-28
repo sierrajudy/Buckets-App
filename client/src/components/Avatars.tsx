@@ -1,5 +1,6 @@
 import { AVATAR_KEYS, type AvatarKey } from "../types";
 import { useRoom } from "../store";
+import { CostumeAccessory, type CostumeKey } from "./costumes";
 
 export { AVATAR_KEYS };
 export type { AvatarKey };
@@ -244,6 +245,7 @@ export function AvatarIcon({
   avatar,
   className,
   forceWolfEars,
+  costume,
 }: {
   avatar: AvatarKey | null;
   className?: string;
@@ -253,11 +255,18 @@ export function AvatarIcon({
    * isolated animation lab at /dev/wolf-transitions. Leave unset anywhere
    * a real room is available; the game itself never needs this. */
   forceWolfEars?: boolean;
+  /** An unlocked achievement costume piece to render on top — a player's
+   * Player.equippedCostume during a live round, or whatever's selected in
+   * the profile's Closet when previewing there. Unrecognized/null values
+   * just render nothing, so a stale or not-yet-typed key never crashes
+   * this. */
+  costume?: string | null;
 }) {
   // Every component that renders an avatar lives inside RoomProvider, so
   // this can read the live game mode directly without prop-drilling it
   // through every call site.
   const isWolf = forceWolfEars ?? (useRoom().state?.gameMode === "wolf");
+  const costumeKey = (costume ?? null) as CostumeKey | null;
 
   if (!avatar) {
     return (
@@ -269,6 +278,7 @@ export function AvatarIcon({
           </text>
         </svg>
         {isWolf && <WolfEars />}
+        {costumeKey && <CostumeAccessory costume={costumeKey} avatar={avatar} />}
       </span>
     );
   }
@@ -277,6 +287,7 @@ export function AvatarIcon({
     <span className={`relative inline-block ${className ?? ""}`}>
       <Cmp />
       {isWolf && <WolfEars {...WOLF_EAR_OFFSETS[avatar]} />}
+      {costumeKey && <CostumeAccessory costume={costumeKey} avatar={avatar} />}
     </span>
   );
 }

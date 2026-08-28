@@ -43,7 +43,10 @@ authRouter.post("/signup", async (req, res) => {
   });
 
   const token = await createSession(id);
-  res.status(201).json({ token, user: { id, email, name, emailRoundStart: false, emailStandings: false } });
+  res.status(201).json({
+    token,
+    user: { id, email, name, emailRoundStart: false, emailStandings: false, equippedCostume: null },
+  });
 });
 
 authRouter.post("/login", async (req, res) => {
@@ -51,7 +54,7 @@ authRouter.post("/login", async (req, res) => {
   const password = String(req.body?.password ?? "");
 
   const result = await db.execute({
-    sql: "SELECT id, email, name, password_hash, email_round_start, email_standings FROM users WHERE email = ? COLLATE NOCASE",
+    sql: "SELECT id, email, name, password_hash, email_round_start, email_standings, equipped_costume FROM users WHERE email = ? COLLATE NOCASE",
     args: [email],
   });
   const row = result.rows[0] as unknown as Record<string, unknown> | undefined;

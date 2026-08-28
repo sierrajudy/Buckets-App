@@ -50,14 +50,16 @@ function StatusAvatar({
   avatar,
   className,
   badge,
+  costume,
 }: {
   avatar: AvatarKey | null;
   className?: string;
   badge?: string;
+  costume?: string | null;
 }) {
   return (
     <span className="relative inline-block">
-      <AvatarIcon avatar={avatar} className={className} />
+      <AvatarIcon avatar={avatar} className={className} costume={costume} />
       {badge && (
         <span
           className="absolute -top-1.5 -right-1.5 text-sm leading-none select-none"
@@ -529,7 +531,12 @@ export function Scorecard() {
               >
                 <div className="flex items-center justify-between mb-3">
                   <div className="flex items-center gap-2">
-                    <StatusAvatar avatar={p.avatar} className="w-8 h-8 shrink-0" badge={statusBadgeFor(p.name)} />
+                    <StatusAvatar
+                      avatar={p.avatar}
+                      className="w-8 h-8 shrink-0"
+                      badge={statusBadgeFor(p.name)}
+                      costume={p.equippedCostume}
+                    />
                     <span className={`font-semibold ${themedTitleCls}`}>
                       {p.name}
                       {p.id === me?.id && <span className="font-normal text-white/60"> (you)</span>}
@@ -667,7 +674,12 @@ export function Scorecard() {
             <div className="flex flex-wrap gap-4">
               {players.map((p) => (
                 <div key={p.id} className="flex items-center gap-1.5">
-                  <StatusAvatar avatar={p.avatar} className="w-6 h-6 shrink-0" badge={statusBadgeFor(p.name)} />
+                  <StatusAvatar
+                    avatar={p.avatar}
+                    className="w-6 h-6 shrink-0"
+                    badge={statusBadgeFor(p.name)}
+                    costume={p.equippedCostume}
+                  />
                   <span className="text-sm text-white">{p.name}</span>
                   <span className="text-lg font-extrabold text-green-300">
                     {totals[p.name] ?? 0}

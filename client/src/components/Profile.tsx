@@ -3,12 +3,22 @@ import { useAuth } from "../authStore";
 import { fetchMyRounds } from "../lib/api";
 import { RoundHistoryTable } from "./RoundHistoryTable";
 import { EmailPreferences } from "./EmailPreferences";
+import { Closet } from "./Closet";
 import type { RoundHistoryRow } from "../types";
 
-export function Profile({ onBack, autoOpenEmailPrefs = false }: { onBack: () => void; autoOpenEmailPrefs?: boolean }) {
+export function Profile({
+  onBack,
+  autoOpenEmailPrefs = false,
+  autoOpenAvatarTab = false,
+}: {
+  onBack: () => void;
+  autoOpenEmailPrefs?: boolean;
+  autoOpenAvatarTab?: boolean;
+}) {
   const { user } = useAuth();
   const [rows, setRows] = useState<RoundHistoryRow[] | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [tab, setTab] = useState<"rounds" | "avatar">(autoOpenAvatarTab ? "avatar" : "rounds");
 
   useEffect(() => {
     fetchMyRounds()
@@ -46,14 +56,37 @@ export function Profile({ onBack, autoOpenEmailPrefs = false }: { onBack: () => 
           )}
         </div>
 
-        <EmailPreferences autoOpen={autoOpenEmailPrefs} />
-
-        <div>
-          <div className="text-sm font-semibold text-neutral-500 mb-2">Every round you've played</div>
-          {error && <p className="text-sm text-red-500">{error}</p>}
-          {!rows && !error && <p className="text-sm text-neutral-500">Loading…</p>}
-          {rows && <RoundHistoryTable rows={rows} emptyMessage="No rounds yet — go host or join one!" />}
+        <div className="flex gap-2">
+          {(["rounds", "avatar"] as const).map((t) => (
+            <button
+              key={t}
+              type="button"
+              onClick={() => setTab(t)}
+              className={`flex-1 rounded-lg py-2 text-sm font-semibold border ${
+                tab === t
+                  ? "bg-green-600 text-white border-green-600"
+                  : "border-neutral-300 dark:border-neutral-700 text-neutral-600 dark:text-neutral-300 hover:bg-neutral-50 dark:hover:bg-neutral-800"
+              }`}
+            >
+              {t === "rounds" ? "Rounds" : "Avatar & Achievements"}
+            </button>
+          ))}
         </div>
+
+        {tab === "rounds" ? (
+          <>
+            <EmailPreferences autoOpen={autoOpenEmailPrefs} />
+
+            <div>
+              <div className="text-sm font-semibold text-neutral-500 mb-2">Every round you've played</div>
+              {error && <p className="text-sm text-red-500">{error}</p>}
+              {!rows && !error && <p className="text-sm text-neutral-500">Loading…</p>}
+              {rows && <RoundHistoryTable rows={rows} emptyMessage="No rounds yet — go host or join one!" />}
+            </div>
+          </>
+        ) : (
+          <Closet />
+        )}
       </div>
     </div>
   );

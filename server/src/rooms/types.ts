@@ -22,6 +22,12 @@ export interface Player {
   /** Only meaningful in "highlow" mode — the host sets this in the lobby
    * for each player before starting. 0 (scratch) otherwise. */
   handicap: number;
+  /** Snapshotted from their account (see AuthUser) at the moment they
+   * create/join/rejoin a room — an achievement costume piece equipped in
+   * their profile, or null. Changing it mid-round in another tab doesn't
+   * live-update here until they reconnect, same as the rest of a player's
+   * account-level info. */
+  equippedCostume: string | null;
 }
 
 export interface Spectator {
@@ -142,6 +148,16 @@ export interface HighLowMatchResult {
   overall: { points: [number, number]; winner: 0 | 1 | null };
 }
 
+/** One achievement, with enough of its definition inlined that the
+ * celebration screen can show it (title/description/emoji) without a
+ * separate round-trip to /api/achievements. See achievements.ts. */
+export interface UnlockedAchievement {
+  key: string;
+  title: string;
+  description: string;
+  emoji: string;
+}
+
 export interface RoundSummary {
   id: string;
   course: string;
@@ -164,6 +180,12 @@ export interface RoundSummary {
   gameMode: GameMode;
   teams: Teams | null;
   highLow: HighLowMatchResult | null;
+  /** Player name -> achievements they newly unlocked by playing this
+   * specific round, for the celebration screen's unlock popup. Empty for
+   * everyone once that popup's been shown — this isn't meant to be a
+   * lasting record, just a one-time notification; the permanent record is
+   * user_achievements in the DB (see /api/achievements for that). */
+  newAchievements: Record<string, UnlockedAchievement[]>;
 }
 
 export interface Room {

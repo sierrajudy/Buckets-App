@@ -40,19 +40,28 @@ function useConfetti(count = 140): ConfettiPiece[] {
 export function Celebration({
   onViewStandings,
   onViewProfile,
+  onViewAchievements,
 }: {
   onViewStandings: () => void;
   onViewProfile: () => void;
+  /** Takes them straight to Profile's Avatar & Achievements tab — used by
+   * the achievement-unlock popup's "Equip now" button. Distinct from
+   * onViewProfile, which is the plain 👤 Profile link and always opens on
+   * the Rounds tab. */
+  onViewAchievements: () => void;
 }) {
-  const { state, isHost, isSpectator, newRound, leaveRoom } = useRoom();
+  const { state, isHost, isSpectator, me, newRound, leaveRoom } = useRoom();
   const confetti = useConfetti();
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [deleted, setDeleted] = useState(false);
   const [deleteError, setDeleteError] = useState<string | null>(null);
+  const [achievementPopupDismissed, setAchievementPopupDismissed] = useState(false);
 
   if (!state || !state.finishedRound) return null;
   const round = state.finishedRound;
+  const myNewAchievements = me ? (round.newAchievements[me.name] ?? []) : [];
+  const showAchievementPopup = myNewAchievements.length > 0 && !achievementPopupDismissed;
   const isHighLow = round.gameMode === "highlow";
   const isWolf = round.gameMode === "wolf";
   const isBaseball = round.gameMode === "baseball";
@@ -87,6 +96,10 @@ export function Celebration({
 
   function avatarFor(name: string) {
     return state!.players.find((p) => p.name === name)?.avatar ?? null;
+  }
+
+  function costumeFor(name: string) {
+    return state!.players.find((p) => p.name === name)?.equippedCostume ?? null;
   }
 
   return (
@@ -197,7 +210,7 @@ export function Celebration({
                   {team.map((p) => (
                     <div key={p} className="flex items-center justify-between">
                       <span className="flex items-center gap-2 text-neutral-300">
-                        <AvatarIcon avatar={avatarFor(p)} className="w-5 h-5" />
+                        <AvatarIcon avatar={avatarFor(p)} className="w-5 h-5" costume={costumeFor(p)} />
                         {p}
                       </span>
                       <span className="font-mono">
@@ -217,7 +230,7 @@ export function Celebration({
           <div>
             <div className="text-neutral-400 text-sm tracking-[0.3em] uppercase mb-2">Champion</div>
             <div className="flex items-center justify-center mb-2">
-              <AvatarIcon avatar={avatarFor(round.winner)} className="w-20 h-20" />
+              <AvatarIcon avatar={avatarFor(round.winner)} className="w-20 h-20" costume={costumeFor(round.winner)} />
             </div>
             <div
               className="text-5xl sm:text-6xl font-black text-yellow-300"
@@ -254,7 +267,7 @@ export function Celebration({
               .map((p) => (
                 <div key={p} className="flex items-center justify-between text-sm">
                   <span className="flex items-center gap-2">
-                    <AvatarIcon avatar={avatarFor(p)} className="w-6 h-6" />
+                    <AvatarIcon avatar={avatarFor(p)} className="w-6 h-6" costume={costumeFor(p)} />
                     <span className={round.winners.includes(p) ? "text-yellow-300 font-semibold" : "text-neutral-300"}>
                       {p}
                     </span>
@@ -361,6 +374,65 @@ export function Celebration({
                 className="flex-1 rounded-lg border border-neutral-700 text-neutral-200 hover:bg-neutral-800 disabled:opacity-60 font-semibold py-2.5"
               >
                 Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showAchievementPopup && (
+        <div className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4">
+          <div
+            className="w-full max-w-sm bg-neutral-900 border border-amber-500/40 rounded-2xl shadow-lg p-6 space-y-5 text-center"
+            style={{ animation: "pop-in 0.4s ease-out" }}
+          >
+            <div>
+              <div className="text-xs font-bold uppercase tracking-widest text-amber-400 mb-1">
+                {myNewAchievements.length > 1 ? "Achievements unlocked!" : "Achievement unlocked!"}
+              </div>
+              <p className="text-sm text-neutral-400">
+                You unlocked a new costume piece{myNewAchievements.length > 1 ? " for each of these" : ""} — head to
+                your Closet to equip it.
+              </p>
+            </div>
+
+            <div className="space-y-2">
+              {myNewAchievements.map((a) => (
+                <div
+                  key={a.key}
+                  className="flex items-center gap-3 bg-neutral-800/80 border border-amber-500/30 rounded-xl p-3 text-left"
+                >
+                  <div
+                    className="w-11 h-11 shrink-0 rounded-full bg-neutral-900 flex items-center justify-center text-2xl"
+                    style={{ animation: "badge-pop 0.5s ease-out" }}
+                  >
+                    {a.emoji}
+                  </div>
+                  <div className="min-w-0">
+                    <div className="font-bold text-white text-sm">{a.title}</div>
+                    <div className="text-xs text-neutral-400">{a.description}</div>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <div className="flex gap-3">
+              <button
+                type="button"
+                onClick={() => {
+                  setAchievementPopupDismissed(true);
+                  onViewAchievements();
+                }}
+                className="flex-1 rounded-lg bg-amber-500 hover:bg-amber-600 text-neutral-900 font-bold py-2.5"
+              >
+                Equip now
+              </button>
+              <button
+                type="button"
+                onClick={() => setAchievementPopupDismissed(true)}
+                className="flex-1 rounded-lg border border-neutral-700 text-neutral-200 hover:bg-neutral-800 font-semibold py-2.5"
+              >
+                Yay! 🎉
               </button>
             </div>
           </div>

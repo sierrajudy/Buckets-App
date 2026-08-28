@@ -38,7 +38,7 @@ interface SocketData {
 
 type Ack = (res: { ok: true; [key: string]: unknown } | { ok: false; error: string }) => void;
 
-function broadcast(io: Server, room: Room) {
+export function broadcast(io: Server, room: Room) {
   io.to(room.code).emit("room:state", serializeRoomState(room));
   saveRoomSnapshot(room);
 }
@@ -52,7 +52,7 @@ export function registerRoomHandlers(io: Server) {
     const data = socket.data as SocketData;
 
     socket.on("room:create", (_payload: unknown, ack: Ack) => {
-      const { room, player } = createRoom(data.user.name);
+      const { room, player } = createRoom(data.user.name, data.user.equippedCostume);
       player.socketId = socket.id;
       data.roomCode = room.code;
       data.playerId = player.id;
@@ -65,7 +65,7 @@ export function registerRoomHandlers(io: Server) {
       const code = (payload?.code ?? "").trim().toUpperCase();
       const room = getRoom(code);
       if (!room) return ack({ ok: false, error: "Room not found." });
-      const result = joinRoom(room, data.user.name);
+      const result = joinRoom(room, data.user.name, data.user.equippedCostume);
       if ("error" in result) return ack({ ok: false, error: result.error });
       result.socketId = socket.id;
       data.roomCode = room.code;
@@ -98,6 +98,7 @@ export function registerRoomHandlers(io: Server) {
       if (player && player.name === data.user.name) {
         player.connected = true;
         player.socketId = socket.id;
+        player.equippedCostume = data.user.equippedCostume; // pick up any profile change since they last connected
         data.roomCode = room.code;
         data.playerId = player.id;
         socket.join(room.code);

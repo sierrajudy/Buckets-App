@@ -12,6 +12,7 @@ import { standingsRouter } from "./routes/standings.js";
 import { authRouter } from "./routes/auth.js";
 import { myRoundsRouter } from "./routes/myRounds.js";
 import { coursesRouter } from "./routes/courses.js";
+import { createAchievementsRouter } from "./routes/achievements.js";
 import { getUserByToken } from "./lib/auth.js";
 import { registerRoomHandlers } from "./rooms/socketHandlers.js";
 import { loadRoomSnapshots } from "./lib/persistRoomSnapshot.js";
@@ -31,6 +32,14 @@ async function main() {
   const app = express();
   const PORT = process.env.PORT ? Number(process.env.PORT) : 3001;
 
+  // Created before the routes below because the achievements router needs
+  // it (equipping a costume broadcasts into any room the player currently
+  // has open — see createAchievementsRouter) — everything socket-specific
+  // (auth middleware, registerRoomHandlers) still happens after routes are
+  // mounted, that part's unaffected.
+  const httpServer = createServer(app);
+  const io = new Server(httpServer, { cors: { origin: "*" } });
+
   app.use(cors());
   app.use(express.json({ limit: "2mb" }));
 
@@ -40,6 +49,7 @@ async function main() {
   app.use("/api/standings", standingsRouter);
   app.use("/api/my-rounds", myRoundsRouter);
   app.use("/api/courses", coursesRouter);
+  app.use("/api/achievements", createAchievementsRouter(io));
 
   const clientDist = path.join(__dirname, "..", "..", "client", "dist");
   if (fs.existsSync(clientDist)) {
@@ -48,9 +58,6 @@ async function main() {
       res.sendFile(path.join(clientDist, "index.html"));
     });
   }
-
-  const httpServer = createServer(app);
-  const io = new Server(httpServer, { cors: { origin: "*" } });
 
   io.use(async (socket, next) => {
     const user = await getUserByToken(socket.handshake.auth?.token);

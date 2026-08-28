@@ -263,7 +263,7 @@ export function Lobby({
             {state.players.map((p, i) => (
               <div key={p.id} className="flex items-center gap-3">
                 <span className="avatar-idle" style={{ animationDelay: `${i * 0.35}s` }}>
-                  <AvatarIcon avatar={p.avatar} className="w-10 h-10 shrink-0" />
+                  <AvatarIcon avatar={p.avatar} className="w-10 h-10 shrink-0" costume={p.equippedCostume} />
                 </span>
                 <span className={`font-medium ${labelCls}`}>{p.name}</span>
                 {p.id === state.hostId && (
@@ -348,7 +348,7 @@ export function Lobby({
           ))}
       </div>
 
-      {showRules && <RulesModal onClose={() => setShowRules(false)} />}
+      {showRules && <RulesModal onClose={() => setShowRules(false)} initialMode={state?.gameMode ?? "standard"} />}
     </div>
   );
 }

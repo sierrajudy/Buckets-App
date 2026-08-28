@@ -14,6 +14,7 @@ export interface Player {
   avatar: AvatarKey | null;
   connected: boolean;
   handicap: number;
+  equippedCostume: string | null;
 }
 
 export interface Spectator {
@@ -78,6 +79,13 @@ export interface HighLowMatchResult {
   overall: { points: [number, number]; winner: 0 | 1 | null };
 }
 
+export interface UnlockedAchievement {
+  key: string;
+  title: string;
+  description: string;
+  emoji: string;
+}
+
 export interface RoundSummary {
   id: string;
   course: string;
@@ -94,6 +102,7 @@ export interface RoundSummary {
   gameMode: GameMode;
   teams: Teams | null;
   highLow: HighLowMatchResult | null;
+  newAchievements: Record<string, UnlockedAchievement[]>;
 }
 
 export interface CourseStats {
@@ -177,6 +186,23 @@ export interface CourseTeeOption {
 export interface CourseTees {
   name: string;
   tees: CourseTeeOption[];
+}
+
+export interface Achievement {
+  key: string;
+  title: string;
+  description: string;
+  emoji: string;
+  earned: boolean;
+  earnedAt: string | null;
+  progress: number;
+  target: number;
+}
+
+export interface AchievementsResponse {
+  achievements: Achievement[];
+  unlockedCostumes: string[];
+  equippedCostume: string | null;
 }
 
 export interface CourseSelection {

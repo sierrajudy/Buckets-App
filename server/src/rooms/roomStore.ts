@@ -25,6 +25,7 @@ import {
 } from "./gameLogic.js";
 import { persistRound } from "../lib/persistRound.js";
 import { notifyStandings } from "../lib/notifications.js";
+import { checkAndAwardAchievementsForRound } from "../lib/achievements.js";
 
 const rooms = new Map<string, Room>();
 
@@ -75,9 +76,38 @@ export function restoreRoomsFromSnapshots(snapshots: Room[]): void {
   }
 }
 
-export function createRoom(hostName: string): { room: Room; player: Player } {
+/** Updates every in-memory room's Player entry for this name (case-
+ * insensitive) to a newly-equipped costume — called right after the REST
+ * equip endpoint updates their account, so a costume change shows up in
+ * any room they currently have open immediately instead of only on their
+ * next reconnect (create/join/rejoin are the only other spots a Player's
+ * equippedCostume gets set — this covers the gap while they're already
+ * connected). Returns the rooms actually touched, so the caller can
+ * broadcast just those instead of every room. */
+export function updateEquippedCostumeForName(name: string, costume: string | null): Room[] {
+  const lower = name.trim().toLowerCase();
+  const touched: Room[] = [];
+  for (const room of rooms.values()) {
+    const player = room.players.find((p) => p.name.toLowerCase() === lower);
+    if (player) {
+      player.equippedCostume = costume;
+      touched.push(room);
+    }
+  }
+  return touched;
+}
+
+export function createRoom(hostName: string, equippedCostume: string | null = null): { room: Room; player: Player } {
   const code = generateRoomCode();
-  const player: Player = { id: uuid(), name: hostName.trim(), avatar: null, connected: true, socketId: null, handicap: 0 };
+  const player: Player = {
+    id: uuid(),
+    name: hostName.trim(),
+    avatar: null,
+    connected: true,
+    socketId: null,
+    handicap: 0,
+    equippedCostume,
+  };
   const room: Room = {
     code,
     hostId: player.id,
@@ -109,13 +139,21 @@ export function isNameTaken(room: Room, name: string): boolean {
   );
 }
 
-export function joinRoom(room: Room, name: string): Player | { error: string } {
+export function joinRoom(room: Room, name: string, equippedCostume: string | null = null): Player | { error: string } {
   if (room.phase !== "lobby") return { error: "This round has already started." };
   if (room.players.length >= 4) return { error: "Room is full (4 players max)." };
   const trimmed = name.trim();
   if (!trimmed) return { error: "Name is required." };
   if (isNameTaken(room, trimmed)) return { error: "That name is already taken in this room." };
-  const player: Player = { id: uuid(), name: trimmed, avatar: null, connected: true, socketId: null, handicap: 0 };
+  const player: Player = {
+    id: uuid(),
+    name: trimmed,
+    avatar: null,
+    connected: true,
+    socketId: null,
+    handicap: 0,
+    equippedCostume,
+  };
   room.players.push(player);
   room.teams = null; // a new roster invalidates any prior team pairing
   return player;
@@ -389,9 +427,22 @@ async function finalizeAndPersist(
           puttOffWinner: opts.puttOffWinner,
           gameMode: room.gameMode,
         });
+  // Persisted BEFORE the achievement check runs — achievements.ts's stats
+  // query reads straight from the rounds table, so this specific round has
+  // to already be in there or a just-crossed threshold (e.g. "First Tee",
+  // literally just needing 1 round played) would look one round short and
+  // silently miss its own moment.
+  await persistRound(round);
+
+  // Checked (and awaited) before the round is ever assigned/broadcast, so
+  // any newly-earned achievements are already sitting on
+  // round.newAchievements by the time the client sees this round at all —
+  // the celebration screen's unlock popup just reads it straight off
+  // state.finishedRound, no separate fetch or later update needed.
+  round.newAchievements = await checkAndAwardAchievementsForRound(names);
+
   room.finishedRound = round;
   room.phase = "celebration";
-  await persistRound(round);
   notifyStandings(round);
 }
 

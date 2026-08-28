@@ -8,6 +8,12 @@ export interface AuthUser {
   name: string;
   emailRoundStart: boolean;
   emailStandings: boolean;
+  /** Their currently-equipped avatar costume piece (see achievements.ts's
+   * COSTUME_SEQUENCE), or null if they haven't equipped anything. Carried
+   * onto the Player object when they create/join/rejoin a room — see
+   * roomStore.ts — so it renders live during a round, not just in their
+   * own profile. */
+  equippedCostume: string | null;
 }
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -37,6 +43,14 @@ export async function createSession(userId: string): Promise<string> {
     sql: "INSERT INTO sessions (token, user_id) VALUES (?, ?)",
     args: [token, userId],
   });
+  // Every signup/login funnels through here, so this is the one place that
+  // needs to record "this user was active today" — see login_events in
+  // db.ts and the "Creature of Habit" achievement. INSERT OR IGNORE since
+  // logging in multiple times the same day should only count once.
+  await db.execute({
+    sql: "INSERT OR IGNORE INTO login_events (user_id, day) VALUES (?, date('now'))",
+    args: [userId],
+  });
   return token;
 }
 
@@ -52,7 +66,7 @@ export function bearerToken(req: { headers: { authorization?: string } }): strin
 export async function getUserByToken(token: string | undefined | null): Promise<AuthUser | null> {
   if (!token) return null;
   const result = await db.execute({
-    sql: `SELECT users.id, users.email, users.name, users.email_round_start, users.email_standings FROM sessions
+    sql: `SELECT users.id, users.email, users.name, users.email_round_start, users.email_standings, users.equipped_costume FROM sessions
           JOIN users ON users.id = sessions.user_id
           WHERE sessions.token = ?`,
     args: [token],
@@ -68,5 +82,6 @@ export function rowToAuthUser(row: Record<string, unknown>): AuthUser {
     name: row.name as string,
     emailRoundStart: Boolean(row.email_round_start),
     emailStandings: Boolean(row.email_standings),
+    equippedCostume: (row.equipped_costume as string | null) ?? null,
   };
 }

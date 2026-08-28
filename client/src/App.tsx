@@ -24,6 +24,7 @@ function AppShell() {
   const [showStandings, setShowStandings] = useState(false);
   const [showProfile, setShowProfile] = useState(false);
   const [autoOpenEmailPrefs, setAutoOpenEmailPrefs] = useState(false);
+  const [autoOpenAvatarTab, setAutoOpenAvatarTab] = useState(false);
   const [showAceIntro, setShowAceIntro] = useState(false);
   const [showPartyIntro, setShowPartyIntro] = useState(false);
   const aceShownRef = useRef(false);
@@ -64,8 +65,10 @@ function AppShell() {
         onBack={() => {
           setShowProfile(false);
           setAutoOpenEmailPrefs(false);
+          setAutoOpenAvatarTab(false);
         }}
         autoOpenEmailPrefs={autoOpenEmailPrefs}
+        autoOpenAvatarTab={autoOpenAvatarTab}
       />
     );
 
@@ -119,6 +122,10 @@ function AppShell() {
             onViewStandings={() => setShowStandings(true)}
             onViewProfile={() => {
               setAutoOpenEmailPrefs(true);
+              setShowProfile(true);
+            }}
+            onViewAchievements={() => {
+              setAutoOpenAvatarTab(true);
               setShowProfile(true);
             }}
           />
