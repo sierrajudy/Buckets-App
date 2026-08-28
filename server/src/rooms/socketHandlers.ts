@@ -27,6 +27,7 @@ import {
 import type { AvatarKey, GameMode, Room, Teams } from "./types.js";
 import type { AuthUser } from "../lib/auth.js";
 import { notifyRoundStarted } from "../lib/notifications.js";
+import { saveRoomSnapshot } from "../lib/persistRoomSnapshot.js";
 
 interface SocketData {
   roomCode?: string;
@@ -39,6 +40,7 @@ type Ack = (res: { ok: true; [key: string]: unknown } | { ok: false; error: stri
 
 function broadcast(io: Server, room: Room) {
   io.to(room.code).emit("room:state", serializeRoomState(room));
+  saveRoomSnapshot(room);
 }
 
 function isHost(room: Room, playerId: string | undefined): boolean {
@@ -55,6 +57,7 @@ export function registerRoomHandlers(io: Server) {
       data.roomCode = room.code;
       data.playerId = player.id;
       socket.join(room.code);
+      saveRoomSnapshot(room); // no one else to broadcast to yet, so this is the only save site for a fresh room
       ack({ ok: true, playerId: player.id, state: serializeRoomState(room) });
     });
 

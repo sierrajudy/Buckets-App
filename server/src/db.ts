@@ -83,4 +83,17 @@ export async function initDb(): Promise<void> {
       created_at TEXT NOT NULL DEFAULT (datetime('now'))
     )
   `);
+
+  // A live room's full in-memory state, snapshotted on every change (see
+  // saveRoomSnapshot) so a redeploy or crash can restore every in-progress
+  // round exactly as it was instead of silently wiping it — see
+  // loadRoomSnapshots, called once at startup before the server accepts
+  // connections. One row per room code; overwritten in place, not appended.
+  await db.execute(`
+    CREATE TABLE IF NOT EXISTS room_snapshots (
+      code TEXT PRIMARY KEY,
+      data TEXT NOT NULL,
+      updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+    )
+  `);
 }

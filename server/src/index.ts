@@ -1,4 +1,4 @@
-import "dotenv/config";
+import "./loadEnv.js";
 import express from "express";
 import cors from "cors";
 import path from "node:path";
@@ -14,11 +14,19 @@ import { myRoundsRouter } from "./routes/myRounds.js";
 import { coursesRouter } from "./routes/courses.js";
 import { getUserByToken } from "./lib/auth.js";
 import { registerRoomHandlers } from "./rooms/socketHandlers.js";
+import { loadRoomSnapshots } from "./lib/persistRoomSnapshot.js";
+import { restoreRoomsFromSnapshots } from "./rooms/roomStore.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 async function main() {
   await initDb();
+
+  const snapshots = await loadRoomSnapshots();
+  restoreRoomsFromSnapshots(snapshots);
+  if (snapshots.length > 0) {
+    console.log(`Restored ${snapshots.length} room(s) from the last snapshot before this restart.`);
+  }
 
   const app = express();
   const PORT = process.env.PORT ? Number(process.env.PORT) : 3001;

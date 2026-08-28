@@ -65,6 +65,16 @@ export function getRoom(code: string): Room | undefined {
   return rooms.get(code.toUpperCase());
 }
 
+/** Called once at startup with whatever loadRoomSnapshots() found in the
+ * DB — repopulates the in-memory Map so every room that was live right
+ * before the process last stopped (a redeploy, a crash) is back exactly as
+ * it was, instead of just gone. */
+export function restoreRoomsFromSnapshots(snapshots: Room[]): void {
+  for (const room of snapshots) {
+    rooms.set(room.code, room);
+  }
+}
+
 export function createRoom(hostName: string): { room: Room; player: Player } {
   const code = generateRoomCode();
   const player: Player = { id: uuid(), name: hostName.trim(), avatar: null, connected: true, socketId: null, handicap: 0 };

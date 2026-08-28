@@ -256,10 +256,11 @@ export function computeHighLowHoleResult(
  * side has the lower best gross score (no handicap in this mode) wins the
  * hole: 1 point each for a winning 2v2 side, 3 points for a lone wolf who
  * wins outright, or 1 point each for the three who beat a lone wolf. A tie
- * pays nothing. Birdie/eagle bonuses are individual, not team-wide — they
- * multiply (not add to) whatever points that specific player already earned
- * from the hole's outcome, ×2 for a birdie and ×3 for an eagle, so a birdie
- * on a hole that player's side lost is still worth 0.
+ * pays nothing. Birdie/eagle bonuses are shared by the whole winning side,
+ * not kept by whoever made it — they multiply (not add to) whatever points
+ * that side already earned from the hole's outcome, ×2 for a birdie and ×3
+ * for an eagle anywhere on that side, so a birdie on a hole that side lost
+ * is still worth 0, and a losing side's birdie never benefits the winners.
  */
 export function computeWolfHoleResult(entry: HoleEntry, wolfName: string, players: string[]): HoleResult {
   const strokes: Record<string, number> = {};
