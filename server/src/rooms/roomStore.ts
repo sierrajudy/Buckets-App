@@ -140,10 +140,28 @@ export function isNameTaken(room: Room, name: string): boolean {
 }
 
 export function joinRoom(room: Room, name: string, equippedCostume: string | null = null): Player | { error: string } {
-  if (room.phase !== "lobby") return { error: "This round has already started." };
-  if (room.players.length >= 4) return { error: "Room is full (4 players max)." };
   const trimmed = name.trim();
   if (!trimmed) return { error: "Name is required." };
+
+  // A room that's already left the lobby can still be rejoined this way —
+  // but only by someone who's already on its roster, matched by name (the
+  // same identity check room:rejoin itself uses). This is the recovery
+  // path for a host/player who lost the local session that the normal
+  // silent auto-rejoin depends on — a new device, a cleared browser, a
+  // crashed app reinstalled — and would otherwise have no way back into
+  // their own in-progress round at all. A genuine outsider (no name
+  // match) still gets turned away same as before.
+  if (room.phase !== "lobby") {
+    const existing = room.players.find((p) => p.name.toLowerCase() === trimmed.toLowerCase());
+    if (existing) {
+      existing.connected = true;
+      existing.equippedCostume = equippedCostume;
+      return existing;
+    }
+    return { error: "This round has already started." };
+  }
+
+  if (room.players.length >= 4) return { error: "Room is full (4 players max)." };
   if (isNameTaken(room, trimmed)) return { error: "That name is already taken in this room." };
   const player: Player = {
     id: uuid(),
