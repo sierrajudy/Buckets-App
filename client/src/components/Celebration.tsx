@@ -1,9 +1,11 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useRoom } from "../store";
 import { AvatarIcon } from "./Avatars";
 import { EmojiReactionBar } from "./EmojiReactionBar";
+import { QuickAddFriendButton } from "./QuickAddFriendButton";
 import { joinNames } from "../lib/format";
 import { deleteRound } from "../lib/api";
+import { fetchFriendsOverview } from "../lib/friendsApi";
 import { WolfBackdrop } from "./WolfBackdrop";
 import { HighLowBackdrop } from "./HighLowBackdrop";
 import { BaseballBackdrop } from "./BaseballBackdrop";
@@ -57,6 +59,23 @@ export function Celebration({
   const [deleted, setDeleted] = useState(false);
   const [deleteError, setDeleteError] = useState<string | null>(null);
   const [achievementPopupDismissed, setAchievementPopupDismissed] = useState(false);
+  // Same idea as Lobby's quick-add — see relatedFriendNames there for why
+  // this is a name set rather than looking anything up by id.
+  const [relatedFriendNames, setRelatedFriendNames] = useState<Set<string>>(new Set());
+
+  useEffect(() => {
+    fetchFriendsOverview()
+      .then((ov) =>
+        setRelatedFriendNames(
+          new Set(
+            [...ov.friends, ...ov.outgoing.map((r) => r.user), ...ov.incoming.map((r) => r.user)].map((u) =>
+              u.name.toLowerCase(),
+            ),
+          ),
+        ),
+      )
+      .catch(() => {});
+  }, []);
 
   if (!state || !state.finishedRound) return null;
   const round = state.finishedRound;
@@ -105,6 +124,10 @@ export function Celebration({
 
   function costumeFor(name: string) {
     return state!.players.find((p) => p.name === name)?.equippedCostume ?? null;
+  }
+
+  function isGuest(name: string) {
+    return state!.players.find((p) => p.name === name)?.isGuest ?? false;
   }
 
   return (
@@ -271,13 +294,20 @@ export function Celebration({
               .sort((a, b) => (round.totals[b] ?? 0) - (round.totals[a] ?? 0))
               .map((p) => (
                 <div key={p} className="flex items-center justify-between text-sm">
-                  <span className="flex items-center gap-2">
-                    <AvatarIcon avatar={avatarFor(p)} className="w-6 h-6" costume={costumeFor(p)} />
+                  <span className="flex items-center gap-2 min-w-0">
+                    <AvatarIcon avatar={avatarFor(p)} className="w-6 h-6 shrink-0" costume={costumeFor(p)} />
                     <span className={round.winners.includes(p) ? "text-yellow-300 font-semibold" : "text-neutral-300"}>
                       {p}
                     </span>
+                    {p !== me?.name && !isGuest(p) && !relatedFriendNames.has(p.toLowerCase()) && (
+                      <QuickAddFriendButton
+                        name={p}
+                        dark
+                        onSent={() => setRelatedFriendNames((prev) => new Set(prev).add(p.toLowerCase()))}
+                      />
+                    )}
                   </span>
-                  <span className="font-mono text-neutral-300">{round.totals[p]}</span>
+                  <span className="font-mono text-neutral-300 shrink-0">{round.totals[p]}</span>
                 </div>
               ))}
           </div>

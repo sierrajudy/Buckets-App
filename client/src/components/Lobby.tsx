@@ -8,6 +8,8 @@ import { WolfBackdrop } from "./WolfBackdrop";
 import { HighLowBackdrop } from "./HighLowBackdrop";
 import { BucketsBackdrop } from "./BucketsBackdrop";
 import { BaseballBackdrop } from "./BaseballBackdrop";
+import { QuickAddFriendButton } from "./QuickAddFriendButton";
+import { fetchFriendsOverview } from "../lib/friendsApi";
 import type { GameMode } from "../types";
 
 const GAME_MODES: { key: GameMode; label: string; blurb: string }[] = [
@@ -47,6 +49,25 @@ export function Lobby({
   const [guestName, setGuestName] = useState("");
   const [addingGuest, setAddingGuest] = useState(false);
   const [guestError, setGuestError] = useState<string | null>(null);
+  // Names already covered by a friend relationship (mutual, or a pending
+  // request in either direction) — the quick-add button next to a player's
+  // name only shows for names NOT in this set, so it disappears the moment
+  // it's no longer needed instead of just failing silently on click.
+  const [relatedFriendNames, setRelatedFriendNames] = useState<Set<string>>(new Set());
+
+  useEffect(() => {
+    fetchFriendsOverview()
+      .then((ov) =>
+        setRelatedFriendNames(
+          new Set(
+            [...ov.friends, ...ov.outgoing.map((r) => r.user), ...ov.incoming.map((r) => r.user)].map((u) =>
+              u.name.toLowerCase(),
+            ),
+          ),
+        ),
+      )
+      .catch(() => {});
+  }, []);
 
   const isHighLow = state?.gameMode === "highlow";
   const isWolf = state?.gameMode === "wolf";
@@ -288,6 +309,15 @@ export function Lobby({
                   >
                     Guest
                   </span>
+                )}
+                {!p.isGuest && p.id !== me?.id && !relatedFriendNames.has(p.name.toLowerCase()) && (
+                  <QuickAddFriendButton
+                    name={p.name}
+                    dark
+                    onSent={() =>
+                      setRelatedFriendNames((prev) => new Set(prev).add(p.name.toLowerCase()))
+                    }
+                  />
                 )}
                 {!p.connected && <span className="text-[10px] text-neutral-400 ml-auto">reconnecting…</span>}
               </div>

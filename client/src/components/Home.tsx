@@ -14,9 +14,11 @@ const PHASE_LABEL: Record<string, string> = {
 export function Home({
   onViewStandings,
   onViewProfile,
+  onViewFriends,
 }: {
   onViewStandings: () => void;
   onViewProfile: () => void;
+  onViewFriends: () => void;
 }) {
   const { user, logout } = useAuth();
   const { createRoom, joinRoom, spectateRoom } = useRoom();
@@ -82,6 +84,13 @@ export function Home({
           className="rounded-full bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-700 shadow-sm px-3 py-1.5 text-sm font-medium text-neutral-600 dark:text-neutral-300 hover:bg-neutral-50 dark:hover:bg-neutral-800"
         >
           Rules
+        </button>
+        <button
+          type="button"
+          onClick={onViewFriends}
+          className="flex items-center gap-1.5 rounded-full bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-700 shadow-sm px-3 py-1.5 text-sm font-medium text-neutral-600 dark:text-neutral-300 hover:bg-neutral-50 dark:hover:bg-neutral-800"
+        >
+          <span aria-hidden>🤝</span> Friends
         </button>
         <button
           type="button"

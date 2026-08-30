@@ -14,6 +14,7 @@ import { myRoundsRouter } from "./routes/myRounds.js";
 import { coursesRouter } from "./routes/courses.js";
 import { createAchievementsRouter } from "./routes/achievements.js";
 import { roomsRouter } from "./routes/rooms.js";
+import { friendsRouter } from "./routes/friends.js";
 import { getUserByToken } from "./lib/auth.js";
 import { registerRoomHandlers } from "./rooms/socketHandlers.js";
 import { loadRoomSnapshots } from "./lib/persistRoomSnapshot.js";
@@ -52,6 +53,7 @@ async function main() {
   app.use("/api/courses", coursesRouter);
   app.use("/api/achievements", createAchievementsRouter(io));
   app.use("/api/rooms", roomsRouter);
+  app.use("/api/friends", friendsRouter);
 
   const clientDist = path.join(__dirname, "..", "..", "client", "dist");
   if (fs.existsSync(clientDist)) {

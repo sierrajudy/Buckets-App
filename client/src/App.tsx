@@ -10,6 +10,7 @@ import { PuttOff } from "./components/PuttOff";
 import { Celebration } from "./components/Celebration";
 import { Standings } from "./components/Standings";
 import { Profile } from "./components/Profile";
+import { Friends } from "./components/Friends";
 import { ResetPassword } from "./components/ResetPassword";
 import { AceIntro } from "./components/AceIntro";
 import { PartyIntro } from "./components/PartyIntro";
@@ -23,6 +24,7 @@ function AppShell() {
   const [showSplash, setShowSplash] = useState(true);
   const [showStandings, setShowStandings] = useState(false);
   const [showProfile, setShowProfile] = useState(false);
+  const [showFriends, setShowFriends] = useState(false);
   const [autoOpenEmailPrefs, setAutoOpenEmailPrefs] = useState(false);
   const [autoOpenAvatarTab, setAutoOpenAvatarTab] = useState(false);
   const [showAceIntro, setShowAceIntro] = useState(false);
@@ -74,8 +76,16 @@ function AppShell() {
 
   if (showStandings) return <Standings onBack={() => setShowStandings(false)} />;
 
+  if (showFriends) return <Friends onBack={() => setShowFriends(false)} />;
+
   if (!state) {
-    return <Home onViewStandings={() => setShowStandings(true)} onViewProfile={() => setShowProfile(true)} />;
+    return (
+      <Home
+        onViewStandings={() => setShowStandings(true)}
+        onViewProfile={() => setShowProfile(true)}
+        onViewFriends={() => setShowFriends(true)}
+      />
+    );
   }
 
   if (showAceIntro && holeInOnePlayer) {
