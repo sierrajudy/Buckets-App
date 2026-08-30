@@ -47,6 +47,15 @@ function isHost(room: Room, playerId: string | undefined): boolean {
   return Boolean(playerId) && room.hostId === playerId;
 }
 
+/** Any of the room's actual players (host included) — as opposed to a
+ * spectator. Scoring itself was host-only for a long time as a side effect
+ * of everything else in the lobby/setup flow being host-gated, not because
+ * it needed to be; players asked for this directly after a trip where the
+ * host got tied up and nobody else could enter a score in the meantime. */
+function isPlayerInRoom(room: Room, playerId: string | undefined): boolean {
+  return Boolean(playerId) && room.players.some((p) => p.id === playerId);
+}
+
 export function registerRoomHandlers(io: Server) {
   io.on("connection", (socket: Socket) => {
     const data = socket.data as SocketData;
@@ -197,7 +206,7 @@ export function registerRoomHandlers(io: Server) {
 
     socket.on("hole:setStrokes", (payload: { holeNumber: number; targetName: string; strokes: number }) => {
       const room = data.roomCode ? getRoom(data.roomCode) : undefined;
-      if (!room || !isHost(room, data.playerId) || room.phase !== "playing") return;
+      if (!room || !isPlayerInRoom(room, data.playerId) || room.phase !== "playing") return;
       const entry = room.entries[payload?.holeNumber];
       if (!entry) return;
       if (!room.players.some((p) => p.name === payload.targetName)) return;
@@ -208,7 +217,7 @@ export function registerRoomHandlers(io: Server) {
 
     socket.on("hole:toggleBucket", (payload: { holeNumber: number; targetName: string }) => {
       const room = data.roomCode ? getRoom(data.roomCode) : undefined;
-      if (!room || !isHost(room, data.playerId) || room.phase !== "playing") return;
+      if (!room || !isPlayerInRoom(room, data.playerId) || room.phase !== "playing") return;
       const entry = room.entries[payload?.holeNumber];
       if (!entry) return;
       entry.bucketWinners = entry.bucketWinners.includes(payload.targetName)
@@ -219,7 +228,7 @@ export function registerRoomHandlers(io: Server) {
 
     socket.on("hole:setPgeEnabled", (payload: { holeNumber: number; enabled: boolean }) => {
       const room = data.roomCode ? getRoom(data.roomCode) : undefined;
-      if (!room || !isHost(room, data.playerId) || room.phase !== "playing") return;
+      if (!room || !isPlayerInRoom(room, data.playerId) || room.phase !== "playing") return;
       const entry = room.entries[payload?.holeNumber];
       if (!entry) return;
       entry.pgeEnabled = Boolean(payload.enabled);
@@ -229,7 +238,7 @@ export function registerRoomHandlers(io: Server) {
 
     socket.on("hole:togglePgeWinner", (payload: { holeNumber: number; targetName: string }) => {
       const room = data.roomCode ? getRoom(data.roomCode) : undefined;
-      if (!room || !isHost(room, data.playerId) || room.phase !== "playing") return;
+      if (!room || !isPlayerInRoom(room, data.playerId) || room.phase !== "playing") return;
       const entry = room.entries[payload?.holeNumber];
       if (!entry || !entry.pgeEnabled) return;
       entry.pgeWinners = entry.pgeWinners.includes(payload.targetName)
@@ -240,7 +249,7 @@ export function registerRoomHandlers(io: Server) {
 
     socket.on("hole:setWolfChoice", (payload: { holeNumber: number; partner: string | null; alone: boolean }) => {
       const room = data.roomCode ? getRoom(data.roomCode) : undefined;
-      if (!room || !isHost(room, data.playerId) || room.phase !== "playing") return;
+      if (!room || !isPlayerInRoom(room, data.playerId) || room.phase !== "playing") return;
       if (setWolfChoice(room, Number(payload?.holeNumber), payload?.partner ?? null, Boolean(payload?.alone))) {
         recomputeAndMaybeFinish(room).then(() => broadcast(io, room));
       }

@@ -158,6 +158,11 @@ export function Scorecard() {
   const isWolf = state.gameMode === "wolf";
   const isBuckets = state.gameMode === "standard";
   const isBaseball = state.gameMode === "baseball";
+  // Any real player can enter scores now, not just the host — only a
+  // spectator (or someone with no seat in this room at all) is locked out.
+  // Room-level controls (ending/finishing the round, which hole the group
+  // is synced to) are unrelated and stay host-only, further down.
+  const canScore = !isSpectator && Boolean(me);
   const result = results[stepIndex];
   const isLastHole = stepIndex === results.length - 1;
   const holeComplete = players.every((p) => (result.strokes[p.name] ?? 0) > 0);
@@ -433,7 +438,7 @@ export function Scorecard() {
           <div className={`${cardBgCls} rounded-xl border ${cardBorderCls} p-4 space-y-3`}>
             <div className="text-sm font-extrabold text-white">🐺 {result.wolf.wolfName} is the wolf this hole</div>
 
-            {isHost && (
+            {canScore && (
               <div className="flex flex-wrap gap-2">
                 {players
                   .filter((p) => p.name !== result.wolf!.wolfName)
@@ -465,7 +470,7 @@ export function Scorecard() {
               </div>
             )}
 
-            {!isHost && (
+            {!canScore && (
               <div className="text-sm text-white/70">
                 {result.wolf.alone
                   ? "Going alone against the other three."
@@ -558,7 +563,7 @@ export function Scorecard() {
                   <div className="flex items-center gap-2">
                     <button
                       type="button"
-                      disabled={!isHost}
+                      disabled={!canScore}
                       onClick={() => setStrokes(result.holeNumber, p.name, Math.max(1, (strokes || result.par) - 1))}
                       className="w-8 h-8 rounded-full border border-white/40 text-white text-lg leading-none disabled:opacity-30"
                     >
@@ -567,7 +572,7 @@ export function Scorecard() {
                     <input
                       type="number"
                       min={1}
-                      disabled={!isHost}
+                      disabled={!canScore}
                       value={strokes || ""}
                       onChange={(e) => setStrokes(result.holeNumber, p.name, Number(e.target.value) || null)}
                       placeholder={String(result.par)}
@@ -575,7 +580,7 @@ export function Scorecard() {
                     />
                     <button
                       type="button"
-                      disabled={!isHost}
+                      disabled={!canScore}
                       onClick={() => setStrokes(result.holeNumber, p.name, (strokes || result.par) + 1)}
                       className="w-8 h-8 rounded-full border border-white/40 text-white text-lg leading-none disabled:opacity-30"
                     >
@@ -587,11 +592,11 @@ export function Scorecard() {
                 {isBuckets && (
                   <div className="flex flex-wrap gap-4">
                     <label
-                      className={`flex items-center gap-2 text-sm text-white ${isHost ? "cursor-pointer" : "cursor-default opacity-70"}`}
+                      className={`flex items-center gap-2 text-sm text-white ${canScore ? "cursor-pointer" : "cursor-default opacity-70"}`}
                     >
                       <input
                         type="checkbox"
-                        disabled={!isHost}
+                        disabled={!canScore}
                         checked={wonBucket}
                         onChange={() => toggleBucket(result.holeNumber, p.name)}
                         className="w-4 h-4 accent-green-600"
@@ -606,11 +611,11 @@ export function Scorecard() {
                     </label>
                     {result.pgeEnabled && (
                       <label
-                        className={`flex items-center gap-2 text-sm text-white ${isHost ? "cursor-pointer" : "cursor-default opacity-70"}`}
+                        className={`flex items-center gap-2 text-sm text-white ${canScore ? "cursor-pointer" : "cursor-default opacity-70"}`}
                       >
                         <input
                           type="checkbox"
-                          disabled={!isHost}
+                          disabled={!canScore}
                           checked={wonPge}
                           onChange={() => togglePgeWinner(result.holeNumber, p.name)}
                           className="w-4 h-4 accent-yellow-500"
@@ -633,11 +638,11 @@ export function Scorecard() {
 
         {isBuckets && (
           <label
-            className={`flex items-center gap-2 text-sm text-white px-1 ${isHost ? "cursor-pointer" : "cursor-default opacity-70"}`}
+            className={`flex items-center gap-2 text-sm text-white px-1 ${canScore ? "cursor-pointer" : "cursor-default opacity-70"}`}
           >
             <input
               type="checkbox"
-              disabled={!isHost}
+              disabled={!canScore}
               checked={result.pgeEnabled}
               onChange={(e) => setPgeEnabled(result.holeNumber, e.target.checked)}
               className="w-4 h-4 accent-yellow-500"
