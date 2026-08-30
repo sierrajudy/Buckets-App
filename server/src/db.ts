@@ -128,4 +128,48 @@ export async function initDb(): Promise<void> {
       updated_at TEXT NOT NULL DEFAULT (datetime('now'))
     )
   `);
+
+  // One row per (user, room) they've ever created/joined/spectated/
+  // rejoined — last_seen_at bumped every time, role overwritten with
+  // whatever it most recently was. Powers "recent rounds" on the home
+  // page: the room itself might still be live (click back in) or might
+  // not (server restart with no snapshot, or just never checked) —
+  // rooms.ts's /recent endpoint checks getRoom() live and only returns
+  // ones that still resolve.
+  await db.execute(`
+    CREATE TABLE IF NOT EXISTS room_memberships (
+      user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      room_code TEXT NOT NULL,
+      role TEXT NOT NULL,
+      last_seen_at TEXT NOT NULL DEFAULT (datetime('now')),
+      PRIMARY KEY (user_id, room_code)
+    )
+  `);
+  await db.execute(
+    `CREATE INDEX IF NOT EXISTS idx_room_memberships_user ON room_memberships(user_id, last_seen_at)`,
+  );
+
+  // Friend requests — a row per direction. 'pending' until the recipient
+  // accepts or declines; once accepted, the pair is mutual friends (see
+  // friends.ts, which queries this from either side). Declining just
+  // leaves the row as 'declined' rather than deleting it, mainly so a
+  // re-request doesn't immediately re-spam someone who just said no —
+  // see friends.ts for the actual cooldown logic around that.
+  await db.execute(`
+    CREATE TABLE IF NOT EXISTS friend_requests (
+      id TEXT PRIMARY KEY,
+      from_user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      to_user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      status TEXT NOT NULL DEFAULT 'pending',
+      created_at TEXT NOT NULL DEFAULT (datetime('now')),
+      responded_at TEXT,
+      UNIQUE(from_user_id, to_user_id)
+    )
+  `);
+  await db.execute(
+    `CREATE INDEX IF NOT EXISTS idx_friend_requests_to ON friend_requests(to_user_id, status)`,
+  );
+  await db.execute(
+    `CREATE INDEX IF NOT EXISTS idx_friend_requests_from ON friend_requests(from_user_id, status)`,
+  );
 }

@@ -29,6 +29,7 @@ import type { AvatarKey, GameMode, Room, Teams } from "./types.js";
 import type { AuthUser } from "../lib/auth.js";
 import { notifyRoundStarted } from "../lib/notifications.js";
 import { saveRoomSnapshot } from "../lib/persistRoomSnapshot.js";
+import { recordRoomMembership } from "../lib/roomMemberships.js";
 
 interface SocketData {
   roomCode?: string;
@@ -68,6 +69,7 @@ export function registerRoomHandlers(io: Server) {
       data.playerId = player.id;
       socket.join(room.code);
       saveRoomSnapshot(room); // no one else to broadcast to yet, so this is the only save site for a fresh room
+      recordRoomMembership(data.user.id, room.code, "player");
       ack({ ok: true, playerId: player.id, state: serializeRoomState(room) });
     });
 
@@ -82,6 +84,7 @@ export function registerRoomHandlers(io: Server) {
       data.playerId = result.id;
       socket.join(room.code);
       broadcast(io, room);
+      recordRoomMembership(data.user.id, room.code, "player");
       ack({ ok: true, playerId: result.id, state: serializeRoomState(room) });
     });
 
@@ -96,6 +99,7 @@ export function registerRoomHandlers(io: Server) {
       data.spectatorId = result.id;
       socket.join(room.code);
       broadcast(io, room);
+      recordRoomMembership(data.user.id, room.code, "spectator");
       ack({ ok: true, playerId: result.id, spectator: true, state: serializeRoomState(room) });
     });
 
@@ -113,6 +117,7 @@ export function registerRoomHandlers(io: Server) {
         data.playerId = player.id;
         socket.join(room.code);
         broadcast(io, room);
+        recordRoomMembership(data.user.id, room.code, "player");
         return ack({ ok: true, playerId: player.id, state: serializeRoomState(room) });
       }
 
@@ -123,6 +128,7 @@ export function registerRoomHandlers(io: Server) {
         data.spectatorId = spectator.id;
         socket.join(room.code);
         broadcast(io, room);
+        recordRoomMembership(data.user.id, room.code, "spectator");
         return ack({ ok: true, playerId: spectator.id, spectator: true, state: serializeRoomState(room) });
       }
 

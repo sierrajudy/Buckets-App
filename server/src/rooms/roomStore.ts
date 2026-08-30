@@ -66,6 +66,14 @@ export function getRoom(code: string): Room | undefined {
   return rooms.get(code.toUpperCase());
 }
 
+/** Every room currently live in memory, regardless of phase — backs the
+ * "watch a live game" listing (see routes/rooms.ts). Unlike room
+ * memberships this isn't account-specific: any signed-in user can spectate
+ * any room, so there's nothing to filter down to here. */
+export function getAllRooms(): Room[] {
+  return Array.from(rooms.values());
+}
+
 /** Called once at startup with whatever loadRoomSnapshots() found in the
  * DB — repopulates the in-memory Map so every room that was live right
  * before the process last stopped (a redeploy, a crash) is back exactly as
@@ -180,6 +188,7 @@ export function joinRoom(room: Room, name: string, equippedCostume: string | nul
 
   if (room.players.length >= 4) return { error: "Room is full (4 players max)." };
   if (isNameTaken(room, trimmed)) return { error: "That name is already taken in this room." };
+  const wasEmpty = room.players.length === 0;
   const player: Player = {
     id: uuid(),
     name: trimmed,
@@ -192,6 +201,12 @@ export function joinRoom(room: Room, name: string, equippedCostume: string | nul
   };
   room.players.push(player);
   room.teams = null; // a new roster invalidates any prior team pairing
+  // A lobby the host deliberately left down to zero players has no one left
+  // for hostId to point to (removePlayer only hands it off when there's
+  // still someone else in the room) — whoever joins next inherits it rather
+  // than landing in a room that can never be started, since nothing else
+  // will ever reassign it.
+  if (wasEmpty) room.hostId = player.id;
   return player;
 }
 
@@ -378,10 +393,21 @@ export function startNewRound(room: Room): void {
 }
 
 export function removePlayer(room: Room, playerId: string): void {
+  const wasHost = room.hostId === playerId;
   room.players = room.players.filter((p) => p.id !== playerId);
   // Only invalidate teams pre-game — nulling them out from under an
   // in-progress highlow round would break its scoring outright.
   if (room.phase === "lobby") room.teams = null;
+  // The host leaving (not just disconnecting — this is the deliberate
+  // "Leave" action, which actually drops them from the roster) can't be
+  // allowed to leave the room with no host at all: every host-gated action
+  // — starting the round, picking a course, ending/finishing it — would
+  // become permanently unreachable for whoever's left. Handing it to
+  // whoever's next in the roster keeps the room usable; if that empties the
+  // roster too, there's no host to reassign to and the room is just done.
+  if (wasHost && room.players.length > 0) {
+    room.hostId = room.players[0].id;
+  }
 }
 
 function playerNames(room: Room): string[] {

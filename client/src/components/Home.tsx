@@ -2,6 +2,14 @@ import { useEffect, useState } from "react";
 import { useAuth } from "../authStore";
 import { useRoom } from "../store";
 import { RulesModal } from "./RulesModal";
+import { fetchActiveRooms, fetchRecentRooms, type ActiveRoom, type RecentRoom } from "../lib/roomsApi";
+
+const PHASE_LABEL: Record<string, string> = {
+  lobby: "Setting up",
+  playing: "In progress",
+  puttoff: "Putt-off",
+  celebration: "Just finished",
+};
 
 export function Home({
   onViewStandings,
@@ -19,11 +27,37 @@ export function Home({
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [showRules, setShowRules] = useState(false);
+  const [recentRooms, setRecentRooms] = useState<RecentRoom[]>([]);
+  const [activeRooms, setActiveRooms] = useState<ActiveRoom[]>([]);
+  const [rejoiningCode, setRejoiningCode] = useState<string | null>(null);
 
   useEffect(() => {
     if (codeFromLink) window.history.replaceState(null, "", window.location.pathname);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  useEffect(() => {
+    fetchRecentRooms()
+      .then(setRecentRooms)
+      .catch(() => setRecentRooms([]));
+    fetchActiveRooms()
+      .then(setActiveRooms)
+      .catch(() => setActiveRooms([]));
+  }, []);
+
+  /** A "recent" room rejoins in whatever role the account last had there —
+   * a player gets put right back on the roster (see roomStore.ts's rejoin-
+   * by-name fallback in joinRoom), a spectator just resumes watching. An
+   * "active" room (someone else's live game) is always joined as a
+   * spectator — this list is for watching, not muscling into someone
+   * else's roster. */
+  async function rejoin(targetCode: string, role: "player" | "spectator") {
+    setRejoiningCode(targetCode);
+    setError(null);
+    const res = role === "spectator" ? await spectateRoom(targetCode) : await joinRoom(targetCode);
+    setRejoiningCode(null);
+    if (!res.ok) setError(res.error ?? "Couldn't get back into that room.");
+  }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -75,6 +109,66 @@ export function Home({
             Sign out
           </button>
         </div>
+
+        {recentRooms.length > 0 && (
+          <div className="space-y-1.5">
+            <p className="text-xs font-semibold uppercase tracking-wide text-neutral-400 dark:text-neutral-500">
+              Get back in
+            </p>
+            <div className="space-y-1.5">
+              {recentRooms.map((r) => (
+                <button
+                  key={r.code}
+                  type="button"
+                  disabled={rejoiningCode !== null}
+                  onClick={() => rejoin(r.code, r.role)}
+                  className="w-full flex items-center justify-between gap-2 rounded-lg border border-neutral-200 dark:border-neutral-700 px-3 py-2 text-left text-sm hover:bg-neutral-50 dark:hover:bg-neutral-800 disabled:opacity-50"
+                >
+                  <span className="min-w-0">
+                    <span className="font-mono font-semibold tracking-widest">{r.code}</span>
+                    <span className="ml-2 text-neutral-500 dark:text-neutral-400 truncate">
+                      {r.course ?? "Round"} · {r.players.join(", ")}
+                    </span>
+                  </span>
+                  <span className="shrink-0 text-xs font-medium text-neutral-500 dark:text-neutral-400">
+                    {rejoiningCode === r.code ? "…" : PHASE_LABEL[r.phase] ?? r.phase}
+                  </span>
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {activeRooms.filter((r) => !recentRooms.some((rr) => rr.code === r.code)).length > 0 && (
+          <div className="space-y-1.5">
+            <p className="text-xs font-semibold uppercase tracking-wide text-neutral-400 dark:text-neutral-500">
+              Watch a live game
+            </p>
+            <div className="space-y-1.5">
+              {activeRooms
+                .filter((r) => !recentRooms.some((rr) => rr.code === r.code))
+                .map((r) => (
+                <button
+                  key={r.code}
+                  type="button"
+                  disabled={rejoiningCode !== null}
+                  onClick={() => rejoin(r.code, "spectator")}
+                  className="w-full flex items-center justify-between gap-2 rounded-lg border border-neutral-200 dark:border-neutral-700 px-3 py-2 text-left text-sm hover:bg-neutral-50 dark:hover:bg-neutral-800 disabled:opacity-50"
+                >
+                  <span className="min-w-0">
+                    <span className="font-mono font-semibold tracking-widest">{r.code}</span>
+                    <span className="ml-2 text-neutral-500 dark:text-neutral-400 truncate">
+                      {r.course ?? "Round"} · {r.players.join(", ")}
+                    </span>
+                  </span>
+                  <span className="shrink-0 text-xs font-medium text-neutral-500 dark:text-neutral-400">
+                    {rejoiningCode === r.code ? "…" : PHASE_LABEL[r.phase] ?? r.phase}
+                  </span>
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
 
         <div className="flex gap-2">
           {(["create", "join"] as const).map((m) => (
