@@ -28,6 +28,13 @@ export interface Player {
    * live-update here until they reconnect, same as the rest of a player's
    * account-level info. */
   equippedCostume: string | null;
+  /** A name slot the host added directly (see roomStore.ts's addGuest) —
+   * no account, no login, no email, nothing saved to a personal history
+   * afterward (there's no account for it to save to). Still scored,
+   * still shows up in the round's own history same as anyone. Never has
+   * a socketId of its own; any other player can enter their scores, same
+   * as everyone else since scoring opened up beyond just the host. */
+  isGuest: boolean;
 }
 
 export interface Spectator {

@@ -82,6 +82,12 @@ export function restoreRoomsFromSnapshots(snapshots: Room[]): void {
     if (room.finishedRound && !room.finishedRound.newAchievements) {
       room.finishedRound.newAchievements = {};
     }
+    // Same deal for isGuest — harmless as undefined (falsy, reads the same
+    // as false) but normalized here anyway so it's never anything but a
+    // real boolean once a room's been through this.
+    for (const p of room.players) {
+      if (p.isGuest === undefined) p.isGuest = false;
+    }
     rooms.set(room.code, room);
   }
 }
@@ -117,6 +123,7 @@ export function createRoom(hostName: string, equippedCostume: string | null = nu
     socketId: null,
     handicap: 0,
     equippedCostume,
+    isGuest: false,
   };
   const room: Room = {
     code,
@@ -181,9 +188,45 @@ export function joinRoom(room: Room, name: string, equippedCostume: string | nul
     socketId: null,
     handicap: 0,
     equippedCostume,
+    isGuest: false,
   };
   room.players.push(player);
   room.teams = null; // a new roster invalidates any prior team pairing
+  return player;
+}
+
+/** Host-only: adds a name slot for someone without a Buckets account at
+ * all — no login, no email, and (since there's no account) nothing saved
+ * to a personal round history afterward. The round itself still records
+ * their name and scores same as anyone, and any other player can enter
+ * their strokes, same as everyone else. Auto-assigned an available
+ * avatar since there's no session on the other end to pick one — with
+ * only 8 avatars and a 4-player cap there's always one free. Allowed
+ * mid-round too (someone shows up late), not just from the lobby. */
+export function addGuest(room: Room, name: string): Player | { error: string } {
+  if (room.phase !== "lobby" && room.phase !== "playing") {
+    return { error: "Can't add a guest right now." };
+  }
+  if (room.players.length >= 4) return { error: "Room is full (4 players max)." };
+  const trimmed = name.trim();
+  if (!trimmed) return { error: "Name is required." };
+  if (isNameTaken(room, trimmed)) return { error: "That name is already taken in this room." };
+
+  const takenAvatars = new Set(room.players.map((p) => p.avatar));
+  const avatar = AVATAR_KEYS.find((a) => !takenAvatars.has(a)) ?? null;
+
+  const player: Player = {
+    id: uuid(),
+    name: trimmed,
+    avatar,
+    connected: true,
+    socketId: null,
+    handicap: 0,
+    equippedCostume: null,
+    isGuest: true,
+  };
+  room.players.push(player);
+  if (room.phase === "lobby") room.teams = null;
   return player;
 }
 

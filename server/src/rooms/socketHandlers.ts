@@ -1,5 +1,6 @@
 import type { Server, Socket } from "socket.io";
 import {
+  addGuest,
   advanceCurrentStep,
   canStart,
   confirmFinishRound,
@@ -189,6 +190,15 @@ export function registerRoomHandlers(io: Server) {
       if (!room || !isHost(room, data.playerId)) return;
       startNewRound(room);
       broadcast(io, room);
+    });
+
+    socket.on("room:addGuest", (payload: { name: string }, ack?: Ack) => {
+      const room = data.roomCode ? getRoom(data.roomCode) : undefined;
+      if (!room || !isHost(room, data.playerId)) return ack?.({ ok: false, error: "Only the host can add a guest." });
+      const result = addGuest(room, String(payload?.name ?? ""));
+      if ("error" in result) return ack?.({ ok: false, error: result.error });
+      broadcast(io, room);
+      ack?.({ ok: true, playerId: result.id });
     });
 
     socket.on("room:leave", () => {

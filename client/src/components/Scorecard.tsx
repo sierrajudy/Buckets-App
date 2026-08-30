@@ -546,6 +546,14 @@ export function Scorecard() {
                     <span className={`font-semibold ${themedTitleCls}`}>
                       {p.name}
                       {p.id === me?.id && <span className="font-normal text-white/60"> (you)</span>}
+                      {p.isGuest && (
+                        <span
+                          title="No account — added by the host"
+                          className="ml-1.5 align-middle text-[10px] font-bold uppercase tracking-wide bg-white/15 text-white/70 px-1.5 py-0.5 rounded"
+                        >
+                          Guest
+                        </span>
+                      )}
                     </span>
                     {tiedThisHole && (
                       <span className="text-base" style={{ animation: "high-five-pop 0.5s ease-out" }}>

@@ -32,6 +32,7 @@ interface RoomContextValue {
   connecting: boolean;
   createRoom: () => Promise<AckResponse>;
   joinRoom: (code: string) => Promise<AckResponse>;
+  addGuest: (name: string) => Promise<AckResponse>;
   spectateRoom: (code: string) => Promise<AckResponse>;
   selectAvatar: (avatar: AvatarKey) => void;
   setConfig: (startingHole: number) => void;
@@ -141,6 +142,12 @@ export function RoomProvider({ children }: { children: ReactNode }) {
       persistSession((res.state as RoomState).code, res.playerId as string);
     }
     return res;
+  }
+
+  async function addGuest(name: string): Promise<AckResponse> {
+    // No local state update needed — the room:state broadcast this
+    // triggers updates everyone, this client included, the normal way.
+    return emitWithAck("room:addGuest", { name });
   }
 
   async function spectateRoom(code: string): Promise<AckResponse> {
@@ -255,6 +262,7 @@ export function RoomProvider({ children }: { children: ReactNode }) {
         connecting,
         createRoom,
         joinRoom,
+        addGuest,
         spectateRoom,
         selectAvatar,
         setConfig,

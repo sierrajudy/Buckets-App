@@ -15,6 +15,7 @@ export interface Player {
   connected: boolean;
   handicap: number;
   equippedCostume: string | null;
+  isGuest: boolean;
 }
 
 export interface Spectator {

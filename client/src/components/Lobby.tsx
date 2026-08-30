@@ -37,11 +37,16 @@ export function Lobby({
     setHandicap,
     startGame,
     leaveRoom,
+    addGuest,
   } = useRoom();
   const [starting, setStarting] = useState(false);
   const [startError, setStartError] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
   const [showRules, setShowRules] = useState(false);
+  const [showAddGuest, setShowAddGuest] = useState(false);
+  const [guestName, setGuestName] = useState("");
+  const [addingGuest, setAddingGuest] = useState(false);
+  const [guestError, setGuestError] = useState<string | null>(null);
 
   const isHighLow = state?.gameMode === "highlow";
   const isWolf = state?.gameMode === "wolf";
@@ -276,10 +281,83 @@ export function Lobby({
                     You
                   </span>
                 )}
+                {p.isGuest && (
+                  <span
+                    title="No account — added by the host, nothing saved to a personal history afterward"
+                    className="text-[10px] font-bold uppercase tracking-wide bg-neutral-200 text-neutral-600 dark:bg-neutral-700 dark:text-neutral-300 px-1.5 py-0.5 rounded"
+                  >
+                    Guest
+                  </span>
+                )}
                 {!p.connected && <span className="text-[10px] text-neutral-400 ml-auto">reconnecting…</span>}
               </div>
             ))}
           </div>
+
+          {isHost && state.players.length < 4 && (
+            <div className="mt-3 pt-3 border-t border-white/10">
+              {!showAddGuest ? (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowAddGuest(true);
+                    setGuestError(null);
+                  }}
+                  className="text-sm font-semibold text-white/80 hover:text-white underline underline-offset-2"
+                >
+                  + Add a guest
+                </button>
+              ) : (
+                <div className="space-y-2">
+                  <p className="text-xs text-white/60">
+                    A guest plays and gets scored like anyone else, but doesn't need a Buckets account — no login, no
+                    email, and there's no personal history for it to be saved to afterward.
+                  </p>
+                  <div className="flex gap-2">
+                    <input
+                      value={guestName}
+                      onChange={(e) => setGuestName(e.target.value)}
+                      placeholder="Guest's name"
+                      maxLength={20}
+                      autoFocus
+                      className="flex-1 rounded-lg border border-white/40 bg-transparent text-white placeholder:text-white/40 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
+                    />
+                    <button
+                      type="button"
+                      disabled={addingGuest || !guestName.trim()}
+                      onClick={async () => {
+                        setAddingGuest(true);
+                        setGuestError(null);
+                        const res = await addGuest(guestName.trim());
+                        setAddingGuest(false);
+                        if (res.ok) {
+                          setGuestName("");
+                          setShowAddGuest(false);
+                        } else {
+                          setGuestError(res.error);
+                        }
+                      }}
+                      className="shrink-0 rounded-lg bg-green-600 hover:bg-green-700 disabled:opacity-50 text-white px-4 py-2 text-sm font-semibold"
+                    >
+                      {addingGuest ? "Adding…" : "Add"}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setShowAddGuest(false);
+                        setGuestName("");
+                        setGuestError(null);
+                      }}
+                      className="shrink-0 rounded-lg border border-white/30 text-white/70 hover:text-white px-3 py-2 text-sm"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                  {guestError && <p className="text-xs text-red-400">{guestError}</p>}
+                </div>
+              )}
+            </div>
+          )}
         </div>
 
         {!isSpectator && (
