@@ -9,6 +9,7 @@ import { HighLowBackdrop } from "./HighLowBackdrop";
 import { BucketsBackdrop } from "./BucketsBackdrop";
 import { BaseballBackdrop } from "./BaseballBackdrop";
 import { QuickAddFriendButton } from "./QuickAddFriendButton";
+import { InviteFriendsButton } from "./InviteFriendsButton";
 import { fetchFriendsOverview } from "../lib/friendsApi";
 import type { GameMode } from "../types";
 
@@ -178,6 +179,7 @@ export function Lobby({
             >
               Standings
             </button>
+            {!isSpectator && <InviteFriendsButton dark />}
           </div>
         </div>
 

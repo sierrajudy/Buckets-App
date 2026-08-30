@@ -26,10 +26,14 @@ import {
   startNewRound,
 } from "./roomStore.js";
 import type { AvatarKey, GameMode, Room, Teams } from "./types.js";
-import type { AuthUser } from "../lib/auth.js";
+import { getUserById, type AuthUser } from "../lib/auth.js";
 import { notifyRoundStarted } from "../lib/notifications.js";
 import { saveRoomSnapshot } from "../lib/persistRoomSnapshot.js";
 import { recordRoomMembership } from "../lib/roomMemberships.js";
+import { areFriends } from "../lib/friends.js";
+import { isUserOnline, userPresenceRoom } from "../lib/presence.js";
+import { tryConsumeInviteCooldown } from "../lib/inviteCooldown.js";
+import { sendSpectateInviteEmail } from "../lib/email.js";
 
 interface SocketData {
   roomCode?: string;
@@ -61,6 +65,12 @@ function isPlayerInRoom(room: Room, playerId: string | undefined): boolean {
 export function registerRoomHandlers(io: Server) {
   io.on("connection", (socket: Socket) => {
     const data = socket.data as SocketData;
+
+    // See presence.ts — every authenticated socket sits in its own
+    // account-wide room for as long as it's connected, independent of
+    // whatever Buckets room (if any) it's currently in. This is what makes
+    // "is this friend online" and "push them a live invite" both work.
+    socket.join(userPresenceRoom(data.user.id));
 
     socket.on("room:create", (_payload: unknown, ack: Ack) => {
       const { room, player } = createRoom(data.user.name, data.user.equippedCostume);
@@ -205,6 +215,49 @@ export function registerRoomHandlers(io: Server) {
       if ("error" in result) return ack?.({ ok: false, error: result.error });
       broadcast(io, room);
       ack?.({ ok: true, playerId: result.id });
+    });
+
+    // Any player (not just the host) can invite a friend into their current
+    // room — pre-game this fills an open player slot if there is one
+    // (joinRoom already falls a full room's would-be player back to
+    // spectating — see the client's accept handler), mid-game it's always
+    // just an invite to spectate, since the roster is locked by then. A
+    // friend who's online right now gets a live pop-up; otherwise they get
+    // an email with the room code and a link. See presence.ts and
+    // inviteCooldown.ts for how each of those is decided.
+    socket.on("room:inviteFriend", async (payload: { friendUserId: string }, ack?: Ack) => {
+      const room = data.roomCode ? getRoom(data.roomCode) : undefined;
+      if (!room) return ack?.({ ok: false, error: "You're not in a room." });
+      if (!isPlayerInRoom(room, data.playerId)) {
+        return ack?.({ ok: false, error: "Only players in the room can send invites." });
+      }
+
+      const friendUserId = String(payload?.friendUserId ?? "");
+      if (!friendUserId) return ack?.({ ok: false, error: "Missing friend." });
+
+      const isFriend = await areFriends(data.user.id, friendUserId);
+      if (!isFriend) return ack?.({ ok: false, error: "That's not one of your friends." });
+
+      if (!tryConsumeInviteCooldown(data.user.id, friendUserId, room.code)) {
+        return ack?.({ ok: false, error: "Give it a few seconds before inviting them again." });
+      }
+
+      const friend = await getUserById(friendUserId);
+      if (!friend) return ack?.({ ok: false, error: "Couldn't find that friend." });
+
+      if (isUserOnline(io, friendUserId)) {
+        io.to(userPresenceRoom(friendUserId)).emit("friend:invited", {
+          roomCode: room.code,
+          inviterName: data.user.name,
+          phase: room.phase,
+        });
+        return ack?.({ ok: true, delivered: "live" });
+      }
+
+      sendSpectateInviteEmail(friend.email, friend.name, { inviterName: data.user.name, roomCode: room.code }).catch(
+        (err) => console.error("Failed to send spectate invite email:", err),
+      );
+      ack?.({ ok: true, delivered: "email" });
     });
 
     socket.on("room:leave", () => {

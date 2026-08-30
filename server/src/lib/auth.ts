@@ -75,6 +75,18 @@ export async function getUserByToken(token: string | undefined | null): Promise<
   return rowToAuthUser(result.rows[0] as unknown as Record<string, unknown>);
 }
 
+/** Looks a user up directly by id rather than by session token — used where
+ * the caller already knows who they mean (e.g. a friend's id from the
+ * friend_requests table) instead of authenticating a request. */
+export async function getUserById(id: string): Promise<AuthUser | null> {
+  const result = await db.execute({
+    sql: `SELECT id, email, name, email_round_start, email_standings, equipped_costume FROM users WHERE id = ?`,
+    args: [id],
+  });
+  if (result.rows.length === 0) return null;
+  return rowToAuthUser(result.rows[0] as unknown as Record<string, unknown>);
+}
+
 export function rowToAuthUser(row: Record<string, unknown>): AuthUser {
   return {
     id: row.id as string,

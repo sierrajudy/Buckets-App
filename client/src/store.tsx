@@ -33,6 +33,7 @@ interface RoomContextValue {
   createRoom: () => Promise<AckResponse>;
   joinRoom: (code: string) => Promise<AckResponse>;
   addGuest: (name: string) => Promise<AckResponse>;
+  inviteFriend: (friendUserId: string) => Promise<AckResponse>;
   spectateRoom: (code: string) => Promise<AckResponse>;
   selectAvatar: (avatar: AvatarKey) => void;
   setConfig: (startingHole: number) => void;
@@ -150,6 +151,14 @@ export function RoomProvider({ children }: { children: ReactNode }) {
     return emitWithAck("room:addGuest", { name });
   }
 
+  async function inviteFriend(friendUserId: string): Promise<AckResponse> {
+    // No local state update — this doesn't change anything about the
+    // current room, it just notifies (or emails) the friend on the other
+    // end. See room:inviteFriend on the server for the live-vs-email
+    // decision and the per-friend cooldown.
+    return emitWithAck("room:inviteFriend", { friendUserId });
+  }
+
   async function spectateRoom(code: string): Promise<AckResponse> {
     const res = await emitWithAck("room:spectate", { code });
     if (res.ok) {
@@ -263,6 +272,7 @@ export function RoomProvider({ children }: { children: ReactNode }) {
         createRoom,
         joinRoom,
         addGuest,
+        inviteFriend,
         spectateRoom,
         selectAvatar,
         setConfig,

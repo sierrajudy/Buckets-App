@@ -5,6 +5,7 @@ import { GolfCart } from "./GolfCart";
 import { CANNON_STAGGER_MS, DrivingRange } from "./DrivingRange";
 import { HecklerGuy } from "./HecklerGuy";
 import { RoomCodeBadge } from "./RoomCodeBadge";
+import { InviteFriendsButton } from "./InviteFriendsButton";
 import { EmojiReactionBar } from "./EmojiReactionBar";
 import { PredictionPicker } from "./PredictionPicker";
 import { WolfBackdrop } from "./WolfBackdrop";
@@ -292,7 +293,10 @@ export function Scorecard() {
                 </button>
               ))}
           </div>
-          <RoomCodeBadge />
+          <div className="flex items-center gap-3">
+            {!isSpectator && <InviteFriendsButton />}
+            <RoomCodeBadge />
+          </div>
         </div>
 
         <div className="max-w-2xl mx-auto mt-3 relative h-6">

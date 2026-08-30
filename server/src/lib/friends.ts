@@ -143,6 +143,16 @@ export async function removeFriend(userId: string, otherUserId: string): Promise
   });
 }
 
+/** Used to gate friend-only actions (like inviting someone into a room) —
+ * a plain existence check rather than pulling either party's full row. */
+export async function areFriends(userId: string, otherUserId: string): Promise<boolean> {
+  const result = await db.execute({
+    sql: `SELECT 1 FROM friend_requests WHERE status = 'accepted' AND ((from_user_id = ? AND to_user_id = ?) OR (from_user_id = ? AND to_user_id = ?))`,
+    args: [userId, otherUserId, otherUserId, userId],
+  });
+  return result.rows.length > 0;
+}
+
 export type FriendStatus = "self" | "friends" | "pending_out" | "pending_in" | "none";
 
 export interface SearchResultUser extends FriendUser {

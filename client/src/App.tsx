@@ -16,6 +16,7 @@ import { AceIntro } from "./components/AceIntro";
 import { PartyIntro } from "./components/PartyIntro";
 import { LoadingScreen } from "./components/LoadingScreen";
 import { ReactionOverlay } from "./components/ReactionOverlay";
+import { InviteToast } from "./components/InviteToast";
 import { WolfTransitionLab } from "./dev/WolfTransitionLab";
 
 function AppShell() {
@@ -51,6 +52,98 @@ function AppShell() {
     }
   }, [state?.phase, holeInOnePlayer]);
 
+  /** Everything below is gated behind auth/connection already being settled
+   * (see the early returns in the outer component). Pulled into its own
+   * function so a friend invite (see InviteToast) can be rendered as a
+   * sibling of whichever of these screens is showing, instead of having to
+   * be threaded into every branch individually — presence is account-wide,
+   * not tied to any one of them. */
+  function renderMain() {
+    if (showProfile)
+      return (
+        <Profile
+          onBack={() => {
+            setShowProfile(false);
+            setAutoOpenEmailPrefs(false);
+            setAutoOpenAvatarTab(false);
+          }}
+          autoOpenEmailPrefs={autoOpenEmailPrefs}
+          autoOpenAvatarTab={autoOpenAvatarTab}
+        />
+      );
+
+    if (showStandings) return <Standings onBack={() => setShowStandings(false)} />;
+
+    if (showFriends) return <Friends onBack={() => setShowFriends(false)} />;
+
+    if (!state) {
+      return (
+        <Home
+          onViewStandings={() => setShowStandings(true)}
+          onViewProfile={() => setShowProfile(true)}
+          onViewFriends={() => setShowFriends(true)}
+        />
+      );
+    }
+
+    if (showAceIntro && holeInOnePlayer) {
+      return <AceIntro player={holeInOnePlayer} onDone={() => setShowAceIntro(false)} />;
+    }
+
+    if (showPartyIntro && state.finishedRound) {
+      return (
+        <PartyIntro
+          players={state.players.map((p) => ({ name: p.name, avatar: p.avatar }))}
+          winner={state.finishedRound.winner}
+          onDone={() => setShowPartyIntro(false)}
+        />
+      );
+    }
+
+    switch (state.phase) {
+      case "lobby":
+        return (
+          <>
+            <ReactionOverlay />
+            <Lobby onViewStandings={() => setShowStandings(true)} onViewProfile={() => setShowProfile(true)} />
+          </>
+        );
+      case "playing":
+        return (
+          <>
+            <ReactionOverlay />
+            <Scorecard />
+          </>
+        );
+      case "puttoff":
+        return (
+          <>
+            <ReactionOverlay />
+            <PuttOff />
+          </>
+        );
+      case "celebration":
+        return (
+          <>
+            <ReactionOverlay />
+            <Celebration
+              onViewStandings={() => setShowStandings(true)}
+              onViewProfile={() => {
+                setAutoOpenEmailPrefs(true);
+                setShowProfile(true);
+              }}
+              onViewAchievements={() => {
+                setAutoOpenAvatarTab(true);
+                setShowProfile(true);
+              }}
+            />
+          </>
+        );
+      default:
+        return null;
+    }
+  }
+
   if (window.location.pathname === "/reset-password") return <ResetPassword />;
 
   if (showSplash) return <Splash onDone={() => setShowSplash(false)} />;
@@ -61,89 +154,12 @@ function AppShell() {
 
   if (connecting) return <LoadingScreen message="Reconnecting…" />;
 
-  if (showProfile)
-    return (
-      <Profile
-        onBack={() => {
-          setShowProfile(false);
-          setAutoOpenEmailPrefs(false);
-          setAutoOpenAvatarTab(false);
-        }}
-        autoOpenEmailPrefs={autoOpenEmailPrefs}
-        autoOpenAvatarTab={autoOpenAvatarTab}
-      />
-    );
-
-  if (showStandings) return <Standings onBack={() => setShowStandings(false)} />;
-
-  if (showFriends) return <Friends onBack={() => setShowFriends(false)} />;
-
-  if (!state) {
-    return (
-      <Home
-        onViewStandings={() => setShowStandings(true)}
-        onViewProfile={() => setShowProfile(true)}
-        onViewFriends={() => setShowFriends(true)}
-      />
-    );
-  }
-
-  if (showAceIntro && holeInOnePlayer) {
-    return <AceIntro player={holeInOnePlayer} onDone={() => setShowAceIntro(false)} />;
-  }
-
-  if (showPartyIntro && state.finishedRound) {
-    return (
-      <PartyIntro
-        players={state.players.map((p) => ({ name: p.name, avatar: p.avatar }))}
-        winner={state.finishedRound.winner}
-        onDone={() => setShowPartyIntro(false)}
-      />
-    );
-  }
-
-  switch (state.phase) {
-    case "lobby":
-      return (
-        <>
-          <ReactionOverlay />
-          <Lobby onViewStandings={() => setShowStandings(true)} onViewProfile={() => setShowProfile(true)} />
-        </>
-      );
-    case "playing":
-      return (
-        <>
-          <ReactionOverlay />
-          <Scorecard />
-        </>
-      );
-    case "puttoff":
-      return (
-        <>
-          <ReactionOverlay />
-          <PuttOff />
-        </>
-      );
-    case "celebration":
-      return (
-        <>
-          <ReactionOverlay />
-          <Celebration
-            onViewStandings={() => setShowStandings(true)}
-            onViewProfile={() => {
-              setAutoOpenEmailPrefs(true);
-              setShowProfile(true);
-            }}
-            onViewAchievements={() => {
-              setAutoOpenAvatarTab(true);
-              setShowProfile(true);
-            }}
-          />
-        </>
-      );
-    default:
-      return null;
-  }
+  return (
+    <>
+      {renderMain()}
+      <InviteToast />
+    </>
+  );
 }
 
 export default function App() {
