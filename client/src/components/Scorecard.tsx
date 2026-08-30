@@ -113,6 +113,7 @@ export function Scorecard() {
   const [confirming, setConfirming] = useState(false);
   const [showEndConfirm, setShowEndConfirm] = useState(false);
   const [ending, setEnding] = useState(false);
+  const [finishError, setFinishError] = useState<string | null>(null);
   const prevStepIndex = useRef(stepIndex);
   const resultsRef = useRef(results);
   const playersRef = useRef(players);
@@ -699,6 +700,12 @@ export function Scorecard() {
           state.spectators.length > 0 && <PredictionPicker readOnly />
         )}
 
+        {finishError && (
+          <div className="rounded-lg border border-red-400 bg-red-950/40 text-red-200 text-sm px-3 py-2.5 mb-2">
+            {finishError}
+          </div>
+        )}
+
         <div className="flex gap-2 pb-6">
           <button
             type="button"
@@ -731,9 +738,12 @@ export function Scorecard() {
                 <button
                   type="button"
                   disabled={confirming}
-                  onClick={() => {
+                  onClick={async () => {
                     setConfirming(true);
-                    confirmFinishRound();
+                    setFinishError(null);
+                    const res = await confirmFinishRound();
+                    setConfirming(false);
+                    if (!res.ok) setFinishError(res.error);
                   }}
                   className={`flex-1 rounded-lg border bg-green-600 hover:bg-green-700 disabled:opacity-60 text-white py-2.5 font-semibold text-sm ${isHighLow ? "border-green-800" : "border-transparent"}`}
                 >
@@ -782,9 +792,15 @@ export function Scorecard() {
               <button
                 type="button"
                 disabled={ending}
-                onClick={() => {
+                onClick={async () => {
                   setEnding(true);
-                  endGame();
+                  setFinishError(null);
+                  const res = await endGame();
+                  setEnding(false);
+                  if (!res.ok) {
+                    setFinishError(res.error);
+                    setShowEndConfirm(false);
+                  }
                 }}
                 className="flex-1 rounded-lg bg-green-600 hover:bg-green-700 disabled:opacity-60 text-white font-semibold py-2.5"
               >

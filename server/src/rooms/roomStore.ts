@@ -494,21 +494,27 @@ export async function advanceCurrentStep(room: Room, stepIndex: number): Promise
  * to finish yet (a hole still missing scores, or — standard mode only — a
  * tie with no winner; High Low has no such requirement since a tied match
  * is a valid final result there). */
-export async function confirmFinishRound(room: Room): Promise<boolean> {
-  if (room.phase !== "playing") return false;
+export type FinishResult = { ok: true } | { ok: false; error: string };
+
+export async function confirmFinishRound(room: Room): Promise<FinishResult> {
+  if (room.phase !== "playing") return { ok: false, error: "This round isn't in progress." };
   const names = playerNames(room);
   const results = orderedResults(room);
 
   const allComplete = results.every((h) => names.every((n) => h.strokes[n] > 0));
-  if (!allComplete) return false;
+  if (!allComplete) {
+    return { ok: false, error: "Every hole needs a score for every player before you can finish — use End Game instead to wrap it up early." };
+  }
 
   if (room.gameMode !== "highlow") {
     const totals = computeRunningTotals(results, names);
-    if (findTiedLeaders(totals, names).length > 1) return false;
+    if (findTiedLeaders(totals, names).length > 1) {
+      return { ok: false, error: "Scores are tied for the lead — that goes to a putt-off, not a manual finish." };
+    }
   }
 
   await finalizeAndPersist(room, results, { holeInOnePlayer: findHoleInOneWinner(results), puttOffWinner: null });
-  return true;
+  return { ok: true };
 }
 
 /** Host-only: ends the round right now, whatever hole it's on. Whatever
@@ -517,11 +523,11 @@ export async function confirmFinishRound(room: Room): Promise<boolean> {
  * totals as they currently stand — no "all holes complete" or "no tie"
  * requirement like confirmFinishRound has, since the whole point is to
  * cut the round short deliberately. */
-export async function endGameEarly(room: Room): Promise<boolean> {
-  if (room.phase !== "playing") return false;
+export async function endGameEarly(room: Room): Promise<FinishResult> {
+  if (room.phase !== "playing") return { ok: false, error: "This round isn't in progress." };
   const results = orderedResults(room);
   await finalizeAndPersist(room, results, { holeInOnePlayer: findHoleInOneWinner(results), puttOffWinner: null });
-  return true;
+  return { ok: true };
 }
 
 export async function resolvePuttOff(room: Room, winnerName: string): Promise<boolean> {

@@ -246,19 +246,21 @@ export function registerRoomHandlers(io: Server) {
       }
     });
 
-    socket.on("room:confirmFinish", () => {
+    socket.on("room:confirmFinish", (_payload: unknown, ack?: Ack) => {
       const room = data.roomCode ? getRoom(data.roomCode) : undefined;
-      if (!room || !isHost(room, data.playerId)) return;
-      confirmFinishRound(room).then((ok) => {
-        if (ok) broadcast(io, room);
+      if (!room || !isHost(room, data.playerId)) return ack?.({ ok: false, error: "Only the host can finish the round." });
+      confirmFinishRound(room).then((result) => {
+        if (result.ok) broadcast(io, room);
+        ack?.(result);
       });
     });
 
-    socket.on("room:endGame", () => {
+    socket.on("room:endGame", (_payload: unknown, ack?: Ack) => {
       const room = data.roomCode ? getRoom(data.roomCode) : undefined;
-      if (!room || !isHost(room, data.playerId)) return;
-      endGameEarly(room).then((ok) => {
-        if (ok) broadcast(io, room);
+      if (!room || !isHost(room, data.playerId)) return ack?.({ ok: false, error: "Only the host can end the round." });
+      endGameEarly(room).then((result) => {
+        if (result.ok) broadcast(io, room);
+        ack?.(result);
       });
     });
 

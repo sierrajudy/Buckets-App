@@ -48,8 +48,8 @@ interface RoomContextValue {
   togglePgeWinner: (holeNumber: number, targetName: string) => void;
   setWolfChoice: (holeNumber: number, partner: string | null, alone: boolean) => void;
   resolvePuttOff: (winner: string) => void;
-  confirmFinishRound: () => void;
-  endGame: () => void;
+  confirmFinishRound: () => Promise<AckResponse>;
+  endGame: () => Promise<AckResponse>;
   setCurrentStep: (stepIndex: number) => void;
   predict: (playerName: string) => void;
   sendReaction: (emoji: string) => void;
@@ -216,12 +216,12 @@ export function RoomProvider({ children }: { children: ReactNode }) {
     socket.emit("puttoff:resolve", { winner });
   }
 
-  function confirmFinishRound() {
-    socket.emit("room:confirmFinish", {});
+  function confirmFinishRound(): Promise<AckResponse> {
+    return emitWithAck("room:confirmFinish", {});
   }
 
-  function endGame() {
-    socket.emit("room:endGame", {});
+  function endGame(): Promise<AckResponse> {
+    return emitWithAck("room:endGame", {});
   }
 
   function setCurrentStep(stepIndex: number) {
