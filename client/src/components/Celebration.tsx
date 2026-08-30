@@ -60,7 +60,12 @@ export function Celebration({
 
   if (!state || !state.finishedRound) return null;
   const round = state.finishedRound;
-  const myNewAchievements = me ? (round.newAchievements[me.name] ?? []) : [];
+  // Optional chaining on newAchievements itself, not just the lookup inside
+  // it — a round finished before this feature existed has no such field at
+  // all (undefined, not {}), and this screen can still show that old
+  // finishedRound (a host who never clicked "New round" leaves everyone
+  // sitting on it indefinitely).
+  const myNewAchievements = me ? (round.newAchievements?.[me.name] ?? []) : [];
   const showAchievementPopup = myNewAchievements.length > 0 && !achievementPopupDismissed;
   const isHighLow = round.gameMode === "highlow";
   const isWolf = round.gameMode === "wolf";

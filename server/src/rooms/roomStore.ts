@@ -72,6 +72,16 @@ export function getRoom(code: string): Room | undefined {
  * it was, instead of just gone. */
 export function restoreRoomsFromSnapshots(snapshots: Room[]): void {
   for (const room of snapshots) {
+    // A finishedRound saved before newAchievements existed as a field has
+    // it missing entirely (undefined, not {}) — the Celebration screen can
+    // still be showing that old round to whoever's in it (the host never
+    // clicked "New round"), and reads round.newAchievements[name]
+    // unconditionally. Backfilling here heals it for every restored room
+    // in one place, rather than relying only on the client's own
+    // defensive fallback.
+    if (room.finishedRound && !room.finishedRound.newAchievements) {
+      room.finishedRound.newAchievements = {};
+    }
     rooms.set(room.code, room);
   }
 }
