@@ -6,20 +6,12 @@ export interface FriendUser {
   email: string;
 }
 
-export interface PendingRequest {
-  id: string;
-  user: FriendUser;
-  createdAt: string;
-}
-
 export interface FriendsOverview {
   friends: FriendUser[];
-  incoming: PendingRequest[];
-  outgoing: PendingRequest[];
   suggested: FriendUser[];
 }
 
-export type FriendStatus = "self" | "friends" | "pending_out" | "pending_in" | "none";
+export type FriendStatus = "friends" | "none";
 
 export interface SearchResultUser extends FriendUser {
   status: FriendStatus;
@@ -46,38 +38,27 @@ export async function searchFriendCandidates(query: string): Promise<SearchResul
   return parse<SearchResultUser[]>(res);
 }
 
-export async function sendFriendRequest(toUserId: string): Promise<{ ok: true; autoAccepted: boolean } | { ok: false; error: string }> {
+/** Adds a friend immediately — no request/accept step, either side sees the
+ * other right away. */
+export async function addFriend(toUserId: string): Promise<{ ok: true } | { ok: false; error: string }> {
   try {
-    const res = await fetch("/api/friends/request", {
+    const res = await fetch("/api/friends/add", {
       method: "POST",
       headers: { "Content-Type": "application/json", ...authHeaders() },
       body: JSON.stringify({ toUserId }),
     });
-    return await parse<{ ok: true; autoAccepted: boolean }>(res);
+    return await parse<{ ok: true }>(res);
   } catch (err) {
     return { ok: false, error: err instanceof Error ? err.message : "Something went wrong." };
   }
 }
 
-export async function sendFriendRequestByName(name: string): Promise<{ ok: true; autoAccepted: boolean } | { ok: false; error: string }> {
+export async function addFriendByName(name: string): Promise<{ ok: true } | { ok: false; error: string }> {
   try {
-    const res = await fetch("/api/friends/request-by-name", {
+    const res = await fetch("/api/friends/add-by-name", {
       method: "POST",
       headers: { "Content-Type": "application/json", ...authHeaders() },
       body: JSON.stringify({ name }),
-    });
-    return await parse<{ ok: true; autoAccepted: boolean }>(res);
-  } catch (err) {
-    return { ok: false, error: err instanceof Error ? err.message : "Something went wrong." };
-  }
-}
-
-export async function respondToFriendRequest(requestId: string, accept: boolean): Promise<{ ok: true } | { ok: false; error: string }> {
-  try {
-    const res = await fetch("/api/friends/respond", {
-      method: "POST",
-      headers: { "Content-Type": "application/json", ...authHeaders() },
-      body: JSON.stringify({ requestId, accept }),
     });
     return await parse<{ ok: true }>(res);
   } catch (err) {

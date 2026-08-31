@@ -65,15 +65,7 @@ export function Celebration({
 
   useEffect(() => {
     fetchFriendsOverview()
-      .then((ov) =>
-        setRelatedFriendNames(
-          new Set(
-            [...ov.friends, ...ov.outgoing.map((r) => r.user), ...ov.incoming.map((r) => r.user)].map((u) =>
-              u.name.toLowerCase(),
-            ),
-          ),
-        ),
-      )
+      .then((ov) => setRelatedFriendNames(new Set(ov.friends.map((u) => u.name.toLowerCase()))))
       .catch(() => {});
   }, []);
 

@@ -58,15 +58,7 @@ export function Lobby({
 
   useEffect(() => {
     fetchFriendsOverview()
-      .then((ov) =>
-        setRelatedFriendNames(
-          new Set(
-            [...ov.friends, ...ov.outgoing.map((r) => r.user), ...ov.incoming.map((r) => r.user)].map((u) =>
-              u.name.toLowerCase(),
-            ),
-          ),
-        ),
-      )
+      .then((ov) => setRelatedFriendNames(new Set(ov.friends.map((u) => u.name.toLowerCase()))))
       .catch(() => {});
   }, []);
 
@@ -179,7 +171,6 @@ export function Lobby({
             >
               Standings
             </button>
-            {!isSpectator && <InviteFriendsButton dark />}
           </div>
         </div>
 
@@ -326,20 +317,25 @@ export function Lobby({
             ))}
           </div>
 
-          {isHost && state.players.length < 4 && (
-            <div className="mt-3 pt-3 border-t border-white/10">
-              {!showAddGuest ? (
-                <button
-                  type="button"
-                  onClick={() => {
-                    setShowAddGuest(true);
-                    setGuestError(null);
-                  }}
-                  className="text-sm font-semibold text-white/80 hover:text-white underline underline-offset-2"
-                >
-                  + Add a guest
-                </button>
-              ) : (
+          {(!isSpectator || (isHost && state.players.length < 4)) && (
+            <div className="mt-3 pt-3 border-t border-white/10 space-y-2">
+              <div className="flex items-center gap-4 flex-wrap">
+                {isHost && state.players.length < 4 && !showAddGuest && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowAddGuest(true);
+                      setGuestError(null);
+                    }}
+                    className="text-sm font-semibold text-white/80 hover:text-white underline underline-offset-2"
+                  >
+                    + Add a guest
+                  </button>
+                )}
+                {!isSpectator && <InviteFriendsButton dark />}
+              </div>
+
+              {isHost && state.players.length < 4 && showAddGuest && (
                 <div className="space-y-2">
                   <p className="text-xs text-white/60">
                     A guest plays and gets scored like anyone else, but doesn't need a Buckets account — no login, no

@@ -149,12 +149,12 @@ export async function initDb(): Promise<void> {
     `CREATE INDEX IF NOT EXISTS idx_room_memberships_user ON room_memberships(user_id, last_seen_at)`,
   );
 
-  // Friend requests — a row per direction. 'pending' until the recipient
-  // accepts or declines; once accepted, the pair is mutual friends (see
-  // friends.ts, which queries this from either side). Declining just
-  // leaves the row as 'declined' rather than deleting it, mainly so a
-  // re-request doesn't immediately re-spam someone who just said no —
-  // see friends.ts for the actual cooldown logic around that.
+  // Friend relationships — one row per (from, to) pair, added directly with
+  // status 'accepted' (see friends.ts's addFriend — adding someone is
+  // immediate, no accept step on their end). The status/responded_at
+  // columns are a holdover from an earlier request/accept design; kept so
+  // old rows don't need a schema change, not because anything still writes
+  // 'pending' or 'declined'.
   await db.execute(`
     CREATE TABLE IF NOT EXISTS friend_requests (
       id TEXT PRIMARY KEY,
@@ -172,4 +172,10 @@ export async function initDb(): Promise<void> {
   await db.execute(
     `CREATE INDEX IF NOT EXISTS idx_friend_requests_from ON friend_requests(from_user_id, status)`,
   );
+  // One-time migration for rows created back when this was a request/accept
+  // flow — anyone left sitting in 'pending' (or 'declined', since adding is
+  // no longer something you can be turned down for) just becomes a friend
+  // outright. A no-op on every startup after the first, once there's
+  // nothing left in either state.
+  await db.execute(`UPDATE friend_requests SET status = 'accepted', responded_at = datetime('now') WHERE status != 'accepted'`);
 }

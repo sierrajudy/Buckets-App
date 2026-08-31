@@ -1,10 +1,9 @@
 import { useEffect, useState } from "react";
 import {
+  addFriend,
   fetchFriendsOverview,
   removeFriend,
-  respondToFriendRequest,
   searchFriendCandidates,
-  sendFriendRequest,
   type FriendsOverview,
   type SearchResultUser,
 } from "../lib/friendsApi";
@@ -41,26 +40,18 @@ export function Friends({ onBack }: { onBack: () => void }) {
     return () => clearTimeout(handle);
   }, [query]);
 
-  async function handleSendRequest(userId: string) {
+  async function handleAdd(userId: string) {
     setBusyId(userId);
-    const res = await sendFriendRequest(userId);
+    const res = await addFriend(userId);
     setBusyId(null);
     if (!res.ok) {
       setError(res.error);
       return;
     }
     setError(null);
-    // Re-run the search so this row's status flips to pending/friends
-    // immediately instead of waiting for the next full reload.
+    // Re-run the search so this row's status flips to "Friends" immediately
+    // instead of waiting for the next full reload.
     if (query.trim().length >= 2) searchFriendCandidates(query.trim()).then(setResults).catch(() => {});
-    load();
-  }
-
-  async function handleRespond(requestId: string, accept: boolean) {
-    setBusyId(requestId);
-    const res = await respondToFriendRequest(requestId, accept);
-    setBusyId(null);
-    if (!res.ok) return setError(res.error);
     load();
   }
 
@@ -103,7 +94,17 @@ export function Friends({ onBack }: { onBack: () => void }) {
                     <span className="font-semibold">{r.name}</span>
                     <span className="ml-2 text-neutral-500">{r.email}</span>
                   </span>
-                  <FriendStatusButton status={r.status} busy={busyId === r.id} onAdd={() => handleSendRequest(r.id)} />
+                  {r.status === "friends" ? (
+                    <span className="shrink-0 text-xs text-neutral-400">Friends</span>
+                  ) : (
+                    <button
+                      disabled={busyId === r.id}
+                      onClick={() => handleAdd(r.id)}
+                      className="shrink-0 rounded-lg border border-green-600 text-green-700 dark:text-green-400 text-xs font-semibold px-3 py-1.5 hover:bg-green-50 dark:hover:bg-green-950 disabled:opacity-50"
+                    >
+                      {busyId === r.id ? "…" : "+ Add"}
+                    </button>
+                  )}
                 </li>
               ))}
             </ul>
@@ -113,32 +114,6 @@ export function Friends({ onBack }: { onBack: () => void }) {
           )}
         </div>
 
-        {overview && overview.incoming.length > 0 && (
-          <Section title="Friend requests">
-            {overview.incoming.map((req) => (
-              <li key={req.id} className="flex items-center justify-between gap-2 text-sm">
-                <span className="font-semibold truncate">{req.user.name}</span>
-                <span className="flex gap-2 shrink-0">
-                  <button
-                    disabled={busyId === req.id}
-                    onClick={() => handleRespond(req.id, true)}
-                    className="rounded-lg bg-green-600 hover:bg-green-700 disabled:opacity-50 text-white text-xs font-semibold px-3 py-1.5"
-                  >
-                    Accept
-                  </button>
-                  <button
-                    disabled={busyId === req.id}
-                    onClick={() => handleRespond(req.id, false)}
-                    className="rounded-lg border border-neutral-300 dark:border-neutral-700 text-xs font-medium px-3 py-1.5 hover:bg-neutral-100 dark:hover:bg-neutral-800"
-                  >
-                    Decline
-                  </button>
-                </span>
-              </li>
-            ))}
-          </Section>
-        )}
-
         {overview && overview.suggested.length > 0 && (
           <Section title="People you've played with">
             {overview.suggested.map((u) => (
@@ -146,22 +121,11 @@ export function Friends({ onBack }: { onBack: () => void }) {
                 <span className="font-semibold truncate">{u.name}</span>
                 <button
                   disabled={busyId === u.id}
-                  onClick={() => handleSendRequest(u.id)}
+                  onClick={() => handleAdd(u.id)}
                   className="shrink-0 rounded-lg border border-green-600 text-green-700 dark:text-green-400 text-xs font-semibold px-3 py-1.5 hover:bg-green-50 dark:hover:bg-green-950"
                 >
                   {busyId === u.id ? "…" : "+ Add"}
                 </button>
-              </li>
-            ))}
-          </Section>
-        )}
-
-        {overview && overview.outgoing.length > 0 && (
-          <Section title="Sent — waiting on them">
-            {overview.outgoing.map((req) => (
-              <li key={req.id} className="flex items-center justify-between gap-2 text-sm">
-                <span className="truncate">{req.user.name}</span>
-                <span className="shrink-0 text-xs text-neutral-500">Pending</span>
               </li>
             ))}
           </Section>
@@ -200,28 +164,5 @@ function Section({ title, children }: { title: string; children: React.ReactNode
       <div className="text-sm font-semibold text-neutral-500 mb-2">{title}</div>
       <ul className="space-y-2">{children}</ul>
     </div>
-  );
-}
-
-function FriendStatusButton({
-  status,
-  busy,
-  onAdd,
-}: {
-  status: SearchResultUser["status"];
-  busy: boolean;
-  onAdd: () => void;
-}) {
-  if (status === "friends") return <span className="shrink-0 text-xs text-neutral-400">Friends</span>;
-  if (status === "pending_out") return <span className="shrink-0 text-xs text-neutral-400">Pending</span>;
-  if (status === "pending_in") return <span className="shrink-0 text-xs text-neutral-400">Check requests ↑</span>;
-  return (
-    <button
-      disabled={busy}
-      onClick={onAdd}
-      className="shrink-0 rounded-lg border border-green-600 text-green-700 dark:text-green-400 text-xs font-semibold px-3 py-1.5 hover:bg-green-50 dark:hover:bg-green-950 disabled:opacity-50"
-    >
-      {busy ? "…" : "+ Add"}
-    </button>
   );
 }

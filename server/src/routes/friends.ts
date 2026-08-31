@@ -1,16 +1,6 @@
 import { Router } from "express";
 import { bearerToken, getUserByToken } from "../lib/auth.js";
-import {
-  getFriends,
-  getIncomingRequests,
-  getOutgoingRequests,
-  getSuggestedFriends,
-  removeFriend,
-  respondToRequest,
-  searchUsers,
-  sendFriendRequest,
-  sendFriendRequestByName,
-} from "../lib/friends.js";
+import { addFriend, addFriendByName, getFriends, getSuggestedFriends, removeFriend, searchUsers } from "../lib/friends.js";
 
 export const friendsRouter = Router();
 
@@ -18,14 +8,9 @@ friendsRouter.get("/", async (req, res) => {
   const user = await getUserByToken(bearerToken(req));
   if (!user) return res.status(401).json({ error: "Not signed in." });
 
-  const [friends, incoming, outgoing, suggested] = await Promise.all([
-    getFriends(user.id),
-    getIncomingRequests(user.id),
-    getOutgoingRequests(user.id),
-    getSuggestedFriends(user.id, user.name),
-  ]);
+  const [friends, suggested] = await Promise.all([getFriends(user.id), getSuggestedFriends(user.id, user.name)]);
 
-  res.json({ friends, incoming, outgoing, suggested });
+  res.json({ friends, suggested });
 });
 
 friendsRouter.get("/search", async (req, res) => {
@@ -37,37 +22,24 @@ friendsRouter.get("/search", async (req, res) => {
   res.json(results);
 });
 
-friendsRouter.post("/request", async (req, res) => {
+friendsRouter.post("/add", async (req, res) => {
   const user = await getUserByToken(bearerToken(req));
   if (!user) return res.status(401).json({ error: "Not signed in." });
 
   const toUserId = String(req.body?.toUserId ?? "");
   if (!toUserId) return res.status(400).json({ error: "Missing toUserId." });
 
-  const result = await sendFriendRequest(user.id, toUserId);
+  const result = await addFriend(user.id, toUserId);
   if (!result.ok) return res.status(400).json({ error: result.error });
-  res.json({ ok: true, autoAccepted: result.autoAccepted });
+  res.json({ ok: true });
 });
 
-friendsRouter.post("/request-by-name", async (req, res) => {
+friendsRouter.post("/add-by-name", async (req, res) => {
   const user = await getUserByToken(bearerToken(req));
   if (!user) return res.status(401).json({ error: "Not signed in." });
 
   const name = String(req.body?.name ?? "");
-  const result = await sendFriendRequestByName(user.id, name);
-  if (!result.ok) return res.status(400).json({ error: result.error });
-  res.json({ ok: true, autoAccepted: result.autoAccepted });
-});
-
-friendsRouter.post("/respond", async (req, res) => {
-  const user = await getUserByToken(bearerToken(req));
-  if (!user) return res.status(401).json({ error: "Not signed in." });
-
-  const requestId = String(req.body?.requestId ?? "");
-  const accept = Boolean(req.body?.accept);
-  if (!requestId) return res.status(400).json({ error: "Missing requestId." });
-
-  const result = await respondToRequest(user.id, requestId, accept);
+  const result = await addFriendByName(user.id, name);
   if (!result.ok) return res.status(400).json({ error: result.error });
   res.json({ ok: true });
 });

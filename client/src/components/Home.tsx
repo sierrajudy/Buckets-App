@@ -131,17 +131,17 @@ export function Home({
                   type="button"
                   disabled={rejoiningCode !== null}
                   onClick={() => rejoin(r.code, r.role)}
-                  className="w-full flex items-center justify-between gap-2 rounded-lg border border-neutral-200 dark:border-neutral-700 px-3 py-2 text-left text-sm hover:bg-neutral-50 dark:hover:bg-neutral-800 disabled:opacity-50"
+                  className="w-full rounded-lg border border-neutral-200 dark:border-neutral-700 px-3 py-2 text-left hover:bg-neutral-50 dark:hover:bg-neutral-800 disabled:opacity-50"
                 >
-                  <span className="min-w-0">
-                    <span className="font-mono font-semibold tracking-widest">{r.code}</span>
-                    <span className="ml-2 text-neutral-500 dark:text-neutral-400 truncate">
-                      {r.course ?? "Round"} · {r.players.join(", ")}
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="font-mono font-semibold tracking-widest text-sm">{r.code}</span>
+                    <span className="shrink-0 text-xs font-medium text-neutral-500 dark:text-neutral-400">
+                      {rejoiningCode === r.code ? "…" : PHASE_LABEL[r.phase] ?? r.phase}
                     </span>
-                  </span>
-                  <span className="shrink-0 text-xs font-medium text-neutral-500 dark:text-neutral-400">
-                    {rejoiningCode === r.code ? "…" : PHASE_LABEL[r.phase] ?? r.phase}
-                  </span>
+                  </div>
+                  <div className="text-xs text-neutral-500 dark:text-neutral-400 truncate mt-0.5">
+                    {r.course ?? "Round"} · {r.players.join(", ")}
+                  </div>
                 </button>
               ))}
             </div>
@@ -157,24 +157,24 @@ export function Home({
               {activeRooms
                 .filter((r) => !recentRooms.some((rr) => rr.code === r.code))
                 .map((r) => (
-                <button
-                  key={r.code}
-                  type="button"
-                  disabled={rejoiningCode !== null}
-                  onClick={() => rejoin(r.code, "spectator")}
-                  className="w-full flex items-center justify-between gap-2 rounded-lg border border-neutral-200 dark:border-neutral-700 px-3 py-2 text-left text-sm hover:bg-neutral-50 dark:hover:bg-neutral-800 disabled:opacity-50"
-                >
-                  <span className="min-w-0">
-                    <span className="font-mono font-semibold tracking-widest">{r.code}</span>
-                    <span className="ml-2 text-neutral-500 dark:text-neutral-400 truncate">
+                  <button
+                    key={r.code}
+                    type="button"
+                    disabled={rejoiningCode !== null}
+                    onClick={() => rejoin(r.code, "spectator")}
+                    className="w-full rounded-lg border border-neutral-200 dark:border-neutral-700 px-3 py-2 text-left hover:bg-neutral-50 dark:hover:bg-neutral-800 disabled:opacity-50"
+                  >
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="font-mono font-semibold tracking-widest text-sm">{r.code}</span>
+                      <span className="shrink-0 text-xs font-medium text-neutral-500 dark:text-neutral-400">
+                        {rejoiningCode === r.code ? "…" : PHASE_LABEL[r.phase] ?? r.phase}
+                      </span>
+                    </div>
+                    <div className="text-xs text-neutral-500 dark:text-neutral-400 truncate mt-0.5">
                       {r.course ?? "Round"} · {r.players.join(", ")}
-                    </span>
-                  </span>
-                  <span className="shrink-0 text-xs font-medium text-neutral-500 dark:text-neutral-400">
-                    {rejoiningCode === r.code ? "…" : PHASE_LABEL[r.phase] ?? r.phase}
-                  </span>
-                </button>
-              ))}
+                    </div>
+                  </button>
+                ))}
             </div>
           </div>
         )}
