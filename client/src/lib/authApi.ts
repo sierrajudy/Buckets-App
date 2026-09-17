@@ -10,6 +10,10 @@ export interface AuthUser {
   name: string;
   emailRoundStart: boolean;
   emailStandings: boolean;
+  /** Persistent, self-chosen avatar shown on this user's Profile and on
+   * friends' view of them — separate from the avatar picked fresh each
+   * round in a room's Lobby. Null until they pick one. */
+  profileAvatar: string | null;
 }
 
 interface AuthResponse {
@@ -83,4 +87,16 @@ export async function updateEmailPreferences(
     body: JSON.stringify(prefs),
   });
   return parse<{ user: AuthUser }>(res);
+}
+
+export async function updateProfileAvatar(
+  token: string,
+  avatar: string | null,
+): Promise<{ ok: true; profileAvatar: string | null }> {
+  const res = await fetch("/api/profile/avatar", {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+    body: JSON.stringify({ avatar }),
+  });
+  return parse<{ ok: true; profileAvatar: string | null }>(res);
 }

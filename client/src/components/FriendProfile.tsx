@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { fetchStandings } from "../lib/api";
 import { fetchFriendAchievements, fetchRoundsWithFriend, type FriendAchievements } from "../lib/friendsApi";
 import { RoundHistoryTable } from "./RoundHistoryTable";
+import { AvatarIcon, type AvatarKey } from "./Avatars";
 import type { RoundHistoryRow, StandingsRow } from "../types";
 
 /** A friend's public profile — their all-time standings (the leaderboard
@@ -13,10 +14,14 @@ import type { RoundHistoryRow, StandingsRow } from "../types";
 export function FriendProfile({
   friendUserId,
   friendName,
+  friendAvatar,
+  friendCostume,
   onBack,
 }: {
   friendUserId: string;
   friendName: string;
+  friendAvatar: string | null;
+  friendCostume: string | null;
   onBack: () => void;
 }) {
   const [standings, setStandings] = useState<StandingsRow | null | undefined>(undefined);
@@ -42,7 +47,12 @@ export function FriendProfile({
     <div className="min-h-screen bg-neutral-50 dark:bg-neutral-950 p-4">
       <div className="max-w-4xl mx-auto space-y-4">
         <div className="flex items-center justify-between">
-          <h1 className="text-2xl font-extrabold text-green-700 dark:text-green-400">{friendName}</h1>
+          <div className="flex items-center gap-3">
+            <div className="w-12 h-12 shrink-0">
+              <AvatarIcon avatar={friendAvatar as AvatarKey | null} className="w-full h-full" costume={friendCostume} />
+            </div>
+            <h1 className="text-2xl font-extrabold text-green-700 dark:text-green-400">{friendName}</h1>
+          </div>
           <button
             onClick={onBack}
             className="rounded-lg border border-neutral-300 dark:border-neutral-700 px-3 py-1.5 text-sm font-medium hover:bg-neutral-100 dark:hover:bg-neutral-800"

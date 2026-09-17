@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
+import { useAuth } from "../authStore";
 import { equipCostume, fetchAchievements } from "../lib/api";
-import { AvatarIcon } from "./Avatars";
+import { AVATAR_KEYS, AVATAR_META, AvatarIcon, type AvatarKey } from "./Avatars";
 import { COSTUME_META, COSTUME_SEQUENCE, type CostumeKey } from "./costumes";
 import type { AchievementsResponse } from "../types";
 
@@ -12,9 +13,11 @@ import type { AchievementsResponse } from "../types";
  * description, and progress — only the badge icon itself stays hidden
  * behind a lock until it's actually earned. */
 export function Closet() {
+  const { user, updateProfileAvatar } = useAuth();
   const [data, setData] = useState<AchievementsResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [avatarBusy, setAvatarBusy] = useState(false);
 
   useEffect(() => {
     fetchAchievements()
@@ -37,17 +40,26 @@ export function Closet() {
     }
   }
 
+  async function handlePickAvatar(avatar: AvatarKey) {
+    if (avatarBusy) return;
+    setAvatarBusy(true);
+    const next = user?.profileAvatar === avatar ? null : avatar;
+    await updateProfileAvatar(next);
+    setAvatarBusy(false);
+  }
+
   if (error && !data) return <p className="text-sm text-red-500">{error}</p>;
   if (!data) return <p className="text-sm text-neutral-500">Loading…</p>;
 
   const unlockedSet = new Set(data.unlockedCostumes);
   const earnedCount = data.achievements.filter((a) => a.earned).length;
+  const profileAvatar = (user?.profileAvatar as AvatarKey | null) ?? null;
 
   return (
     <div className="space-y-6">
       <div className="bg-white dark:bg-neutral-900 rounded-2xl border border-neutral-200 dark:border-neutral-800 p-4 flex items-center gap-4">
         <div className="w-20 h-20 shrink-0">
-          <AvatarIcon avatar="ball" className="w-full h-full" costume={data.equippedCostume} />
+          <AvatarIcon avatar={profileAvatar} className="w-full h-full" costume={data.equippedCostume} />
         </div>
         <div className="min-w-0">
           <div className="font-bold">Your look</div>
@@ -55,13 +67,40 @@ export function Closet() {
             {data.equippedCostume ? COSTUME_META[data.equippedCostume as CostumeKey].label : "Nothing equipped"}
           </div>
           <div className="text-xs text-neutral-400 mt-1">
-            This is just a costume preview — your actual avatar shape is still picked fresh each round in the
-            lobby, and wears whatever's equipped here.
+            This is your profile picture — shown on your Profile and to friends. Your avatar SHAPE each round is
+            still picked fresh in the lobby, but it always wears whatever's equipped here.
           </div>
         </div>
       </div>
 
       {error && <p className="text-sm text-red-500">{error}</p>}
+
+      <div>
+        <div className="text-sm font-semibold text-neutral-500 mb-2">Profile picture</div>
+        <div className="grid grid-cols-4 gap-3">
+          {AVATAR_KEYS.map((key) => {
+            const selected = profileAvatar === key;
+            return (
+              <button
+                key={key}
+                type="button"
+                disabled={avatarBusy}
+                onClick={() => handlePickAvatar(key)}
+                className={`relative rounded-xl border-2 p-2 flex flex-col items-center gap-1 transition-all disabled:opacity-50 ${
+                  selected
+                    ? "border-green-600 bg-green-50 dark:bg-green-950"
+                    : "border-transparent hover:border-green-300"
+                }`}
+              >
+                <div className="w-12 h-12">
+                  <AvatarIcon avatar={key} className="w-full h-full" costume={data.equippedCostume} />
+                </div>
+                <span className="text-[10px] font-medium text-neutral-500">{AVATAR_META[key].label}</span>
+              </button>
+            );
+          })}
+        </div>
+      </div>
 
       <div>
         <div className="text-sm font-semibold text-neutral-500 mb-2">

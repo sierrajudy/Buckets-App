@@ -67,6 +67,8 @@ function AppShell() {
         <FriendProfile
           friendUserId={viewingFriend.id}
           friendName={viewingFriend.name}
+          friendAvatar={viewingFriend.profileAvatar}
+          friendCostume={viewingFriend.equippedCostume}
           onBack={() => setViewingFriend(null)}
         />
       );

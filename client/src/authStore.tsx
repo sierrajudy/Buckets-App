@@ -7,6 +7,7 @@ import {
   signup as signupRequest,
   TOKEN_KEY,
   updateEmailPreferences as updateEmailPreferencesRequest,
+  updateProfileAvatar as updateProfileAvatarRequest,
   type AuthUser,
 } from "./lib/authApi";
 
@@ -23,6 +24,7 @@ interface AuthContextValue {
   login: (email: string, password: string) => Promise<Result>;
   logout: () => void;
   updateEmailPreferences: (prefs: { emailRoundStart: boolean; emailStandings: boolean }) => Promise<Result>;
+  updateProfileAvatar: (avatar: string | null) => Promise<Result>;
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null);
@@ -96,8 +98,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }
 
+  async function updateProfileAvatar(avatar: string | null): Promise<Result> {
+    const token = localStorage.getItem(TOKEN_KEY);
+    if (!token) return { ok: false, error: "Not signed in." };
+    try {
+      const res = await updateProfileAvatarRequest(token, avatar);
+      setUser((prev) => (prev ? { ...prev, profileAvatar: res.profileAvatar } : prev));
+      return { ok: true };
+    } catch (err) {
+      return { ok: false, error: err instanceof Error ? err.message : "Something went wrong." };
+    }
+  }
+
   return (
-    <AuthContext.Provider value={{ status, user, signup, login, logout, updateEmailPreferences }}>
+    <AuthContext.Provider
+      value={{ status, user, signup, login, logout, updateEmailPreferences, updateProfileAvatar }}
+    >
       {children}
     </AuthContext.Provider>
   );

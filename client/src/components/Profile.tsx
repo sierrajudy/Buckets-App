@@ -1,10 +1,11 @@
 import { useEffect, useState } from "react";
 import { useAuth } from "../authStore";
-import { fetchMyRounds } from "../lib/api";
+import { fetchAchievements, fetchMyRounds } from "../lib/api";
 import { fetchFriendsOverview, type FriendUser } from "../lib/friendsApi";
 import { RoundHistoryTable } from "./RoundHistoryTable";
 import { EmailPreferences } from "./EmailPreferences";
 import { Closet } from "./Closet";
+import { AvatarIcon, type AvatarKey } from "./Avatars";
 import type { RoundHistoryRow } from "../types";
 
 export function Profile({
@@ -23,6 +24,7 @@ export function Profile({
   const { user } = useAuth();
   const [rows, setRows] = useState<RoundHistoryRow[] | null>(null);
   const [friends, setFriends] = useState<FriendUser[] | null>(null);
+  const [equippedCostume, setEquippedCostume] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [tab, setTab] = useState<"rounds" | "avatar">(autoOpenAvatarTab ? "avatar" : "rounds");
 
@@ -33,6 +35,9 @@ export function Profile({
     fetchFriendsOverview()
       .then((ov) => setFriends(ov.friends))
       .catch(() => setFriends([]));
+    fetchAchievements()
+      .then((a) => setEquippedCostume(a.equippedCostume))
+      .catch(() => {});
   }, []);
 
   const wins = rows?.filter((r) => r.won).length ?? 0;
@@ -51,9 +56,18 @@ export function Profile({
         </div>
 
         <div className="bg-white dark:bg-neutral-900 rounded-2xl border border-neutral-200 dark:border-neutral-800 p-4 flex items-center justify-between">
-          <div>
-            <div className="font-bold text-lg">{user?.name}</div>
-            <div className="text-sm text-neutral-500">{user?.email}</div>
+          <div className="flex items-center gap-3">
+            <div className="w-14 h-14 shrink-0">
+              <AvatarIcon
+                avatar={(user?.profileAvatar as AvatarKey | null) ?? null}
+                className="w-full h-full"
+                costume={equippedCostume}
+              />
+            </div>
+            <div>
+              <div className="font-bold text-lg">{user?.name}</div>
+              <div className="text-sm text-neutral-500">{user?.email}</div>
+            </div>
           </div>
           {rows && (
             <div className="text-right">
@@ -82,8 +96,15 @@ export function Profile({
                   <button
                     type="button"
                     onClick={() => onViewFriend(f)}
-                    className="rounded-full border border-neutral-300 dark:border-neutral-700 px-3 py-1.5 text-sm font-medium hover:border-green-500 hover:text-green-700 dark:hover:text-green-400"
+                    className="flex items-center gap-1.5 rounded-full border border-neutral-300 dark:border-neutral-700 pl-1.5 pr-3 py-1 text-sm font-medium hover:border-green-500 hover:text-green-700 dark:hover:text-green-400"
                   >
+                    <span className="w-6 h-6 shrink-0">
+                      <AvatarIcon
+                        avatar={f.profileAvatar as AvatarKey | null}
+                        className="w-full h-full"
+                        costume={f.equippedCostume}
+                      />
+                    </span>
                     {f.name}
                   </button>
                 </li>

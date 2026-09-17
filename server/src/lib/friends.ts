@@ -5,7 +5,11 @@ export interface FriendUser {
   id: string;
   name: string;
   email: string;
+  profileAvatar: string | null;
+  equippedCostume: string | null;
 }
+
+const FRIEND_USER_COLUMNS = "users.id, users.name, users.email, users.profile_avatar as profileAvatar, users.equipped_costume as equippedCostume";
 
 /** Everyone this user has added, or been added by — friend_requests still
  * has a "from"/"to" column for who initiated it, but there's no accept step
@@ -13,7 +17,7 @@ export interface FriendUser {
  * already see each other as friends, regardless of direction. */
 export async function getFriends(userId: string): Promise<FriendUser[]> {
   const result = await db.execute({
-    sql: `SELECT users.id, users.name, users.email
+    sql: `SELECT ${FRIEND_USER_COLUMNS}
           FROM friend_requests
           JOIN users ON users.id = CASE WHEN friend_requests.from_user_id = ? THEN friend_requests.to_user_id ELSE friend_requests.from_user_id END
           WHERE friend_requests.from_user_id = ? OR friend_requests.to_user_id = ?
@@ -91,7 +95,7 @@ export async function searchUsers(userId: string, query: string): Promise<Search
   // schema, so these LIKE comparisons are already case-insensitive without
   // needing it spelled out here.
   const result = await db.execute({
-    sql: `SELECT id, name, email FROM users WHERE id != ? AND (name LIKE ? OR email LIKE ?) LIMIT 20`,
+    sql: `SELECT ${FRIEND_USER_COLUMNS} FROM users WHERE id != ? AND (name LIKE ? OR email LIKE ?) LIMIT 20`,
     args: [userId, `%${trimmed}%`, `%${trimmed}%`],
   });
 
@@ -137,7 +141,7 @@ export async function getSuggestedFriends(userId: string, userName: string): Pro
     .map(() => "?")
     .join(",");
   const usersResult = await db.execute({
-    sql: `SELECT id, name, email FROM users WHERE id != ? AND name IN (${placeholders})`,
+    sql: `SELECT ${FRIEND_USER_COLUMNS} FROM users WHERE id != ? AND name IN (${placeholders})`,
     args: [userId, ...coPlayerNames],
   });
   const matched = usersResult.rows as unknown as FriendUser[];

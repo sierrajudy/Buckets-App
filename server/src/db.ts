@@ -71,6 +71,11 @@ export async function initDb(): Promise<void> {
   // equipped right now, one at a time. NULL until they equip something in
   // their profile's Closet, and always one they've actually unlocked.
   await addColumnIfMissing("users", "equipped_costume", "TEXT");
+  // A persistent, self-chosen avatar (one of AVATAR_KEYS) shown on this
+  // user's Profile and on friends' view of them — distinct from the avatar
+  // a player picks fresh each round in a room's Lobby (Player.avatar,
+  // never persisted past that round). NULL until they pick one.
+  await addColumnIfMissing("users", "profile_avatar", "TEXT");
 
   await db.execute(`
     CREATE TABLE IF NOT EXISTS sessions (

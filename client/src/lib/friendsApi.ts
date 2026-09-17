@@ -5,6 +5,8 @@ export interface FriendUser {
   id: string;
   name: string;
   email: string;
+  profileAvatar: string | null;
+  equippedCostume: string | null;
 }
 
 export interface FriendsOverview {

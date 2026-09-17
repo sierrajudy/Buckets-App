@@ -1,6 +1,7 @@
 import { randomBytes, scryptSync, timingSafeEqual } from "node:crypto";
 import { v4 as uuid } from "uuid";
 import { db } from "../db.js";
+import type { AvatarKey } from "../rooms/types.js";
 
 export interface AuthUser {
   id: string;
@@ -14,6 +15,11 @@ export interface AuthUser {
    * roomStore.ts — so it renders live during a round, not just in their
    * own profile. */
   equippedCostume: string | null;
+  /** A persistent, self-chosen avatar shown on their Profile and on
+   * friends' view of them — separate from the avatar a player picks fresh
+   * each round in a room's Lobby, which is never saved past that round.
+   * NULL until they pick one in their profile. */
+  profileAvatar: AvatarKey | null;
 }
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -66,7 +72,7 @@ export function bearerToken(req: { headers: { authorization?: string } }): strin
 export async function getUserByToken(token: string | undefined | null): Promise<AuthUser | null> {
   if (!token) return null;
   const result = await db.execute({
-    sql: `SELECT users.id, users.email, users.name, users.email_round_start, users.email_standings, users.equipped_costume FROM sessions
+    sql: `SELECT users.id, users.email, users.name, users.email_round_start, users.email_standings, users.equipped_costume, users.profile_avatar FROM sessions
           JOIN users ON users.id = sessions.user_id
           WHERE sessions.token = ?`,
     args: [token],
@@ -80,7 +86,7 @@ export async function getUserByToken(token: string | undefined | null): Promise<
  * friend_requests table) instead of authenticating a request. */
 export async function getUserById(id: string): Promise<AuthUser | null> {
   const result = await db.execute({
-    sql: `SELECT id, email, name, email_round_start, email_standings, equipped_costume FROM users WHERE id = ?`,
+    sql: `SELECT id, email, name, email_round_start, email_standings, equipped_costume, profile_avatar FROM users WHERE id = ?`,
     args: [id],
   });
   if (result.rows.length === 0) return null;
@@ -95,5 +101,6 @@ export function rowToAuthUser(row: Record<string, unknown>): AuthUser {
     emailRoundStart: Boolean(row.email_round_start),
     emailStandings: Boolean(row.email_standings),
     equippedCostume: (row.equipped_costume as string | null) ?? null,
+    profileAvatar: (row.profile_avatar as AvatarKey | null) ?? null,
   };
 }

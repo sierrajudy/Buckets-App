@@ -77,12 +77,15 @@ export function Friends({ onBack }: { onBack: () => void }) {
 
         {error && <p className="text-sm text-red-500">{error}</p>}
 
-        <div className="bg-white dark:bg-neutral-900 rounded-2xl border border-neutral-200 dark:border-neutral-800 p-4 space-y-3">
-          <label className="block text-sm font-semibold text-neutral-500">Find someone by name or email</label>
+        <div className="bg-white dark:bg-neutral-900 rounded-2xl border-2 border-green-500 p-4 space-y-3">
+          <label className="block text-base font-bold text-neutral-800 dark:text-neutral-100">
+            🔍 Search for friends
+          </label>
           <input
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Start typing…"
+            placeholder="Search by name or email…"
+            autoFocus
             className="w-full rounded-lg border border-neutral-300 dark:border-neutral-700 bg-transparent px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
           />
           {searching && <p className="text-xs text-neutral-500">Searching…</p>}
