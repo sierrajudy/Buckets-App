@@ -168,21 +168,21 @@ export function joinRoom(room: Room, name: string, equippedCostume: string | nul
   const trimmed = name.trim();
   if (!trimmed) return { error: "Name is required." };
 
-  // A room that's already left the lobby can still be rejoined this way —
-  // but only by someone who's already on its roster, matched by name (the
-  // same identity check room:rejoin itself uses). This is the recovery
-  // path for a host/player who lost the local session that the normal
-  // silent auto-rejoin depends on — a new device, a cleared browser, a
-  // crashed app reinstalled — and would otherwise have no way back into
-  // their own in-progress round at all. A genuine outsider (no name
-  // match) still gets turned away same as before.
+  // Reconnect-by-name, checked before anything else regardless of phase —
+  // covers a genuine rejoin (a host/player who lost the local session the
+  // normal silent auto-rejoin depends on: a new device, a cleared browser,
+  // a crashed app reinstalled) AND someone another player seated here via
+  // addFriendToRoom but who has never actually connected yet. Either way,
+  // matching by name is the same identity check room:rejoin itself uses. A
+  // genuine outsider (no name match) falls through to the checks below.
+  const existing = room.players.find((p) => p.name.toLowerCase() === trimmed.toLowerCase());
+  if (existing) {
+    existing.connected = true;
+    existing.equippedCostume = equippedCostume;
+    return existing;
+  }
+
   if (room.phase !== "lobby") {
-    const existing = room.players.find((p) => p.name.toLowerCase() === trimmed.toLowerCase());
-    if (existing) {
-      existing.connected = true;
-      existing.equippedCostume = equippedCostume;
-      return existing;
-    }
     return { error: "This round has already started." };
   }
 
@@ -251,10 +251,62 @@ export function addGuest(room: Room, name: string): Player | { error: string } {
 export function spectateRoom(room: Room, name: string): Spectator | { error: string } {
   const trimmed = name.trim();
   if (!trimmed) return { error: "Name is required." };
+
+  // Same reconnect-by-name idea as joinRoom — covers someone another player
+  // seated here as a spectator via addFriendToRoom who hasn't connected yet.
+  const existing = room.spectators.find((s) => s.name.toLowerCase() === trimmed.toLowerCase());
+  if (existing) return existing;
+
   if (isNameTaken(room, trimmed)) return { error: "That name is already taken in this room." };
   const spectator: Spectator = { id: uuid(), name: trimmed, socketId: null };
   room.spectators.push(spectator);
   return spectator;
+}
+
+export type AddFriendToRoomResult =
+  | { role: "player"; player: Player; alreadyPresent: boolean }
+  | { role: "spectator"; spectator: Spectator; alreadyPresent: boolean }
+  | { error: string };
+
+/** Directly seats a friend (a real account, not a guest) into this room —
+ * no accept step on their end, unlike an ordinary invite; the caller
+ * notifies them separately (see room:addFriendToRoom in socketHandlers.ts).
+ * Pre-game (or mid-round, same as addGuest) this fills an open player slot
+ * if there is one — avatar is left null, since a real account holder picks
+ * their own when they actually show up, unlike a guest who never will.
+ * Once the roster's full or the round's past "playing", they're seated as a
+ * spectator instead. Idempotent: adding someone already seated under that
+ * name just returns what's already there (with alreadyPresent: true) rather
+ * than erroring or creating a duplicate — a repeat click, or the friend
+ * having already joined themselves in the meantime, is harmless. */
+export function addFriendToRoom(room: Room, friend: { name: string; equippedCostume: string | null }): AddFriendToRoomResult {
+  const trimmed = friend.name.trim();
+  if (!trimmed) return { error: "Name is required." };
+
+  const existingPlayer = room.players.find((p) => p.name.toLowerCase() === trimmed.toLowerCase());
+  if (existingPlayer) return { role: "player", player: existingPlayer, alreadyPresent: true };
+  const existingSpectator = room.spectators.find((s) => s.name.toLowerCase() === trimmed.toLowerCase());
+  if (existingSpectator) return { role: "spectator", spectator: existingSpectator, alreadyPresent: true };
+
+  if ((room.phase === "lobby" || room.phase === "playing") && room.players.length < 4) {
+    const player: Player = {
+      id: uuid(),
+      name: trimmed,
+      avatar: null,
+      connected: false,
+      socketId: null,
+      handicap: 0,
+      equippedCostume: friend.equippedCostume,
+      isGuest: false,
+    };
+    room.players.push(player);
+    if (room.phase === "lobby") room.teams = null;
+    return { role: "player", player, alreadyPresent: false };
+  }
+
+  const spectator: Spectator = { id: uuid(), name: trimmed, socketId: null };
+  room.spectators.push(spectator);
+  return { role: "spectator", spectator, alreadyPresent: false };
 }
 
 export function removeSpectator(room: Room, spectatorId: string): void {

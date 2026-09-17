@@ -86,16 +86,28 @@ export function Celebration({
 
   const grossTotals: Record<string, number> = {};
   const netTotals: Record<string, number> = {};
+  const frontTotals: Record<string, number> = {};
+  const backTotals: Record<string, number> = {};
   for (const p of round.players) {
     grossTotals[p] = 0;
     netTotals[p] = 0;
+    frontTotals[p] = 0;
+    backTotals[p] = 0;
   }
+  // Bucketed by hole NUMBER, not play order — a round starting on hole 10
+  // plays 10-18 before 1-9, so front/back has to follow holeNumber to land
+  // on the actual front and back nines rather than just the first/second
+  // half of round.holes.
   for (const h of round.holes) {
     for (const p of round.players) {
-      grossTotals[p] += h.strokes[p] ?? 0;
-      netTotals[p] += h.highLow?.netStrokes[p] ?? h.strokes[p] ?? 0;
+      const strokes = h.strokes[p] ?? 0;
+      grossTotals[p] += strokes;
+      netTotals[p] += h.highLow?.netStrokes[p] ?? strokes;
+      if (h.holeNumber <= 9) frontTotals[p] += strokes;
+      else backTotals[p] += strokes;
     }
   }
+  const hasBackNine = round.holes.some((h) => h.holeNumber > 9);
 
   async function handleDeleteRound() {
     setDeleting(true);
@@ -304,6 +316,30 @@ export function Celebration({
               ))}
           </div>
         </div>
+
+        {round.gameMode !== "highlow" && (
+          <div className={`${cardBgCls} border border-neutral-800 rounded-2xl p-5`}>
+            <div className="text-sm text-neutral-400 mb-3">Strokes</div>
+            <div className="space-y-1.5">
+              {round.players.map((p) => (
+                <div key={p} className="flex items-center justify-between text-sm">
+                  <span className="flex items-center gap-2 min-w-0">
+                    <AvatarIcon avatar={avatarFor(p)} className="w-6 h-6 shrink-0" costume={costumeFor(p)} />
+                    <span className="text-neutral-300">{p}</span>
+                  </span>
+                  <span className="font-mono text-neutral-300 shrink-0">
+                    {hasBackNine ? (
+                      <>
+                        {frontTotals[p]} + {backTotals[p]} ={" "}
+                      </>
+                    ) : null}
+                    <span className="font-semibold text-white">{frontTotals[p] + backTotals[p]}</span>
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
 
         {round.losers.length > 0 && (
           <div

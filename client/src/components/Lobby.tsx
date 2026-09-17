@@ -9,7 +9,7 @@ import { HighLowBackdrop } from "./HighLowBackdrop";
 import { BucketsBackdrop } from "./BucketsBackdrop";
 import { BaseballBackdrop } from "./BaseballBackdrop";
 import { QuickAddFriendButton } from "./QuickAddFriendButton";
-import { InviteFriendsButton } from "./InviteFriendsButton";
+import { AddFriendToRoundButton } from "./AddFriendToRoundButton";
 import { fetchFriendsOverview } from "../lib/friendsApi";
 import type { GameMode } from "../types";
 
@@ -332,7 +332,7 @@ export function Lobby({
                     + Add a guest
                   </button>
                 )}
-                {!isSpectator && <InviteFriendsButton dark />}
+                {!isSpectator && <AddFriendToRoundButton dark />}
               </div>
 
               {isHost && state.players.length < 4 && showAddGuest && (

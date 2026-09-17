@@ -16,7 +16,7 @@ import { AceIntro } from "./components/AceIntro";
 import { PartyIntro } from "./components/PartyIntro";
 import { LoadingScreen } from "./components/LoadingScreen";
 import { ReactionOverlay } from "./components/ReactionOverlay";
-import { InviteToast } from "./components/InviteToast";
+import { AddedToRoundToast } from "./components/AddedToRoundToast";
 import { WolfTransitionLab } from "./dev/WolfTransitionLab";
 
 function AppShell() {
@@ -54,10 +54,10 @@ function AppShell() {
 
   /** Everything below is gated behind auth/connection already being settled
    * (see the early returns in the outer component). Pulled into its own
-   * function so a friend invite (see InviteToast) can be rendered as a
-   * sibling of whichever of these screens is showing, instead of having to
-   * be threaded into every branch individually — presence is account-wide,
-   * not tied to any one of them. */
+   * function so a friend add-to-round notice (see AddedToRoundToast) can be
+   * rendered as a sibling of whichever of these screens is showing, instead
+   * of having to be threaded into every branch individually — presence is
+   * account-wide, not tied to any one of them. */
   function renderMain() {
     if (showProfile)
       return (
@@ -157,7 +157,7 @@ function AppShell() {
   return (
     <>
       {renderMain()}
-      <InviteToast />
+      <AddedToRoundToast />
     </>
   );
 }

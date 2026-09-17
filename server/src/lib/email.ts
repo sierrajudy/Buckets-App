@@ -57,23 +57,26 @@ export async function sendRoundStartEmail(
   );
 }
 
-/** Sent when a player invites a friend to spectate and that friend isn't
- * currently online to get the live pop-up instead (see presence.ts). The
- * link carries ?code= the same way a shared room-code link already does
+/** Sent when a player adds a friend directly into their room (see
+ * addFriendToRoom) and that friend isn't currently online to get the live
+ * pop-up instead (see presence.ts). Unlike an old-style invite, there's
+ * nothing to accept — they're already seated, this just tells them where.
+ * The link carries ?code= the same way a shared room-code link already does
  * elsewhere in the app (see Home.tsx's codeFromLink), so opening it drops
  * the room code straight into the join form. */
-export async function sendSpectateInviteEmail(
+export async function sendAddedToRoundEmail(
   to: string,
   name: string,
-  opts: { inviterName: string; roomCode: string },
+  opts: { byName: string; roomCode: string; role: "player" | "spectator" },
 ): Promise<void> {
   const link = `${APP_URL}/?code=${opts.roomCode}`;
+  const action = opts.role === "player" ? "play in" : "spectate";
   await sendEmail(
     to,
-    `⛳ ${opts.inviterName} invited you to watch a live game of Buckets`,
+    `⛳ ${opts.byName} added you to a round of Buckets`,
     `
       <p>Hi ${name},</p>
-      <p>${opts.inviterName} has invited you to spectate a live game of Buckets! Enter the room code or click the link below to watch the game.</p>
+      <p>${opts.byName} added you to a round of Buckets — you're all set to ${action}, no need to accept anything, just hop in whenever you're ready.</p>
       <p>Room code: <strong>${opts.roomCode}</strong></p>
       <p><a href="${link}">${link}</a></p>
     `,

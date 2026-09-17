@@ -33,7 +33,7 @@ interface RoomContextValue {
   createRoom: () => Promise<AckResponse>;
   joinRoom: (code: string) => Promise<AckResponse>;
   addGuest: (name: string) => Promise<AckResponse>;
-  inviteFriend: (friendUserId: string) => Promise<AckResponse>;
+  addFriendToRoom: (friendUserId: string) => Promise<AckResponse>;
   spectateRoom: (code: string) => Promise<AckResponse>;
   selectAvatar: (avatar: AvatarKey) => void;
   setConfig: (startingHole: number) => void;
@@ -151,12 +151,12 @@ export function RoomProvider({ children }: { children: ReactNode }) {
     return emitWithAck("room:addGuest", { name });
   }
 
-  async function inviteFriend(friendUserId: string): Promise<AckResponse> {
-    // No local state update — this doesn't change anything about the
-    // current room, it just notifies (or emails) the friend on the other
-    // end. See room:inviteFriend on the server for the live-vs-email
-    // decision and the per-friend cooldown.
-    return emitWithAck("room:inviteFriend", { friendUserId });
+  async function addFriendToRoom(friendUserId: string): Promise<AckResponse> {
+    // Seats the friend directly (no accept step on their end) — the
+    // room:state broadcast this triggers updates everyone, this client
+    // included, the normal way. See room:addFriendToRoom on the server for
+    // how it decides player vs. spectator and live-vs-email notification.
+    return emitWithAck("room:addFriendToRoom", { friendUserId });
   }
 
   async function spectateRoom(code: string): Promise<AckResponse> {
@@ -272,7 +272,7 @@ export function RoomProvider({ children }: { children: ReactNode }) {
         createRoom,
         joinRoom,
         addGuest,
-        inviteFriend,
+        addFriendToRoom,
         spectateRoom,
         selectAvatar,
         setConfig,

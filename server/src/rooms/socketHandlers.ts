@@ -1,5 +1,6 @@
 import type { Server, Socket } from "socket.io";
 import {
+  addFriendToRoom,
   addGuest,
   advanceCurrentStep,
   canStart,
@@ -32,8 +33,7 @@ import { saveRoomSnapshot } from "../lib/persistRoomSnapshot.js";
 import { recordRoomMembership } from "../lib/roomMemberships.js";
 import { areFriends } from "../lib/friends.js";
 import { isUserOnline, userPresenceRoom } from "../lib/presence.js";
-import { tryConsumeInviteCooldown } from "../lib/inviteCooldown.js";
-import { sendSpectateInviteEmail } from "../lib/email.js";
+import { sendAddedToRoundEmail } from "../lib/email.js";
 
 interface SocketData {
   roomCode?: string;
@@ -217,19 +217,19 @@ export function registerRoomHandlers(io: Server) {
       ack?.({ ok: true, playerId: result.id });
     });
 
-    // Any player (not just the host) can invite a friend into their current
-    // room — pre-game this fills an open player slot if there is one
-    // (joinRoom already falls a full room's would-be player back to
-    // spectating — see the client's accept handler), mid-game it's always
-    // just an invite to spectate, since the roster is locked by then. A
-    // friend who's online right now gets a live pop-up; otherwise they get
-    // an email with the room code and a link. See presence.ts and
-    // inviteCooldown.ts for how each of those is decided.
-    socket.on("room:inviteFriend", async (payload: { friendUserId: string }, ack?: Ack) => {
+    // Any player (not just the host) can add a friend directly into their
+    // current room — no accept step on the friend's end, unlike an
+    // old-style invite. Pre-game (or mid-round, same as addGuest) this
+    // seats them as a player if there's an open slot; once the roster's
+    // full or the round's past "playing", they're seated as a spectator
+    // instead — see addFriendToRoom. Either way the friend just gets told
+    // where to go: a live pop-up if they're online right now (see
+    // presence.ts), otherwise an email with the room code and a link.
+    socket.on("room:addFriendToRoom", async (payload: { friendUserId: string }, ack?: Ack) => {
       const room = data.roomCode ? getRoom(data.roomCode) : undefined;
       if (!room) return ack?.({ ok: false, error: "You're not in a room." });
       if (!isPlayerInRoom(room, data.playerId)) {
-        return ack?.({ ok: false, error: "Only players in the room can send invites." });
+        return ack?.({ ok: false, error: "Only players in the room can add friends." });
       }
 
       const friendUserId = String(payload?.friendUserId ?? "");
@@ -238,26 +238,31 @@ export function registerRoomHandlers(io: Server) {
       const isFriend = await areFriends(data.user.id, friendUserId);
       if (!isFriend) return ack?.({ ok: false, error: "That's not one of your friends." });
 
-      if (!tryConsumeInviteCooldown(data.user.id, friendUserId, room.code)) {
-        return ack?.({ ok: false, error: "Give it a few seconds before inviting them again." });
-      }
-
       const friend = await getUserById(friendUserId);
       if (!friend) return ack?.({ ok: false, error: "Couldn't find that friend." });
 
+      const result = addFriendToRoom(room, { name: friend.name, equippedCostume: friend.equippedCostume });
+      if ("error" in result) return ack?.({ ok: false, error: result.error });
+
+      broadcast(io, room);
+
+      // Already seated (a repeat click, or they'd already joined themselves
+      // in the meantime) — nothing new to tell them, so skip the notify.
+      if (result.alreadyPresent) return ack?.({ ok: true, delivered: "already-in", role: result.role });
+
       if (isUserOnline(io, friendUserId)) {
-        io.to(userPresenceRoom(friendUserId)).emit("friend:invited", {
+        io.to(userPresenceRoom(friendUserId)).emit("friend:addedToRound", {
           roomCode: room.code,
-          inviterName: data.user.name,
-          phase: room.phase,
+          byName: data.user.name,
+          role: result.role,
         });
-        return ack?.({ ok: true, delivered: "live" });
+        return ack?.({ ok: true, delivered: "live", role: result.role });
       }
 
-      sendSpectateInviteEmail(friend.email, friend.name, { inviterName: data.user.name, roomCode: room.code }).catch(
-        (err) => console.error("Failed to send spectate invite email:", err),
+      sendAddedToRoundEmail(friend.email, friend.name, { byName: data.user.name, roomCode: room.code, role: result.role }).catch(
+        (err) => console.error("Failed to send added-to-round email:", err),
       );
-      ack?.({ ok: true, delivered: "email" });
+      ack?.({ ok: true, delivered: "email", role: result.role });
     });
 
     socket.on("room:leave", () => {
