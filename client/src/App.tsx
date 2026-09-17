@@ -11,6 +11,8 @@ import { Celebration } from "./components/Celebration";
 import { Standings } from "./components/Standings";
 import { Profile } from "./components/Profile";
 import { Friends } from "./components/Friends";
+import { FriendProfile } from "./components/FriendProfile";
+import type { FriendUser } from "./lib/friendsApi";
 import { ResetPassword } from "./components/ResetPassword";
 import { AceIntro } from "./components/AceIntro";
 import { PartyIntro } from "./components/PartyIntro";
@@ -26,6 +28,7 @@ function AppShell() {
   const [showStandings, setShowStandings] = useState(false);
   const [showProfile, setShowProfile] = useState(false);
   const [showFriends, setShowFriends] = useState(false);
+  const [viewingFriend, setViewingFriend] = useState<FriendUser | null>(null);
   const [autoOpenEmailPrefs, setAutoOpenEmailPrefs] = useState(false);
   const [autoOpenAvatarTab, setAutoOpenAvatarTab] = useState(false);
   const [showAceIntro, setShowAceIntro] = useState(false);
@@ -59,6 +62,15 @@ function AppShell() {
    * of having to be threaded into every branch individually — presence is
    * account-wide, not tied to any one of them. */
   function renderMain() {
+    if (viewingFriend)
+      return (
+        <FriendProfile
+          friendUserId={viewingFriend.id}
+          friendName={viewingFriend.name}
+          onBack={() => setViewingFriend(null)}
+        />
+      );
+
     if (showProfile)
       return (
         <Profile
@@ -67,6 +79,7 @@ function AppShell() {
             setAutoOpenEmailPrefs(false);
             setAutoOpenAvatarTab(false);
           }}
+          onViewFriend={setViewingFriend}
           autoOpenEmailPrefs={autoOpenEmailPrefs}
           autoOpenAvatarTab={autoOpenAvatarTab}
         />

@@ -1,4 +1,5 @@
 import { getStoredToken } from "./authApi";
+import type { Achievement, RoundHistoryRow } from "../types";
 
 export interface FriendUser {
   id: string;
@@ -68,4 +69,19 @@ export async function addFriendByName(name: string): Promise<{ ok: true } | { ok
 
 export async function removeFriend(friendUserId: string): Promise<void> {
   await fetch(`/api/friends/${friendUserId}`, { method: "DELETE", headers: authHeaders() }).catch(() => {});
+}
+
+export interface FriendAchievements {
+  name: string;
+  achievements: Achievement[];
+}
+
+export async function fetchFriendAchievements(friendUserId: string): Promise<FriendAchievements> {
+  const res = await fetch(`/api/friends/${friendUserId}/achievements`, { headers: authHeaders() });
+  return parse<FriendAchievements>(res);
+}
+
+export async function fetchRoundsWithFriend(friendUserId: string): Promise<RoundHistoryRow[]> {
+  const res = await fetch(`/api/my-rounds/with/${friendUserId}`, { headers: authHeaders() });
+  return parse<RoundHistoryRow[]>(res);
 }

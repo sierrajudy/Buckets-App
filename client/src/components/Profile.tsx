@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useAuth } from "../authStore";
 import { fetchMyRounds } from "../lib/api";
+import { fetchFriendsOverview, type FriendUser } from "../lib/friendsApi";
 import { RoundHistoryTable } from "./RoundHistoryTable";
 import { EmailPreferences } from "./EmailPreferences";
 import { Closet } from "./Closet";
@@ -8,15 +9,20 @@ import type { RoundHistoryRow } from "../types";
 
 export function Profile({
   onBack,
+  onViewFriend,
   autoOpenEmailPrefs = false,
   autoOpenAvatarTab = false,
 }: {
   onBack: () => void;
+  /** Takes the viewer to that friend's own profile — standings,
+   * achievements, and games played together (see FriendProfile.tsx). */
+  onViewFriend: (friend: FriendUser) => void;
   autoOpenEmailPrefs?: boolean;
   autoOpenAvatarTab?: boolean;
 }) {
   const { user } = useAuth();
   const [rows, setRows] = useState<RoundHistoryRow[] | null>(null);
+  const [friends, setFriends] = useState<FriendUser[] | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [tab, setTab] = useState<"rounds" | "avatar">(autoOpenAvatarTab ? "avatar" : "rounds");
 
@@ -24,6 +30,9 @@ export function Profile({
     fetchMyRounds()
       .then(setRows)
       .catch(() => setError("Couldn't load your round history."));
+    fetchFriendsOverview()
+      .then((ov) => setFriends(ov.friends))
+      .catch(() => setFriends([]));
   }, []);
 
   const wins = rows?.filter((r) => r.won).length ?? 0;
@@ -53,6 +62,33 @@ export function Profile({
                 {wins === 1 ? "win" : "wins"} of {rows.length} {rows.length === 1 ? "round" : "rounds"}
               </div>
             </div>
+          )}
+        </div>
+
+        <div className="bg-white dark:bg-neutral-900 rounded-2xl border border-neutral-200 dark:border-neutral-800 p-4">
+          <div className="text-sm font-semibold text-neutral-500 mb-2">
+            Friends{friends ? ` (${friends.length})` : ""}
+          </div>
+          {!friends && <p className="text-sm text-neutral-500">Loading…</p>}
+          {friends && friends.length === 0 && (
+            <p className="text-sm text-neutral-500">
+              No friends added yet — search for them or quick-add from a game on the 🤝 Friends page.
+            </p>
+          )}
+          {friends && friends.length > 0 && (
+            <ul className="flex flex-wrap gap-2">
+              {friends.map((f) => (
+                <li key={f.id}>
+                  <button
+                    type="button"
+                    onClick={() => onViewFriend(f)}
+                    className="rounded-full border border-neutral-300 dark:border-neutral-700 px-3 py-1.5 text-sm font-medium hover:border-green-500 hover:text-green-700 dark:hover:text-green-400"
+                  >
+                    {f.name}
+                  </button>
+                </li>
+              ))}
+            </ul>
           )}
         </div>
 
