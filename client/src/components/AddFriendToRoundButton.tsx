@@ -1,19 +1,42 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRoom } from "../store";
 import { fetchFriendsOverview, type FriendUser } from "../lib/friendsApi";
+
+const PANEL_WIDTH = 256; // matches w-64 below
+const VIEWPORT_MARGIN = 8;
 
 /** A "🤝 Add friend" button + dropdown, shared by the Lobby (seats them as a
  * player if there's an open slot) and the Scorecard (seats them as a
  * spectator, since the roster's locked mid-round) — see addFriendToRoom on
  * the server for how it decides. No accept step on their end: they're
  * seated immediately and just get notified where to go (a live pop-up if
- * they're online, otherwise an email with the room code). */
+ * they're online, otherwise an email with the room code).
+ *
+ * The panel is positioned with `fixed` + a measured, viewport-clamped
+ * offset rather than `absolute right-0` against its own trigger button —
+ * this button sits well left of the screen edge in both the Lobby and
+ * Scorecard, and a naive right-anchored panel wider than the space to the
+ * button's right (which it always is here) renders partly off-screen. */
 export function AddFriendToRoundButton({ dark = false }: { dark?: boolean }) {
   const { addFriendToRoom } = useRoom();
+  const buttonRef = useRef<HTMLButtonElement>(null);
   const [open, setOpen] = useState(false);
+  const [panelPos, setPanelPos] = useState<{ top: number; left: number } | null>(null);
   const [friends, setFriends] = useState<FriendUser[] | null>(null);
   const [busyId, setBusyId] = useState<string | null>(null);
   const [feedback, setFeedback] = useState<Record<string, string>>({});
+
+  function toggleOpen() {
+    if (!open && buttonRef.current) {
+      const rect = buttonRef.current.getBoundingClientRect();
+      const left = Math.min(
+        Math.max(VIEWPORT_MARGIN, rect.right - PANEL_WIDTH),
+        window.innerWidth - PANEL_WIDTH - VIEWPORT_MARGIN,
+      );
+      setPanelPos({ top: rect.bottom + 8, left });
+    }
+    setOpen((o) => !o);
+  }
 
   useEffect(() => {
     if (!open || friends !== null) return;
@@ -42,17 +65,21 @@ export function AddFriendToRoundButton({ dark = false }: { dark?: boolean }) {
   return (
     <div className="relative">
       <button
+        ref={buttonRef}
         type="button"
-        onClick={() => setOpen((o) => !o)}
+        onClick={toggleOpen}
         className={`text-sm ${dark ? "text-white/70 hover:text-white" : "text-neutral-500 hover:text-green-600 dark:hover:text-green-400"}`}
       >
         🤝 Add friend
       </button>
 
-      {open && (
+      {open && panelPos && (
         <>
           <div className="fixed inset-0 z-30" onClick={() => setOpen(false)} />
-          <div className="absolute right-0 mt-2 w-64 z-40 rounded-xl border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-900 shadow-lg p-3 space-y-2 text-left">
+          <div
+            style={{ top: panelPos.top, left: panelPos.left }}
+            className="fixed w-64 z-40 rounded-xl border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-900 shadow-lg p-3 space-y-2 text-left"
+          >
             <div className="text-xs font-semibold text-neutral-500 uppercase tracking-wide">
               Add a friend to this round
             </div>
