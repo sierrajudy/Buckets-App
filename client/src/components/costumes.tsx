@@ -65,6 +65,10 @@ const FACE_ANCHORS: Record<AvatarKey, Anchor> = {
   flag: { cx: 80, cy: 38, rotate: -4 },
   cart: { cx: 60, cy: 66 },
   cap: { cx: 58, cy: 48 },
+  sun: { cx: 60, cy: 62 },
+  trophy: { cx: 60, cy: 48 },
+  cooler: { cx: 60, cy: 80 },
+  umbrella: { cx: 60, cy: 40 },
 };
 
 function headAnchor(avatar: AvatarKey | null): Anchor {

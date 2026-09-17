@@ -14,6 +14,10 @@ export const AVATAR_META: Record<AvatarKey, { label: string; color: string }> = 
   flag: { label: "Flag", color: "#ef4444" },
   cart: { label: "Cart", color: "#3b82f6" },
   cap: { label: "Cap", color: "#ec4899" },
+  sun: { label: "Sun", color: "#fbbf24" },
+  trophy: { label: "Trophy", color: "#facc15" },
+  cooler: { label: "Cooler", color: "#ef4444" },
+  umbrella: { label: "Umbrella", color: "#3b82f6" },
 };
 
 function Face({
@@ -196,6 +200,73 @@ function CapAvatar() {
   );
 }
 
+function SunAvatar() {
+  const rays = Array.from({ length: 8 }, (_, i) => (i * 360) / 8);
+  return (
+    <svg viewBox="0 0 120 120" width="100%" height="100%" role="img" aria-label="Sun avatar">
+      {rays.map((angle) => (
+        <rect
+          key={angle}
+          x={57}
+          y={6}
+          width={6}
+          height={20}
+          rx={3}
+          fill="#fbbf24"
+          stroke="#0f172a"
+          strokeWidth="2"
+          transform={`rotate(${angle} 60 60)`}
+        />
+      ))}
+      <circle cx="60" cy="60" r="34" fill="#fde047" stroke="#0f172a" strokeWidth="3" />
+      <Face x={60} y={62} width={36} height={18} />
+    </svg>
+  );
+}
+
+function TrophyAvatar() {
+  return (
+    <svg viewBox="0 0 120 120" width="100%" height="100%" role="img" aria-label="Trophy avatar">
+      <rect x="42" y="94" width="36" height="10" rx="2.5" fill="#a16207" stroke="#0f172a" strokeWidth="2.5" />
+      <rect x="53" y="80" width="14" height="16" fill="#facc15" stroke="#0f172a" strokeWidth="2.5" />
+      <path d="M33 28 L87 28 Q88 66 60 72 Q32 66 33 28 Z" fill="#facc15" stroke="#0f172a" strokeWidth="3" />
+      <path d="M33 32 Q13 32 13 48 Q13 62 33 58" fill="none" stroke="#0f172a" strokeWidth="4" strokeLinecap="round" />
+      <path d="M87 32 Q107 32 107 48 Q107 62 87 58" fill="none" stroke="#0f172a" strokeWidth="4" strokeLinecap="round" />
+      <Face x={60} y={48} width={34} height={17} />
+    </svg>
+  );
+}
+
+function CoolerAvatar() {
+  return (
+    <svg viewBox="0 0 120 120" width="100%" height="100%" role="img" aria-label="Cooler avatar">
+      <rect x="48" y="28" width="24" height="14" rx="4" fill="#f8fafc" stroke="#0f172a" strokeWidth="2.5" />
+      <rect x="24" y="40" width="72" height="60" rx="10" fill="#ef4444" stroke="#0f172a" strokeWidth="3" />
+      <line x1="24" y1="58" x2="96" y2="58" stroke="#0f172a" strokeWidth="3" />
+      <rect x="34" y="46" width="10" height="6" rx="2" fill="#fecaca" />
+      <rect x="76" y="46" width="10" height="6" rx="2" fill="#fecaca" />
+      <Face x={60} y={80} width={38} height={18} />
+    </svg>
+  );
+}
+
+function UmbrellaAvatar() {
+  return (
+    <svg viewBox="0 0 120 120" width="100%" height="100%" role="img" aria-label="Umbrella avatar">
+      <rect x="57" y="52" width="6" height="56" rx="3" fill="#78716c" stroke="#0f172a" strokeWidth="2" />
+      <path d="M12 54 Q60 6 108 54 Z" fill="#3b82f6" stroke="#0f172a" strokeWidth="3" strokeLinejoin="round" />
+      <path
+        d="M12 54 L28 60 L44 54 L60 60 L76 54 L92 60 L108 54"
+        fill="none"
+        stroke="#0f172a"
+        strokeWidth="2.5"
+        strokeLinejoin="round"
+      />
+      <Face x={60} y={40} width={36} height={18} />
+    </svg>
+  );
+}
+
 /** Wolf mode's fun little flourish — a pair of ears poking up from behind
  * whatever avatar is showing, drawn in the same 120x120 space so they line
  * up regardless of which icon is underneath. The shape is authored once
@@ -239,6 +310,10 @@ const AVATAR_COMPONENTS: Record<AvatarKey, () => React.JSX.Element> = {
   flag: FlagAvatar,
   cart: CartAvatar,
   cap: CapAvatar,
+  sun: SunAvatar,
+  trophy: TrophyAvatar,
+  cooler: CoolerAvatar,
+  umbrella: UmbrellaAvatar,
 };
 
 export function AvatarIcon({
