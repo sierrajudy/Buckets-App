@@ -1,14 +1,33 @@
 import { useEffect, useState } from "react";
 import { Search } from "lucide-react";
 import { EmptyState } from "./EmptyState";
+import { AvatarIcon, type AvatarKey } from "./Avatars";
 import {
   addFriend,
   fetchFriendsOverview,
   removeFriend,
   searchFriendCandidates,
   type FriendsOverview,
+  type FriendUser,
   type SearchResultUser,
 } from "../lib/friendsApi";
+
+/** A friend's equipped costume only ever showed up in Profile's own mini
+ * friends list and on FriendProfile's header — this page (search results,
+ * "people you've played with", and the friends list itself) rendered every
+ * row as plain text with no picture at all, so a costume had nowhere to
+ * appear even though the data was already there on every row. */
+function FriendAvatar({ friend }: { friend: Pick<FriendUser, "profileAvatar" | "equippedCostume"> }) {
+  return (
+    <span className="w-8 h-8 shrink-0">
+      <AvatarIcon
+        avatar={friend.profileAvatar as AvatarKey | null}
+        className="w-full h-full"
+        costume={friend.equippedCostume}
+      />
+    </span>
+  );
+}
 
 export function Friends({ onBack }: { onBack: () => void }) {
   const [overview, setOverview] = useState<FriendsOverview | null>(null);
@@ -94,8 +113,9 @@ export function Friends({ onBack }: { onBack: () => void }) {
           {results.length > 0 && (
             <ul className="space-y-2">
               {results.map((r) => (
-                <li key={r.id} className="flex items-center justify-between gap-2 text-sm">
-                  <span className="min-w-0 truncate">
+                <li key={r.id} className="flex items-center gap-2 text-sm">
+                  <FriendAvatar friend={r} />
+                  <span className="min-w-0 truncate flex-1">
                     <span className="font-semibold">{r.name}</span>
                     <span className="ml-2 text-neutral-500">{r.email}</span>
                   </span>
@@ -122,8 +142,9 @@ export function Friends({ onBack }: { onBack: () => void }) {
         {overview && overview.suggested.length > 0 && (
           <Section title="People you've played with">
             {overview.suggested.map((u) => (
-              <li key={u.id} className="flex items-center justify-between gap-2 text-sm">
-                <span className="font-semibold truncate">{u.name}</span>
+              <li key={u.id} className="flex items-center gap-2 text-sm">
+                <FriendAvatar friend={u} />
+                <span className="font-semibold truncate flex-1">{u.name}</span>
                 <button
                   disabled={busyId === u.id}
                   onClick={() => handleAdd(u.id)}
@@ -141,8 +162,9 @@ export function Friends({ onBack }: { onBack: () => void }) {
             <EmptyState message="No friends added yet — search above, or add someone you've played with." />
           )}
           {overview?.friends.map((f) => (
-            <li key={f.id} className="flex items-center justify-between gap-2 text-sm">
-              <span className="min-w-0 truncate">
+            <li key={f.id} className="flex items-center gap-2 text-sm">
+              <FriendAvatar friend={f} />
+              <span className="min-w-0 truncate flex-1">
                 <span className="font-semibold">{f.name}</span>
                 <span className="ml-2 text-neutral-500">{f.email}</span>
               </span>
