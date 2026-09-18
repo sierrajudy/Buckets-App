@@ -189,6 +189,13 @@ export function Scorecard() {
   // (not a tie, unlike standard mode where >1 winner only happens on a
   // split) — so the crown/tied-hole flourishes below are standard-mode only.
   const leader = isHighLow ? null : computeLeader(totals, players);
+  // Shown next to points in the Running score card below — knowing your
+  // stroke count mid-round (not just points) is the same thing a paper
+  // scorecard already gives you for free.
+  const runningStrokes = players.reduce<Record<string, number>>((acc, p) => {
+    acc[p.name] = results.reduce((sum, r) => sum + (r.strokes[p.name] ?? 0), 0);
+    return acc;
+  }, {});
   const tiedHole = isHighLow ? false : isWolf ? result.wolf?.outcome === "tie" : result.holeWinners.length > 1;
   // Baseball has no birdie/eagle bonus at all — the badge still shows for
   // the flair, just without a point value that would otherwise be a lie.
@@ -751,7 +758,7 @@ export function Scorecard() {
             <div className={`text-sm font-bold ${themedSubCls} mb-2`}>Running score</div>
             <div className="flex flex-wrap gap-4">
               {players.map((p) => (
-                <div key={p.id} className="flex items-center gap-1.5">
+                <div key={p.id} className="flex items-center gap-1.5 flex-wrap">
                   <StatusAvatar
                     avatar={p.avatar}
                     className="w-6 h-6 shrink-0"
@@ -762,6 +769,11 @@ export function Scorecard() {
                   <span className="text-lg font-extrabold text-primary-300">
                     {totals[p.name] ?? 0}
                   </span>
+                  <span className="text-xs text-white/50">pts</span>
+                  <span className="text-sm font-semibold text-white/80 ml-1">
+                    {runningStrokes[p.name] ?? 0}
+                  </span>
+                  <span className="text-xs text-white/50">strokes</span>
                 </div>
               ))}
             </div>
