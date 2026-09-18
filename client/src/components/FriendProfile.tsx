@@ -1,8 +1,10 @@
 import { useEffect, useState } from "react";
+import { Lock } from "lucide-react";
 import { fetchStandings } from "../lib/api";
 import { fetchFriendAchievements, fetchRoundsWithFriend, type FriendAchievements } from "../lib/friendsApi";
 import { RoundHistoryTable } from "./RoundHistoryTable";
 import { AvatarIcon, type AvatarKey } from "./Avatars";
+import { Skeleton, SkeletonRows, SkeletonStatGrid } from "./Skeleton";
 import type { RoundHistoryRow, StandingsRow } from "../types";
 
 /** A friend's public profile — their all-time standings (the leaderboard
@@ -51,7 +53,7 @@ export function FriendProfile({
             <div className="w-12 h-12 shrink-0">
               <AvatarIcon avatar={friendAvatar as AvatarKey | null} className="w-full h-full" costume={friendCostume} />
             </div>
-            <h1 className="text-2xl font-extrabold text-green-700 dark:text-green-400">{friendName}</h1>
+            <h1 className="text-2xl font-extrabold text-primary-700 dark:text-primary-400">{friendName}</h1>
           </div>
           <button
             onClick={onBack}
@@ -61,11 +63,11 @@ export function FriendProfile({
           </button>
         </div>
 
-        {error && <p className="text-sm text-red-500">{error}</p>}
+        {error && <p className="text-sm text-danger-500">{error}</p>}
 
-        <div className="bg-white dark:bg-neutral-900 rounded-2xl border border-neutral-200 dark:border-neutral-800 p-4">
+        <div className="bg-white dark:bg-neutral-900 rounded-2xl border border-neutral-200 dark:border-neutral-800 shadow-sm p-5">
           <div className="text-sm font-semibold text-neutral-500 mb-3">Standings</div>
-          {standings === undefined && <p className="text-sm text-neutral-500">Loading…</p>}
+          {standings === undefined && <SkeletonStatGrid />}
           {standings === null && <p className="text-sm text-neutral-500">No rounds recorded for them yet.</p>}
           {standings && (
             <div className="grid grid-cols-3 sm:grid-cols-6 gap-3 text-center">
@@ -80,7 +82,7 @@ export function FriendProfile({
                 ] as const
               ).map((stat) => (
                 <div key={stat.label}>
-                  <div className="text-xl font-extrabold text-green-700 dark:text-green-400">{stat.value}</div>
+                  <div className="text-xl font-extrabold text-primary-700 dark:text-primary-400">{stat.value}</div>
                   <div className="text-[11px] text-neutral-500">{stat.label}</div>
                 </div>
               ))}
@@ -88,11 +90,11 @@ export function FriendProfile({
           )}
         </div>
 
-        <div className="bg-white dark:bg-neutral-900 rounded-2xl border border-neutral-200 dark:border-neutral-800 p-4">
+        <div className="bg-white dark:bg-neutral-900 rounded-2xl border border-neutral-200 dark:border-neutral-800 shadow-sm p-5">
           <div className="text-sm font-semibold text-neutral-500 mb-3">
             Achievements{achievements ? ` — ${earnedCount} of ${achievements.achievements.length}` : ""}
           </div>
-          {!achievements && !error && <p className="text-sm text-neutral-500">Loading…</p>}
+          {!achievements && !error && <SkeletonRows count={4} withAvatar={false} />}
           {achievements && (
             <div className="space-y-2">
               {achievements.achievements.map((a) => (
@@ -100,7 +102,7 @@ export function FriendProfile({
                   key={a.key}
                   className={`rounded-xl border p-3 flex items-center gap-3 ${
                     a.earned
-                      ? "border-green-200 dark:border-green-900 bg-green-50 dark:bg-green-950/40"
+                      ? "border-primary-200 dark:border-primary-900 bg-primary-50 dark:bg-primary-950/40"
                       : "border-neutral-200 dark:border-neutral-800"
                   }`}
                 >
@@ -109,7 +111,7 @@ export function FriendProfile({
                       a.earned ? "bg-white dark:bg-neutral-900" : "bg-neutral-200 dark:bg-neutral-800 text-neutral-400"
                     }`}
                   >
-                    {a.earned ? a.emoji : "🔒"}
+                    {a.earned ? a.emoji : <Lock size={16} />}
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="font-semibold text-sm">{a.title}</div>
@@ -118,7 +120,7 @@ export function FriendProfile({
                       <div className="mt-1.5">
                         <div className="h-1.5 rounded-full bg-neutral-200 dark:bg-neutral-800 overflow-hidden">
                           <div
-                            className="h-full bg-green-500"
+                            className="h-full bg-primary-500"
                             style={{ width: `${Math.min(100, (a.progress / a.target) * 100)}%` }}
                           />
                         </div>
@@ -138,7 +140,7 @@ export function FriendProfile({
           <div className="text-sm font-semibold text-neutral-500 mb-2">
             Games you've played together{roundsTogether ? ` (${roundsTogether.length})` : ""}
           </div>
-          {!roundsTogether && !error && <p className="text-sm text-neutral-500">Loading…</p>}
+          {!roundsTogether && !error && <Skeleton className="h-40 w-full rounded-xl" />}
           {roundsTogether && (
             <RoundHistoryTable
               rows={roundsTogether}

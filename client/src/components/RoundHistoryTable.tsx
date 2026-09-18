@@ -27,7 +27,7 @@ export function RoundHistoryTable({ rows, emptyMessage }: { rows: RoundHistoryRo
   const maxHoles = Math.max(0, ...rows.map((r) => r.holeStrokes.length));
 
   return (
-    <div className="overflow-x-auto rounded-xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900">
+    <div className="overflow-x-auto rounded-xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 shadow-sm">
       <table className="w-full text-sm">
         <thead>
           <tr className="text-left text-neutral-500 border-b border-neutral-200 dark:border-neutral-800">
@@ -53,7 +53,7 @@ export function RoundHistoryTable({ rows, emptyMessage }: { rows: RoundHistoryRo
             <tr
               key={r.id}
               className={`border-b border-neutral-100 dark:border-neutral-800 last:border-0 ${
-                r.won ? "bg-green-50 dark:bg-green-950/40" : ""
+                r.won ? "bg-primary-50 dark:bg-primary-950/40" : ""
               }`}
             >
               <td className="px-3 py-2.5 whitespace-nowrap font-medium">{r.date === "now" ? "Today" : formatDate(r.date)}</td>
@@ -68,13 +68,13 @@ export function RoundHistoryTable({ rows, emptyMessage }: { rows: RoundHistoryRo
               <td className="px-3 py-2.5 text-right">{r.buckets}</td>
               <td className="px-3 py-2.5 text-right">{r.pge}</td>
               <td className="px-3 py-2.5 text-right">
-                {r.tiebreak === "won" && <span className="text-green-600 font-semibold">Won</span>}
-                {r.tiebreak === "lost" && <span className="text-red-500 font-semibold">Lost</span>}
+                {r.tiebreak === "won" && <span className="text-primary-600 font-semibold">Won</span>}
+                {r.tiebreak === "lost" && <span className="text-danger-500 font-semibold">Lost</span>}
                 {r.tiebreak === null && <span className="text-neutral-400">—</span>}
               </td>
               <td className="px-3 py-2.5 text-right font-bold">
                 {r.total}
-                {r.won && <span className="ml-1 text-green-600">🏆</span>}
+                {r.won && <span className="ml-1 text-primary-600">🏆</span>}
               </td>
             </tr>
             );

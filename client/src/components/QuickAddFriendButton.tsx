@@ -33,7 +33,7 @@ export function QuickAddFriendButton({
         else setError(true);
       }}
       className={`text-[10px] font-semibold underline underline-offset-2 disabled:opacity-50 ${
-        dark ? "text-white/60 hover:text-white" : "text-neutral-500 hover:text-green-600"
+        dark ? "text-white/60 hover:text-white" : "text-neutral-500 hover:text-primary-600"
       }`}
     >
       {busy ? "…" : error ? "Couldn't add" : "+ friend"}

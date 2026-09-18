@@ -41,7 +41,7 @@ export function PredictionPicker({ dark = false, readOnly = false }: { dark?: bo
               readOnly ? "cursor-default" : ""
             } ${
               myPick === p.name
-                ? "border-green-600 bg-green-50 dark:bg-green-950 text-green-700 dark:text-green-400"
+                ? "border-primary-600 bg-primary-50 dark:bg-primary-950 text-primary-700 dark:text-primary-400"
                 : `${idleBtnClass} ${idleBtnHover}`
             }`}
           >

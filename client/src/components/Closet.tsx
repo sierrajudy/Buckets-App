@@ -1,8 +1,10 @@
 import { useEffect, useState } from "react";
+import { Lock } from "lucide-react";
 import { useAuth } from "../authStore";
 import { equipCostume, fetchAchievements } from "../lib/api";
 import { AVATAR_KEYS, AVATAR_META, AvatarIcon, type AvatarKey } from "./Avatars";
 import { COSTUME_META, COSTUME_SEQUENCE, type CostumeKey } from "./costumes";
+import { Skeleton, SkeletonRows } from "./Skeleton";
 import type { AchievementsResponse } from "../types";
 
 /** Achievements + the Closet (equip UI for unlocked avatar costume pieces).
@@ -48,8 +50,26 @@ export function Closet() {
     setAvatarBusy(false);
   }
 
-  if (error && !data) return <p className="text-sm text-red-500">{error}</p>;
-  if (!data) return <p className="text-sm text-neutral-500">Loading…</p>;
+  if (error && !data) return <p className="text-sm text-danger-500">{error}</p>;
+  if (!data) {
+    return (
+      <div className="space-y-6">
+        <div className="bg-white dark:bg-neutral-900 rounded-2xl border border-neutral-200 dark:border-neutral-800 shadow-sm p-4 flex items-center gap-4">
+          <Skeleton className="w-20 h-20 rounded-full shrink-0" />
+          <div className="flex-1 space-y-2">
+            <Skeleton className="h-4 w-24" />
+            <Skeleton className="h-3 w-32" />
+          </div>
+        </div>
+        <div className="grid grid-cols-4 gap-3">
+          {Array.from({ length: 8 }, (_, i) => (
+            <Skeleton key={i} className="aspect-square rounded-xl" />
+          ))}
+        </div>
+        <SkeletonRows count={4} />
+      </div>
+    );
+  }
 
   const unlockedSet = new Set(data.unlockedCostumes);
   const earnedCount = data.achievements.filter((a) => a.earned).length;
@@ -57,7 +77,7 @@ export function Closet() {
 
   return (
     <div className="space-y-6">
-      <div className="bg-white dark:bg-neutral-900 rounded-2xl border border-neutral-200 dark:border-neutral-800 p-4 flex items-center gap-4">
+      <div className="bg-white dark:bg-neutral-900 rounded-2xl border border-neutral-200 dark:border-neutral-800 shadow-sm p-5 flex items-center gap-4">
         <div className="w-20 h-20 shrink-0">
           <AvatarIcon avatar={profileAvatar} className="w-full h-full" costume={data.equippedCostume} />
         </div>
@@ -73,7 +93,7 @@ export function Closet() {
         </div>
       </div>
 
-      {error && <p className="text-sm text-red-500">{error}</p>}
+      {error && <p className="text-sm text-danger-500">{error}</p>}
 
       <div>
         <div className="text-sm font-semibold text-neutral-500 mb-2">Profile picture</div>
@@ -88,8 +108,8 @@ export function Closet() {
                 onClick={() => handlePickAvatar(key)}
                 className={`relative rounded-xl border-2 p-2 flex flex-col items-center gap-1 transition-all disabled:opacity-50 ${
                   selected
-                    ? "border-green-600 bg-green-50 dark:bg-green-950"
-                    : "border-transparent hover:border-green-300"
+                    ? "border-primary-600 bg-primary-50 dark:bg-primary-950"
+                    : "border-transparent hover:border-primary-300"
                 }`}
               >
                 <div className="w-12 h-12">
@@ -115,7 +135,7 @@ export function Closet() {
                 key={key}
                 className={`relative rounded-xl border p-3 flex flex-col items-center gap-1.5 text-center ${
                   equipped
-                    ? "border-green-500 bg-green-50 dark:bg-green-950"
+                    ? "border-primary-500 bg-primary-50 dark:bg-primary-950"
                     : unlocked
                       ? "border-neutral-200 dark:border-neutral-700"
                       : "border-neutral-100 dark:border-neutral-800 opacity-50"
@@ -125,14 +145,14 @@ export function Closet() {
                   {unlocked ? (
                     <AvatarIcon avatar="ball" className="w-full h-full" costume={key} />
                   ) : (
-                    <div className="w-full h-full rounded-full bg-neutral-200 dark:bg-neutral-800 flex items-center justify-center text-xl">
-                      🔒
+                    <div className="w-full h-full rounded-full bg-neutral-200 dark:bg-neutral-800 flex items-center justify-center text-neutral-400">
+                      <Lock size={18} />
                     </div>
                   )}
                 </div>
                 <span className="text-xs font-semibold">{COSTUME_META[key].label}</span>
                 {equipped && (
-                  <span className="text-[10px] font-bold text-green-600 dark:text-green-400 tracking-wide">
+                  <span className="text-[10px] font-bold text-primary-600 dark:text-primary-400 tracking-wide">
                     EQUIPPED
                   </span>
                 )}
@@ -144,7 +164,7 @@ export function Closet() {
                     className={`mt-1 w-full rounded-lg py-1.5 text-xs font-bold disabled:opacity-50 ${
                       equipped
                         ? "border border-neutral-300 dark:border-neutral-600 text-neutral-600 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-neutral-800"
-                        : "bg-green-600 hover:bg-green-700 text-white"
+                        : "bg-primary-600 hover:bg-primary-700 text-white"
                     }`}
                   >
                     {equipped ? "Unequip" : "Equip"}
@@ -166,7 +186,7 @@ export function Closet() {
               key={a.key}
               className={`rounded-xl border p-3 flex items-center gap-3 ${
                 a.earned
-                  ? "border-green-200 dark:border-green-900 bg-green-50 dark:bg-green-950/40"
+                  ? "border-primary-200 dark:border-primary-900 bg-primary-50 dark:bg-primary-950/40"
                   : "border-neutral-200 dark:border-neutral-800"
               }`}
             >
@@ -175,7 +195,7 @@ export function Closet() {
                   a.earned ? "bg-white dark:bg-neutral-900" : "bg-neutral-200 dark:bg-neutral-800 text-neutral-400"
                 }`}
               >
-                {a.earned ? a.emoji : "🔒"}
+                {a.earned ? a.emoji : <Lock size={16} />}
               </div>
               <div className="flex-1 min-w-0">
                 <div className="font-semibold text-sm">{a.title}</div>
@@ -184,7 +204,7 @@ export function Closet() {
                   <div className="mt-1.5">
                     <div className="h-1.5 rounded-full bg-neutral-200 dark:bg-neutral-800 overflow-hidden">
                       <div
-                        className="h-full bg-green-500"
+                        className="h-full bg-primary-500"
                         style={{ width: `${Math.min(100, (a.progress / a.target) * 100)}%` }}
                       />
                     </div>

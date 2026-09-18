@@ -91,7 +91,7 @@ export function ShareRecapModal({
           </div>
         </div>
 
-        {error && previewUrl && <p className="px-4 pb-2 text-sm text-red-400 shrink-0">{error}</p>}
+        {error && previewUrl && <p className="px-4 pb-2 text-sm text-danger-400 shrink-0">{error}</p>}
 
         <div className="p-4 flex gap-3 border-t border-neutral-800 shrink-0">
           <button
@@ -106,7 +106,7 @@ export function ShareRecapModal({
             type="button"
             disabled={!previewUrl || busy}
             onClick={handleShare}
-            className="flex-1 rounded-lg bg-green-600 hover:bg-green-700 text-white py-2.5 font-semibold text-sm disabled:opacity-50"
+            className="flex-1 rounded-lg bg-primary-600 hover:bg-primary-700 text-white py-2.5 font-semibold text-sm disabled:opacity-50"
           >
             {busy ? "…" : "Share"}
           </button>

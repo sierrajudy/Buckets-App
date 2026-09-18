@@ -48,7 +48,7 @@ export function PuttOff() {
                   onClick={() => setWinner(name)}
                   className={`w-full rounded-lg py-3 font-semibold border transition-colors flex items-center justify-center gap-2 ${
                     winner === name
-                      ? "bg-green-600 border-green-600 text-white"
+                      ? "bg-primary-600 border-primary-600 text-white"
                       : "border-neutral-700 text-neutral-200 hover:bg-neutral-800"
                   }`}
                 >

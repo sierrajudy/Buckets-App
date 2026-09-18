@@ -48,13 +48,13 @@ export function Auth() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-green-50 to-white dark:from-green-950 dark:to-neutral-950 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-gradient-to-b from-primary-50 to-white dark:from-primary-950 dark:to-neutral-950 flex items-center justify-center p-4">
       <form
         onSubmit={handleSubmit}
-        className="w-full max-w-md bg-white dark:bg-neutral-900 rounded-2xl shadow-lg border border-green-100 dark:border-green-900 p-6 space-y-5"
+        className="w-full max-w-md bg-white dark:bg-neutral-900 rounded-2xl shadow-lg border border-primary-100 dark:border-primary-900 p-6 space-y-5"
       >
         <div className="text-center space-y-1">
-          <h1 className="text-3xl font-extrabold text-green-700 dark:text-green-400 tracking-tight">Buckets</h1>
+          <h1 className="text-3xl font-extrabold text-primary-700 dark:text-primary-400 tracking-tight">Buckets</h1>
           <p className="text-sm text-neutral-500 dark:text-neutral-400">
             {mode === "forgot"
               ? "Reset your password"
@@ -71,7 +71,7 @@ export function Auth() {
                 onClick={() => switchMode(m)}
                 className={`flex-1 rounded-lg py-2 text-sm font-semibold border ${
                   mode === m
-                    ? "bg-green-600 text-white border-green-600"
+                    ? "bg-primary-600 text-white border-primary-600"
                     : "border-neutral-300 dark:border-neutral-700 text-neutral-600 dark:text-neutral-300 hover:bg-neutral-50 dark:hover:bg-neutral-800"
                 }`}
               >
@@ -89,7 +89,7 @@ export function Auth() {
               onChange={(e) => setName(e.target.value)}
               placeholder="What your group will see"
               maxLength={20}
-              className="w-full rounded-lg border border-neutral-300 dark:border-neutral-700 bg-transparent px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
+              className="w-full rounded-lg border border-neutral-300 dark:border-neutral-700 bg-transparent px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
             />
           </div>
         )}
@@ -103,7 +103,7 @@ export function Auth() {
             <button
               type="button"
               onClick={() => switchMode("login")}
-              className="text-sm font-semibold text-green-700 dark:text-green-400 hover:underline"
+              className="text-sm font-semibold text-primary-700 dark:text-primary-400 hover:underline"
             >
               Back to log in
             </button>
@@ -117,7 +117,7 @@ export function Auth() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="you@example.com"
-                className="w-full rounded-lg border border-neutral-300 dark:border-neutral-700 bg-transparent px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
+                className="w-full rounded-lg border border-neutral-300 dark:border-neutral-700 bg-transparent px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
               />
             </div>
 
@@ -129,7 +129,7 @@ export function Auth() {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder={mode === "signup" ? "At least 6 characters" : "Password"}
-                  className="w-full rounded-lg border border-neutral-300 dark:border-neutral-700 bg-transparent px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
+                  className="w-full rounded-lg border border-neutral-300 dark:border-neutral-700 bg-transparent px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
                 />
               </div>
             )}
@@ -142,7 +142,7 @@ export function Auth() {
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
                   placeholder="Same password again"
-                  className="w-full rounded-lg border border-neutral-300 dark:border-neutral-700 bg-transparent px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
+                  className="w-full rounded-lg border border-neutral-300 dark:border-neutral-700 bg-transparent px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
                 />
               </div>
             )}
@@ -151,18 +151,18 @@ export function Auth() {
               <button
                 type="button"
                 onClick={() => switchMode("forgot")}
-                className="text-sm text-neutral-500 hover:text-green-600 dark:hover:text-green-400"
+                className="text-sm text-neutral-500 hover:text-primary-600 dark:hover:text-primary-400"
               >
                 Forgot password?
               </button>
             )}
 
-            {error && <p className="text-sm text-red-500">{error}</p>}
+            {error && <p className="text-sm text-danger-500">{error}</p>}
 
             <button
               type="submit"
               disabled={busy}
-              className="w-full rounded-lg bg-green-600 hover:bg-green-700 disabled:opacity-50 text-white font-semibold py-2.5 transition-colors"
+              className="w-full rounded-lg bg-primary-600 hover:bg-primary-700 disabled:opacity-50 text-white font-semibold py-2.5 transition-colors"
             >
               {busy
                 ? "One sec…"
@@ -177,7 +177,7 @@ export function Auth() {
               <button
                 type="button"
                 onClick={() => switchMode("login")}
-                className="w-full text-sm text-neutral-500 hover:text-green-600 dark:hover:text-green-400 py-1"
+                className="w-full text-sm text-neutral-500 hover:text-primary-600 dark:hover:text-primary-400 py-1"
               >
                 Back to log in
               </button>

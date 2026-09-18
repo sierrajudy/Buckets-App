@@ -71,7 +71,7 @@ export function WolfHoleTransition({
       )}
 
       <div className="absolute inset-x-0 bottom-10 text-center">
-        <span className="inline-block px-4 py-1.5 rounded-full bg-white/90 dark:bg-neutral-900/90 text-green-700 dark:text-green-400 font-bold text-sm shadow">
+        <span className="inline-block px-4 py-1.5 rounded-full bg-white/90 dark:bg-neutral-900/90 text-primary-700 dark:text-primary-400 font-bold text-sm shadow">
           🐺 Awoooo! Next hole
         </span>
       </div>

@@ -7,7 +7,7 @@ export function AceIntro({ player, onDone }: { player: string; onDone: () => voi
   }, [onDone]);
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-green-800 to-neutral-950 flex flex-col items-center justify-center overflow-hidden relative">
+    <div className="min-h-screen bg-gradient-to-b from-primary-800 to-neutral-950 flex flex-col items-center justify-center overflow-hidden relative">
       <div className="relative w-40 h-40 flex items-center justify-center">
         <div className="absolute bottom-0 w-28 h-10 rounded-full bg-neutral-950 border-4 border-white/70" />
         <div
@@ -15,7 +15,7 @@ export function AceIntro({ player, onDone }: { player: string; onDone: () => voi
           style={{ animation: "ace-ball-drop-zoom 1.6s cubic-bezier(0.5, 0, 0.6, 1) both" }}
         />
       </div>
-      <div className="mt-6 text-5xl font-black text-amber-300 tracking-tight" style={{ animation: "pop-in 0.5s ease-out 0.9s both" }}>
+      <div className="mt-6 text-5xl font-black text-warning-300 tracking-tight" style={{ animation: "pop-in 0.5s ease-out 0.9s both" }}>
         ACE!
       </div>
       <div

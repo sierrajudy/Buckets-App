@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { Handshake, User } from "lucide-react";
 import { useAuth } from "../authStore";
 import { useRoom } from "../store";
 import { RulesModal } from "./RulesModal";
@@ -76,7 +77,7 @@ export function Home({
   }
 
   return (
-    <div className="relative min-h-screen bg-gradient-to-b from-green-50 to-white dark:from-green-950 dark:to-neutral-950 flex items-center justify-center p-4">
+    <div className="relative min-h-screen bg-gradient-to-b from-primary-50 to-white dark:from-primary-950 dark:to-neutral-950 flex items-center justify-center p-4">
       <div className="absolute top-4 right-4 flex items-center gap-2">
         <button
           type="button"
@@ -90,23 +91,23 @@ export function Home({
           onClick={onViewFriends}
           className="flex items-center gap-1.5 rounded-full bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-700 shadow-sm px-3 py-1.5 text-sm font-medium text-neutral-600 dark:text-neutral-300 hover:bg-neutral-50 dark:hover:bg-neutral-800"
         >
-          <span aria-hidden>🤝</span> Friends
+          <Handshake size={16} aria-hidden /> Friends
         </button>
         <button
           type="button"
           onClick={onViewProfile}
           className="flex items-center gap-1.5 rounded-full bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-700 shadow-sm px-3 py-1.5 text-sm font-medium text-neutral-600 dark:text-neutral-300 hover:bg-neutral-50 dark:hover:bg-neutral-800"
         >
-          <span aria-hidden>👤</span> Profile
+          <User size={16} aria-hidden /> Profile
         </button>
       </div>
 
       <form
         onSubmit={handleSubmit}
-        className="w-full max-w-md bg-white dark:bg-neutral-900 rounded-2xl shadow-lg border border-green-100 dark:border-green-900 p-6 space-y-5"
+        className="w-full max-w-md bg-white dark:bg-neutral-900 rounded-2xl shadow-lg border border-primary-100 dark:border-primary-900 p-6 space-y-5"
       >
         <div className="text-center space-y-1">
-          <h1 className="text-3xl font-extrabold text-green-700 dark:text-green-400 tracking-tight">Buckets</h1>
+          <h1 className="text-3xl font-extrabold text-primary-700 dark:text-primary-400 tracking-tight">Buckets</h1>
           <p className="text-sm text-neutral-500 dark:text-neutral-400">Play with your foursome, anywhere</p>
         </div>
 
@@ -114,7 +115,7 @@ export function Home({
           <span className="text-neutral-600 dark:text-neutral-300">
             Signed in as <span className="font-semibold text-neutral-900 dark:text-white">{user?.name}</span>
           </span>
-          <button type="button" onClick={logout} className="text-neutral-500 hover:text-red-500 font-medium">
+          <button type="button" onClick={logout} className="text-neutral-500 hover:text-danger-500 font-medium">
             Sign out
           </button>
         </div>
@@ -190,7 +191,7 @@ export function Home({
               }}
               className={`flex-1 rounded-lg py-2 text-sm font-semibold border ${
                 mode === m
-                  ? "bg-green-600 text-white border-green-600"
+                  ? "bg-primary-600 text-white border-primary-600"
                   : "border-neutral-300 dark:border-neutral-700 text-neutral-600 dark:text-neutral-300 hover:bg-neutral-50 dark:hover:bg-neutral-800"
               }`}
             >
@@ -208,7 +209,7 @@ export function Home({
                 onChange={(e) => setCode(e.target.value.toUpperCase())}
                 placeholder="ABCDE"
                 maxLength={5}
-                className="w-full rounded-lg border border-neutral-300 dark:border-neutral-700 bg-transparent px-3 py-2 text-sm tracking-[0.3em] font-mono uppercase focus:outline-none focus:ring-2 focus:ring-green-500"
+                className="w-full rounded-lg border border-neutral-300 dark:border-neutral-700 bg-transparent px-3 py-2 text-sm tracking-[0.3em] font-mono uppercase focus:outline-none focus:ring-2 focus:ring-primary-500"
               />
             </div>
 
@@ -223,7 +224,7 @@ export function Home({
                   onClick={() => setAsSpectator(opt.value)}
                   className={`flex-1 rounded-lg py-2 text-xs font-semibold border ${
                     asSpectator === opt.value
-                      ? "bg-green-600 text-white border-green-600"
+                      ? "bg-primary-600 text-white border-primary-600"
                       : "border-neutral-300 dark:border-neutral-700 text-neutral-600 dark:text-neutral-300 hover:bg-neutral-50 dark:hover:bg-neutral-800"
                   }`}
                 >
@@ -247,12 +248,12 @@ export function Home({
           </p>
         )}
 
-        {error && <p className="text-sm text-red-500">{error}</p>}
+        {error && <p className="text-sm text-danger-500">{error}</p>}
 
         <button
           type="submit"
           disabled={busy}
-          className="w-full rounded-lg bg-green-600 hover:bg-green-700 disabled:opacity-50 text-white font-semibold py-2.5 transition-colors"
+          className="w-full rounded-lg bg-primary-600 hover:bg-primary-700 disabled:opacity-50 text-white font-semibold py-2.5 transition-colors"
         >
           {busy
             ? "One sec…"
@@ -266,7 +267,7 @@ export function Home({
         <button
           type="button"
           onClick={onViewStandings}
-          className="w-full text-sm text-neutral-500 dark:text-neutral-400 hover:text-green-600 dark:hover:text-green-400 py-1"
+          className="w-full text-sm text-neutral-500 dark:text-neutral-400 hover:text-primary-600 dark:hover:text-primary-400 py-1"
         >
           View standings & history
         </button>

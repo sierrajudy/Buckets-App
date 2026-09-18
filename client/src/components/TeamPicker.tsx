@@ -84,7 +84,7 @@ export function TeamPicker({
                   <div
                     key={name}
                     className={`flex items-center gap-2 rounded-lg pl-2 pr-2 py-1.5 transition-colors ${
-                      selected === name ? "bg-green-100 dark:bg-green-900 ring-2 ring-green-500" : ""
+                      selected === name ? "bg-primary-100 dark:bg-primary-900 ring-2 ring-primary-500" : ""
                     }`}
                   >
                     <button
@@ -109,7 +109,7 @@ export function TeamPicker({
                         onClick={(e) => e.stopPropagation()}
                         onChange={(e) => player && onSetHandicap(player.id, Number(e.target.value) || 0)}
                         title="Handicap"
-                        className="w-12 text-center rounded-md border border-neutral-300 dark:border-neutral-700 bg-transparent text-sm text-white py-1 disabled:opacity-60 focus:outline-none focus:ring-2 focus:ring-green-500"
+                        className="w-12 text-center rounded-md border border-neutral-300 dark:border-neutral-700 bg-transparent text-sm text-white py-1 disabled:opacity-60 focus:outline-none focus:ring-2 focus:ring-primary-500"
                       />
                     </label>
                   </div>

@@ -1,11 +1,13 @@
 import { useEffect, useRef, useState } from "react";
+import { Handshake } from "lucide-react";
 import { useRoom } from "../store";
 import { fetchFriendsOverview, type FriendUser } from "../lib/friendsApi";
+import { SkeletonRows } from "./Skeleton";
 
 const PANEL_WIDTH = 256; // matches w-64 below
 const VIEWPORT_MARGIN = 8;
 
-/** A "🤝 Add friend" button + dropdown, shared by the Lobby (seats them as a
+/** An "Add friend" button + dropdown, shared by the Lobby (seats them as a
  * player if there's an open slot) and the Scorecard (seats them as a
  * spectator, since the roster's locked mid-round) — see addFriendToRoom on
  * the server for how it decides. No accept step on their end: they're
@@ -68,9 +70,9 @@ export function AddFriendToRoundButton({ dark = false }: { dark?: boolean }) {
         ref={buttonRef}
         type="button"
         onClick={toggleOpen}
-        className={`text-sm ${dark ? "text-white/70 hover:text-white" : "text-neutral-500 hover:text-green-600 dark:hover:text-green-400"}`}
+        className={`flex items-center gap-1 text-sm ${dark ? "text-white/70 hover:text-white" : "text-neutral-500 hover:text-primary-600 dark:hover:text-primary-400"}`}
       >
-        🤝 Add friend
+        <Handshake size={15} aria-hidden /> Add friend
       </button>
 
       {open && panelPos && (
@@ -83,10 +85,10 @@ export function AddFriendToRoundButton({ dark = false }: { dark?: boolean }) {
             <div className="text-xs font-semibold text-neutral-500 uppercase tracking-wide">
               Add a friend to this round
             </div>
-            {friends === null && <p className="text-xs text-neutral-500">Loading…</p>}
+            {friends === null && <SkeletonRows count={2} withAvatar={false} />}
             {friends !== null && friends.length === 0 && (
               <p className="text-xs text-neutral-500">
-                No friends yet — add some from the 🤝 Friends page on Home.
+                No friends yet — add some from the Friends page on Home.
               </p>
             )}
             <ul className="space-y-1.5">
@@ -99,7 +101,7 @@ export function AddFriendToRoundButton({ dark = false }: { dark?: boolean }) {
                       type="button"
                       disabled={busyId === f.id}
                       onClick={() => handleAdd(f)}
-                      className="rounded-lg border border-green-600 text-green-700 dark:text-green-400 text-xs font-semibold px-2.5 py-1 hover:bg-green-50 dark:hover:bg-green-950 disabled:opacity-40"
+                      className="rounded-lg border border-primary-600 text-primary-700 dark:text-primary-400 text-xs font-semibold px-2.5 py-1 hover:bg-primary-50 dark:hover:bg-primary-950 disabled:opacity-40"
                     >
                       Add
                     </button>

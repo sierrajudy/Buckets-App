@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { Ban, Share2, User } from "lucide-react";
 import { useRoom } from "../store";
 import { AvatarIcon } from "./Avatars";
 import { EmojiReactionBar } from "./EmojiReactionBar";
@@ -49,8 +50,8 @@ export function Celebration({
   onViewProfile: () => void;
   /** Takes them straight to Profile's Avatar & Achievements tab — used by
    * the achievement-unlock popup's "Equip now" button. Distinct from
-   * onViewProfile, which is the plain 👤 Profile link and always opens on
-   * the Rounds tab. */
+   * onViewProfile, which is the plain Profile link and always opens on the
+   * Rounds tab. */
   onViewAchievements: () => void;
 }) {
   const { state, isHost, isSpectator, me, newRound, leaveRoom } = useRoom();
@@ -145,7 +146,7 @@ export function Celebration({
             ? "bg-gradient-to-b from-slate-950 via-indigo-950 to-indigo-900"
             : isBaseball
               ? "bg-gradient-to-b from-slate-950 via-blue-950 to-slate-900"
-              : "bg-gradient-to-b from-slate-950 via-emerald-950 to-green-950"
+              : "bg-gradient-to-b from-slate-950 via-emerald-950 to-primary-950"
       }`}
     >
       {isWolf && <WolfBackdrop />}
@@ -173,7 +174,7 @@ export function Celebration({
 
       <div className="relative z-10 max-w-lg w-full text-center space-y-8">
         <div className="flex items-center justify-between text-xs">
-          <button type="button" onClick={leaveRoom} className="text-neutral-500 hover:text-red-400">
+          <button type="button" onClick={leaveRoom} className="text-neutral-500 hover:text-danger-400">
             Home
           </button>
           <div className="flex items-center gap-4">
@@ -185,14 +186,14 @@ export function Celebration({
             >
               Refresh
             </button>
-            <button type="button" onClick={onViewProfile} className="text-neutral-500 hover:text-white">
-              👤 Profile
+            <button type="button" onClick={onViewProfile} className="flex items-center gap-1 text-neutral-500 hover:text-white">
+              <User size={14} aria-hidden /> Profile
             </button>
           </div>
         </div>
 
         {round.holeInOnePlayer && (
-          <div className="text-amber-400 font-bold text-sm tracking-widest uppercase">
+          <div className="text-warning-400 font-bold text-sm tracking-widest uppercase">
             Match won on a hole in one!
           </div>
         )}
@@ -272,7 +273,7 @@ export function Celebration({
             >
               {round.winner}
             </div>
-            <div className="mt-2 text-2xl font-bold text-green-400">{round.totals[round.winner]} pts</div>
+            <div className="mt-2 text-2xl font-bold text-primary-400">{round.totals[round.winner]} pts</div>
           </div>
         )}
 
@@ -284,12 +285,12 @@ export function Celebration({
               <button
                 type="button"
                 onClick={() => setShowDeleteConfirm(true)}
-                className="text-sm font-semibold text-neutral-300 hover:text-red-400"
+                className="inline-flex items-center gap-1.5 text-sm font-semibold text-neutral-300 hover:text-danger-400"
               >
-                🚫 Don't count this game in the standings
+                <Ban size={15} aria-hidden /> Don't count this game in the standings
               </button>
             )}
-            {deleteError && <p className="text-xs text-red-400 mt-1">{deleteError}</p>}
+            {deleteError && <p className="text-xs text-danger-400 mt-1">{deleteError}</p>}
           </div>
         )}
 
@@ -345,11 +346,11 @@ export function Celebration({
 
         {round.losers.length > 0 && (
           <div
-            className="rounded-2xl p-5 bg-amber-950/40 border border-amber-800"
+            className="rounded-2xl p-5 bg-warning-950/40 border border-warning-800"
             style={{ animation: "pop-in 0.6s ease-out 0.3s both" }}
           >
             <div className="text-2xl mb-1">🍺</div>
-            <div className="text-amber-200 font-semibold">
+            <div className="text-warning-200 font-semibold">
               {joinNames(round.losers)} {round.losers.length > 1 ? "are" : "is"} buying the beers
             </div>
           </div>
@@ -360,7 +361,9 @@ export function Celebration({
           onClick={() => setShowShareRecap(true)}
           className={`w-full rounded-2xl p-4 ${cardBgCls} border border-neutral-800 text-center hover:border-neutral-700`}
         >
-          <div className="text-sm font-semibold text-white">📤 Share this round</div>
+          <div className="flex items-center justify-center gap-1.5 text-sm font-semibold text-white">
+            <Share2 size={15} aria-hidden /> Share this round
+          </div>
           <div className="text-xs text-neutral-400 mt-1">Get a recap image to send to the group chat</div>
         </button>
 
@@ -371,7 +374,7 @@ export function Celebration({
               href="https://venmo.com/u/Sierra-Judy-2"
               target="_blank"
               rel="noopener noreferrer"
-              className="font-semibold text-white underline underline-offset-2 hover:text-green-400"
+              className="font-semibold text-white underline underline-offset-2 hover:text-primary-400"
             >
               @Sierra-judy-2
             </a>
@@ -407,7 +410,7 @@ export function Celebration({
           {isHost ? (
             <button
               onClick={newRound}
-              className="flex-1 rounded-lg bg-green-600 hover:bg-green-700 text-white py-2.5 font-semibold text-sm"
+              className="flex-1 rounded-lg bg-primary-600 hover:bg-primary-700 text-white py-2.5 font-semibold text-sm"
             >
               New round
             </button>
@@ -437,7 +440,7 @@ export function Celebration({
                 type="button"
                 disabled={deleting}
                 onClick={handleDeleteRound}
-                className="flex-1 rounded-lg bg-red-600 hover:bg-red-700 disabled:opacity-60 text-white font-semibold py-2.5"
+                className="flex-1 rounded-lg bg-danger-600 hover:bg-danger-700 disabled:opacity-60 text-white font-semibold py-2.5"
               >
                 {deleting ? "Removing…" : "Yes, don't count it"}
               </button>
@@ -457,11 +460,11 @@ export function Celebration({
       {showAchievementPopup && (
         <div className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4">
           <div
-            className="w-full max-w-sm bg-neutral-900 border border-amber-500/40 rounded-2xl shadow-lg p-6 space-y-5 text-center"
+            className="w-full max-w-sm bg-neutral-900 border border-warning-500/40 rounded-2xl shadow-lg p-6 space-y-5 text-center"
             style={{ animation: "pop-in 0.4s ease-out" }}
           >
             <div>
-              <div className="text-xs font-bold uppercase tracking-widest text-amber-400 mb-1">
+              <div className="text-xs font-bold uppercase tracking-widest text-warning-400 mb-1">
                 {myNewAchievements.length > 1 ? "Achievements unlocked!" : "Achievement unlocked!"}
               </div>
               <p className="text-sm text-neutral-400">
@@ -474,7 +477,7 @@ export function Celebration({
               {myNewAchievements.map((a) => (
                 <div
                   key={a.key}
-                  className="flex items-center gap-3 bg-neutral-800/80 border border-amber-500/30 rounded-xl p-3 text-left"
+                  className="flex items-center gap-3 bg-neutral-800/80 border border-warning-500/30 rounded-xl p-3 text-left"
                 >
                   <div
                     className="w-11 h-11 shrink-0 rounded-full bg-neutral-900 flex items-center justify-center text-2xl"
@@ -497,7 +500,7 @@ export function Celebration({
                   setAchievementPopupDismissed(true);
                   onViewAchievements();
                 }}
-                className="flex-1 rounded-lg bg-amber-500 hover:bg-amber-600 text-neutral-900 font-bold py-2.5"
+                className="flex-1 rounded-lg bg-warning-500 hover:bg-warning-600 text-neutral-900 font-bold py-2.5"
               >
                 Equip now
               </button>

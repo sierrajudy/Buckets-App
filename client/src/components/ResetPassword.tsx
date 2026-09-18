@@ -37,15 +37,15 @@ export function ResetPassword() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-green-50 to-white dark:from-green-950 dark:to-neutral-950 flex items-center justify-center p-4">
-      <div className="w-full max-w-md bg-white dark:bg-neutral-900 rounded-2xl shadow-lg border border-green-100 dark:border-green-900 p-6 space-y-5">
+    <div className="min-h-screen bg-gradient-to-b from-primary-50 to-white dark:from-primary-950 dark:to-neutral-950 flex items-center justify-center p-4">
+      <div className="w-full max-w-md bg-white dark:bg-neutral-900 rounded-2xl shadow-lg border border-primary-100 dark:border-primary-900 p-6 space-y-5">
         <div className="text-center space-y-1">
-          <h1 className="text-3xl font-extrabold text-green-700 dark:text-green-400 tracking-tight">Buckets</h1>
+          <h1 className="text-3xl font-extrabold text-primary-700 dark:text-primary-400 tracking-tight">Buckets</h1>
           <p className="text-sm text-neutral-500 dark:text-neutral-400">Set a new password</p>
         </div>
 
         {!token && (
-          <p className="text-sm text-red-500 text-center">
+          <p className="text-sm text-danger-500 text-center">
             This link is missing its reset code. Request a new one from the log in screen.
           </p>
         )}
@@ -59,7 +59,7 @@ export function ResetPassword() {
             <button
               type="button"
               onClick={goToLogin}
-              className="w-full rounded-lg bg-green-600 hover:bg-green-700 text-white font-semibold py-2.5"
+              className="w-full rounded-lg bg-primary-600 hover:bg-primary-700 text-white font-semibold py-2.5"
             >
               Log in
             </button>
@@ -75,7 +75,7 @@ export function ResetPassword() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="At least 6 characters"
-                className="w-full rounded-lg border border-neutral-300 dark:border-neutral-700 bg-transparent px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
+                className="w-full rounded-lg border border-neutral-300 dark:border-neutral-700 bg-transparent px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
               />
             </div>
 
@@ -86,16 +86,16 @@ export function ResetPassword() {
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
                 placeholder="Same password again"
-                className="w-full rounded-lg border border-neutral-300 dark:border-neutral-700 bg-transparent px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
+                className="w-full rounded-lg border border-neutral-300 dark:border-neutral-700 bg-transparent px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
               />
             </div>
 
-            {error && <p className="text-sm text-red-500">{error}</p>}
+            {error && <p className="text-sm text-danger-500">{error}</p>}
 
             <button
               type="submit"
               disabled={busy}
-              className="w-full rounded-lg bg-green-600 hover:bg-green-700 disabled:opacity-50 text-white font-semibold py-2.5 transition-colors"
+              className="w-full rounded-lg bg-primary-600 hover:bg-primary-700 disabled:opacity-50 text-white font-semibold py-2.5 transition-colors"
             >
               {busy ? "One sec…" : "Update password"}
             </button>

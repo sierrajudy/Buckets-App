@@ -21,11 +21,11 @@ export function RulesModal({ onClose, initialMode = "standard" }: { onClose: () 
   return (
     <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4" onClick={onClose}>
       <div
-        className="w-full max-w-lg max-h-[85vh] bg-white dark:bg-neutral-900 rounded-2xl shadow-lg border border-green-100 dark:border-green-900 flex flex-col overflow-hidden"
+        className="w-full max-w-lg max-h-[85vh] bg-white dark:bg-neutral-900 rounded-2xl shadow-lg border border-primary-100 dark:border-primary-900 flex flex-col overflow-hidden"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between px-6 py-4 border-b border-neutral-200 dark:border-neutral-800 shrink-0">
-          <h2 className="text-xl font-extrabold text-green-700 dark:text-green-400">
+          <h2 className="text-xl font-extrabold text-primary-700 dark:text-primary-400">
             How to play {MODE_LABELS[mode]}
           </h2>
           <button
@@ -46,7 +46,7 @@ export function RulesModal({ onClose, initialMode = "standard" }: { onClose: () 
               onClick={() => setMode(m)}
               className={`shrink-0 rounded-full px-3 py-1.5 text-xs font-semibold border ${
                 mode === m
-                  ? "bg-green-600 text-white border-green-600"
+                  ? "bg-primary-600 text-white border-primary-600"
                   : "border-neutral-300 dark:border-neutral-700 text-neutral-600 dark:text-neutral-300 hover:bg-neutral-50 dark:hover:bg-neutral-800"
               }`}
             >

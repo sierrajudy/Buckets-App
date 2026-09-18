@@ -185,7 +185,7 @@ export function Scorecard() {
     : isWolf
       ? "border-indigo-700 dark:border-indigo-400"
       : isBaseball
-        ? "border-red-700 dark:border-red-400"
+        ? "border-danger-700 dark:border-danger-400"
         : "border-emerald-700 dark:border-emerald-400";
   // Every mode now has its own fixed background scene, so cards go
   // translucent everywhere to let it show through — a dark glass tint (not
@@ -223,7 +223,7 @@ export function Scorecard() {
             ? "bg-gradient-to-b from-slate-950 via-indigo-950 to-indigo-900"
             : isBaseball
               ? "bg-gradient-to-b from-slate-950 via-blue-950 to-slate-900"
-              : "bg-gradient-to-b from-slate-950 via-emerald-950 to-green-950"
+              : "bg-gradient-to-b from-slate-950 via-emerald-950 to-primary-950"
       }`}
     >
       {isWolf && <WolfBackdrop />}
@@ -267,7 +267,7 @@ export function Scorecard() {
             )}
 
             <div className="absolute inset-x-0 bottom-10 text-center">
-              <span className="inline-block px-4 py-1.5 rounded-full bg-white/90 dark:bg-neutral-900/90 text-green-700 dark:text-green-400 font-bold text-sm shadow">
+              <span className="inline-block px-4 py-1.5 rounded-full bg-white/90 dark:bg-neutral-900/90 text-primary-700 dark:text-primary-400 font-bold text-sm shadow">
                 On to the next hole! ⛳
               </span>
             </div>
@@ -276,7 +276,7 @@ export function Scorecard() {
 
       <header className="border-b border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 px-4 py-3 sticky top-0 z-20">
         <div className="flex items-center justify-between max-w-2xl mx-auto">
-          <button onClick={leaveRoom} className="text-sm text-neutral-500 hover:text-red-500">
+          <button onClick={leaveRoom} className="text-sm text-neutral-500 hover:text-danger-500">
             Leave
           </button>
           <div className="text-sm font-semibold text-neutral-600 dark:text-neutral-300">
@@ -288,7 +288,7 @@ export function Scorecard() {
                 <button
                   type="button"
                   onClick={() => setStepIndex(state.currentStep)}
-                  className="text-green-600 dark:text-green-400 font-semibold underline underline-offset-2"
+                  className="text-primary-600 dark:text-primary-400 font-semibold underline underline-offset-2"
                 >
                   · Jump to current hole
                 </button>
@@ -303,7 +303,7 @@ export function Scorecard() {
         <SyncStatusBanner />
 
         <div className="max-w-2xl mx-auto mt-3 relative h-6">
-          <div className="absolute inset-x-0 top-1/2 -translate-y-1/2 h-3 rounded-full bg-gradient-to-r from-green-500 to-green-700 dark:from-green-700 dark:to-green-900 overflow-hidden">
+          <div className="absolute inset-x-0 top-1/2 -translate-y-1/2 h-3 rounded-full bg-gradient-to-r from-primary-500 to-primary-700 dark:from-primary-700 dark:to-primary-900 overflow-hidden">
             <div
               className="absolute inset-0 opacity-20"
               style={{
@@ -323,7 +323,7 @@ export function Scorecard() {
                 className={`absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-3.5 h-3.5 rounded-full border-2 ${
                   done
                     ? "bg-white border-white"
-                    : "bg-green-800/40 border-green-200 dark:border-green-900"
+                    : "bg-primary-800/40 border-primary-200 dark:border-primary-900"
                 }`}
                 style={{ left: `${pct}%` }}
               />
@@ -380,7 +380,7 @@ export function Scorecard() {
                 </span>
               )}
               {result.holeInOnePlayers.length > 0 && (
-                <span className="px-2 py-1 rounded-full bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-300 animate-pulse">
+                <span className="px-2 py-1 rounded-full bg-warning-100 text-warning-800 dark:bg-warning-900 dark:text-warning-300 animate-pulse">
                   HOLE IN ONE!
                 </span>
               )}
@@ -411,13 +411,13 @@ export function Scorecard() {
                     {label}
                   </span>
                   <span
-                    className={`flex-1 text-right truncate ${outcome === "team0" ? "font-bold text-green-300" : "text-white/70"}`}
+                    className={`flex-1 text-right truncate ${outcome === "team0" ? "font-bold text-primary-300" : "text-white/70"}`}
                   >
                     {p0} ({formatMatchupScore(p0)})
                   </span>
                   <span className="text-white/60 px-2 text-xs shrink-0">vs</span>
                   <span
-                    className={`flex-1 truncate ${outcome === "team1" ? "font-bold text-green-300" : "text-white/70"}`}
+                    className={`flex-1 truncate ${outcome === "team1" ? "font-bold text-primary-300" : "text-white/70"}`}
                   >
                     {p1} ({formatMatchupScore(p1)})
                   </span>
@@ -434,7 +434,7 @@ export function Scorecard() {
                       <span className="text-xs font-normal text-white/70"> (+{result.highLow!.bonusPoints[i]} bonus)</span>
                     )}
                   </span>
-                  <span className="font-mono font-bold text-green-300">+{pts}</span>
+                  <span className="font-mono font-bold text-primary-300">+{pts}</span>
                 </div>
               ))}
             </div>
@@ -491,13 +491,13 @@ export function Scorecard() {
               <div className="pt-2 border-t border-white/20">
                 <div className="flex items-center justify-between text-sm">
                   <span
-                    className={`truncate ${result.wolf.outcome === "teamA" ? "font-bold text-green-300" : "text-white/70"}`}
+                    className={`truncate ${result.wolf.outcome === "teamA" ? "font-bold text-primary-300" : "text-white/70"}`}
                   >
                     {result.wolf.teamA.join(" & ")} ({result.wolf.bestA})
                   </span>
                   <span className="text-white/60 px-2 text-xs shrink-0">vs</span>
                   <span
-                    className={`text-right truncate ${result.wolf.outcome === "teamB" ? "font-bold text-green-300" : "text-white/70"}`}
+                    className={`text-right truncate ${result.wolf.outcome === "teamB" ? "font-bold text-primary-300" : "text-white/70"}`}
                   >
                     ({result.wolf.bestB}) {result.wolf.teamB.join(" & ")}
                   </span>
@@ -522,7 +522,7 @@ export function Scorecard() {
                     {medal} {group.join(" & ")}
                     {group.length > 1 && <span className="text-white/60"> (tied)</span>}
                   </span>
-                  <span className="font-mono font-bold text-green-300 shrink-0">
+                  <span className="font-mono font-bold text-primary-300 shrink-0">
                     {group.length > 1 ? `${pts} pts each` : `+${pts} pts`}
                   </span>
                 </div>
@@ -568,7 +568,7 @@ export function Scorecard() {
                       </span>
                     )}
                   </div>
-                  <span className="text-sm font-semibold text-green-300">
+                  <span className="text-sm font-semibold text-primary-300">
                     +{result.totalPoints[p.name] ?? 0} pts
                   </span>
                 </div>
@@ -591,7 +591,7 @@ export function Scorecard() {
                       value={strokes || ""}
                       onChange={(e) => setStrokes(result.holeNumber, p.name, Number(e.target.value) || null)}
                       placeholder={String(result.par)}
-                      className="w-14 text-center rounded-lg border border-white/40 bg-transparent text-white placeholder:text-white/40 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-green-500 disabled:opacity-50"
+                      className="w-14 text-center rounded-lg border border-white/40 bg-transparent text-white placeholder:text-white/40 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 disabled:opacity-50"
                     />
                     <button
                       type="button"
@@ -614,7 +614,7 @@ export function Scorecard() {
                         disabled={!canScore}
                         checked={wonBucket}
                         onChange={() => toggleBucket(result.holeNumber, p.name)}
-                        className="w-4 h-4 accent-green-600"
+                        className="w-4 h-4 accent-primary-600"
                       />
                       <span
                         className="inline-block"
@@ -676,7 +676,7 @@ export function Scorecard() {
                 <div key={i}>
                   <div className="text-xs font-semibold uppercase tracking-wide text-white/70">Team {i + 1}</div>
                   <div className="text-sm text-white/70 truncate">{team.join(" & ")}</div>
-                  <div className="text-lg font-extrabold text-green-700 dark:text-green-400">{sumTeamPoints(results)[i]}</div>
+                  <div className="text-lg font-extrabold text-primary-700 dark:text-primary-400">{sumTeamPoints(results)[i]}</div>
                 </div>
               ))}
             </div>
@@ -702,7 +702,7 @@ export function Scorecard() {
                     costume={p.equippedCostume}
                   />
                   <span className="text-sm text-white">{p.name}</span>
-                  <span className="text-lg font-extrabold text-green-300">
+                  <span className="text-lg font-extrabold text-primary-300">
                     {totals[p.name] ?? 0}
                   </span>
                 </div>
@@ -721,7 +721,7 @@ export function Scorecard() {
         )}
 
         {finishError && (
-          <div className="rounded-lg border border-red-400 bg-red-950/40 text-red-200 text-sm px-3 py-2.5 mb-2">
+          <div className="rounded-lg border border-danger-400 bg-danger-950/40 text-danger-200 text-sm px-3 py-2.5 mb-2">
             {finishError}
           </div>
         )}
@@ -739,7 +739,7 @@ export function Scorecard() {
             <button
               type="button"
               onClick={() => setShowEndConfirm(true)}
-              className={`shrink-0 rounded-lg border ${isHighLow ? "border-red-600" : "border-red-300 dark:border-red-900"} text-red-600 dark:text-red-400 px-3 py-2.5 font-semibold text-sm hover:bg-red-50 dark:hover:bg-red-950/40`}
+              className={`shrink-0 rounded-lg border ${isHighLow ? "border-danger-600" : "border-danger-300 dark:border-danger-900"} text-danger-600 dark:text-danger-400 px-3 py-2.5 font-semibold text-sm hover:bg-danger-50 dark:hover:bg-danger-950/40`}
             >
               End Game
             </button>
@@ -765,7 +765,7 @@ export function Scorecard() {
                     setConfirming(false);
                     if (!res.ok) setFinishError(res.error);
                   }}
-                  className={`flex-1 rounded-lg border bg-green-600 hover:bg-green-700 disabled:opacity-60 text-white py-2.5 font-semibold text-sm ${isHighLow ? "border-green-800" : "border-transparent"}`}
+                  className={`flex-1 rounded-lg border bg-primary-600 hover:bg-primary-700 disabled:opacity-60 text-white py-2.5 font-semibold text-sm ${isHighLow ? "border-primary-800" : "border-transparent"}`}
                 >
                   {confirming ? "Finishing…" : "Confirm & Finish Round"}
                 </button>
@@ -788,7 +788,7 @@ export function Scorecard() {
                 setStepIndex(next);
                 if (isHost) setCurrentStep(next);
               }}
-              className={`flex-1 rounded-lg border bg-green-600 hover:bg-green-700 disabled:opacity-40 text-white py-2.5 font-semibold text-sm ${isHighLow ? "border-green-800" : "border-transparent"}`}
+              className={`flex-1 rounded-lg border bg-primary-600 hover:bg-primary-700 disabled:opacity-40 text-white py-2.5 font-semibold text-sm ${isHighLow ? "border-primary-800" : "border-transparent"}`}
             >
               Next hole
             </button>
@@ -822,7 +822,7 @@ export function Scorecard() {
                     setShowEndConfirm(false);
                   }
                 }}
-                className="flex-1 rounded-lg bg-green-600 hover:bg-green-700 disabled:opacity-60 text-white font-semibold py-2.5"
+                className="flex-1 rounded-lg bg-primary-600 hover:bg-primary-700 disabled:opacity-60 text-white font-semibold py-2.5"
               >
                 {ending ? "Ending…" : "Yes"}
               </button>
@@ -830,7 +830,7 @@ export function Scorecard() {
                 type="button"
                 disabled={ending}
                 onClick={() => setShowEndConfirm(false)}
-                className="flex-1 rounded-lg bg-red-600 hover:bg-red-700 disabled:opacity-60 text-white font-semibold py-2.5"
+                className="flex-1 rounded-lg bg-danger-600 hover:bg-danger-700 disabled:opacity-60 text-white font-semibold py-2.5"
               >
                 No
               </button>

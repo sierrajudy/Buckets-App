@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { Eye, QrCode, User } from "lucide-react";
 import { useRoom } from "../store";
 import { AVATAR_KEYS, AVATAR_META, AvatarIcon, type AvatarKey } from "./Avatars";
 import { RulesModal } from "./RulesModal";
@@ -136,7 +137,7 @@ export function Lobby({
             ? "bg-gradient-to-b from-slate-950 via-indigo-950 to-indigo-900"
             : isBaseball
               ? "bg-gradient-to-b from-slate-950 via-blue-950 to-slate-900"
-              : "bg-gradient-to-b from-slate-950 via-emerald-950 to-green-950"
+              : "bg-gradient-to-b from-slate-950 via-emerald-950 to-primary-950"
       }`}
     >
       {isWolf && <WolfBackdrop />}
@@ -145,32 +146,32 @@ export function Lobby({
       {isBaseball && <BaseballBackdrop />}
       <div className="max-w-lg mx-auto space-y-4 relative z-10">
         <div className="flex items-center justify-between">
-          <button onClick={leaveRoom} className="text-sm text-neutral-500 hover:text-red-500">
+          <button onClick={leaveRoom} className="text-sm text-neutral-500 hover:text-danger-500">
             Leave
           </button>
           <div className="flex items-center gap-4">
             <button
               onClick={() => window.location.reload()}
               title="Reload if the room stops updating (e.g. after switching apps)"
-              className="text-sm text-neutral-500 hover:text-green-600 dark:hover:text-green-400"
+              className="text-sm text-neutral-500 hover:text-primary-600 dark:hover:text-primary-400"
             >
               Refresh
             </button>
             <button
               onClick={() => setShowRules(true)}
-              className="text-sm text-neutral-500 hover:text-green-600 dark:hover:text-green-400"
+              className="text-sm text-neutral-500 hover:text-primary-600 dark:hover:text-primary-400"
             >
               Rules
             </button>
             <button
               onClick={onViewProfile}
-              className="text-sm text-neutral-500 hover:text-green-600 dark:hover:text-green-400"
+              className="flex items-center gap-1 text-sm text-neutral-500 hover:text-primary-600 dark:hover:text-primary-400"
             >
-              👤 Profile
+              <User size={14} aria-hidden /> Profile
             </button>
             <button
               onClick={onViewStandings}
-              className="text-sm text-neutral-500 hover:text-green-600 dark:hover:text-green-400"
+              className="text-sm text-neutral-500 hover:text-primary-600 dark:hover:text-primary-400"
             >
               Standings
             </button>
@@ -181,7 +182,7 @@ export function Lobby({
           <div className={`text-xs font-semibold ${labelCls} uppercase tracking-widest mb-1`}>Room code</div>
           <button
             onClick={copyCode}
-            className="text-4xl font-black tracking-[0.25em] text-green-700 dark:text-green-400 font-mono"
+            className="text-4xl font-black tracking-[0.25em] text-primary-700 dark:text-primary-400 font-mono"
           >
             {state.code}
           </button>
@@ -189,12 +190,12 @@ export function Lobby({
           <button
             type="button"
             onClick={() => setShowQr(true)}
-            className="mt-2 inline-flex items-center gap-1.5 text-xs font-semibold text-neutral-500 hover:text-green-600 dark:hover:text-green-400"
+            className="mt-2 inline-flex items-center gap-1.5 text-xs font-semibold text-neutral-500 hover:text-primary-600 dark:hover:text-primary-400"
           >
-            📷 Show QR code
+            <QrCode size={14} aria-hidden /> Show QR code
           </button>
-          <div className="text-xs text-neutral-500 mt-2">
-            👀 {state.spectators.length} {state.spectators.length === 1 ? "person" : "people"} watching
+          <div className="flex items-center justify-center gap-1 text-xs text-neutral-500 mt-2">
+            <Eye size={14} aria-hidden /> {state.spectators.length} {state.spectators.length === 1 ? "person" : "people"} watching
           </div>
         </div>
 
@@ -215,8 +216,8 @@ export function Lobby({
                   onClick={() => setGameMode(mode.key)}
                   className={`text-left rounded-xl border-2 p-3 transition-colors ${
                     state.gameMode === mode.key
-                      ? "border-green-600 bg-green-50 dark:bg-green-950"
-                      : "border-transparent bg-neutral-50 dark:bg-neutral-800 hover:border-green-300"
+                      ? "border-primary-600 bg-primary-50 dark:bg-primary-950"
+                      : "border-transparent bg-neutral-50 dark:bg-neutral-800 hover:border-primary-300"
                   }`}
                 >
                   <div className="font-semibold text-sm">{mode.label}</div>
@@ -272,7 +273,7 @@ export function Lobby({
                 <select
                   value={state.startingHole}
                   onChange={(e) => setConfig(Number(e.target.value))}
-                  className="w-full rounded-lg border border-white/40 bg-transparent text-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
+                  className="w-full rounded-lg border border-white/40 bg-transparent text-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
                 >
                   {Array.from({ length: state.results.length }, (_, i) => i + 1).map((h) => (
                     <option key={h} value={h} className="text-black">
@@ -298,12 +299,12 @@ export function Lobby({
                 </span>
                 <span className={`font-medium ${labelCls}`}>{p.name}</span>
                 {p.id === state.hostId && (
-                  <span className="text-[10px] font-bold uppercase tracking-wide bg-amber-100 text-amber-700 dark:bg-amber-900 dark:text-amber-300 px-1.5 py-0.5 rounded">
+                  <span className="text-[10px] font-bold uppercase tracking-wide bg-warning-100 text-warning-700 dark:bg-warning-900 dark:text-warning-300 px-1.5 py-0.5 rounded">
                     Host
                   </span>
                 )}
                 {p.id === me?.id && (
-                  <span className="text-[10px] font-bold uppercase tracking-wide bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300 px-1.5 py-0.5 rounded">
+                  <span className="text-[10px] font-bold uppercase tracking-wide bg-primary-100 text-primary-700 dark:bg-primary-900 dark:text-primary-300 px-1.5 py-0.5 rounded">
                     You
                   </span>
                 )}
@@ -360,7 +361,7 @@ export function Lobby({
                       placeholder="Guest's name"
                       maxLength={20}
                       autoFocus
-                      className="flex-1 rounded-lg border border-white/40 bg-transparent text-white placeholder:text-white/40 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
+                      className="flex-1 rounded-lg border border-white/40 bg-transparent text-white placeholder:text-white/40 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
                     />
                     <button
                       type="button"
@@ -377,7 +378,7 @@ export function Lobby({
                           setGuestError(res.error);
                         }
                       }}
-                      className="shrink-0 rounded-lg bg-green-600 hover:bg-green-700 disabled:opacity-50 text-white px-4 py-2 text-sm font-semibold"
+                      className="shrink-0 rounded-lg bg-primary-600 hover:bg-primary-700 disabled:opacity-50 text-white px-4 py-2 text-sm font-semibold"
                     >
                       {addingGuest ? "Adding…" : "Add"}
                     </button>
@@ -393,7 +394,7 @@ export function Lobby({
                       Cancel
                     </button>
                   </div>
-                  {guestError && <p className="text-xs text-red-400">{guestError}</p>}
+                  {guestError && <p className="text-xs text-danger-400">{guestError}</p>}
                 </div>
               )}
             </div>
@@ -415,10 +416,10 @@ export function Lobby({
                     onClick={() => selectAvatar(key as AvatarKey)}
                     className={`relative rounded-xl border-2 p-2 flex flex-col items-center gap-1 transition-all ${
                       selected
-                        ? "border-green-600 bg-green-50 dark:bg-green-950"
+                        ? "border-primary-600 bg-primary-50 dark:bg-primary-950"
                         : takenByOther
                           ? "border-transparent opacity-30 cursor-not-allowed"
-                          : "border-transparent hover:border-green-300"
+                          : "border-transparent hover:border-primary-300"
                     }`}
                   >
                     <AvatarIcon avatar={key as AvatarKey} className="w-12 h-12" />
@@ -432,7 +433,7 @@ export function Lobby({
           </div>
         )}
 
-        {startError && <p className="text-sm text-red-500 text-center">{startError}</p>}
+        {startError && <p className="text-sm text-danger-500 text-center">{startError}</p>}
 
         {!isSpectator &&
           (isHost ? (
@@ -440,7 +441,7 @@ export function Lobby({
               <button
                 onClick={handleStart}
                 disabled={!canStart || starting}
-                className="w-full rounded-lg bg-green-600 hover:bg-green-700 disabled:opacity-40 text-white font-semibold py-3"
+                className="w-full rounded-lg bg-primary-600 hover:bg-primary-700 disabled:opacity-40 text-white font-semibold py-3"
               >
                 {starting ? "Starting…" : "Start round"}
               </button>

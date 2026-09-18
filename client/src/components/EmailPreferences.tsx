@@ -60,7 +60,7 @@ export function EmailPreferences({ autoOpen = false }: { autoOpen?: boolean }) {
           type="checkbox"
           checked={roundStart}
           onChange={(e) => setRoundStart(e.target.checked)}
-          className="w-4 h-4 mt-0.5 accent-green-600"
+          className="w-4 h-4 mt-0.5 accent-primary-600"
         />
         <span>
           <span className="font-medium">🏌️ Round started</span> — email me when a round begins, so I can come
@@ -73,21 +73,21 @@ export function EmailPreferences({ autoOpen = false }: { autoOpen?: boolean }) {
           type="checkbox"
           checked={standings}
           onChange={(e) => setStandings(e.target.checked)}
-          className="w-4 h-4 mt-0.5 accent-green-600"
+          className="w-4 h-4 mt-0.5 accent-primary-600"
         />
         <span>
           <span className="font-medium">🏆 Final standings</span> — email me the results when a round finishes
         </span>
       </label>
 
-      {error && <p className="text-xs text-red-500">{error}</p>}
+      {error && <p className="text-xs text-danger-500">{error}</p>}
 
       <div className="flex gap-2 pt-1">
         <button
           type="button"
           onClick={handleSave}
           disabled={saving}
-          className="flex-1 rounded-lg bg-green-600 hover:bg-green-700 disabled:opacity-60 text-white font-semibold text-sm py-2"
+          className="flex-1 rounded-lg bg-primary-600 hover:bg-primary-700 disabled:opacity-60 text-white font-semibold text-sm py-2"
         >
           {saving ? "Saving…" : "Save preferences"}
         </button>

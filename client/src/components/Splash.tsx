@@ -9,7 +9,7 @@ export function Splash({ onDone }: { onDone: () => void }) {
   }, [onDone]);
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-green-700 to-green-900 flex flex-col items-center justify-center overflow-hidden">
+    <div className="min-h-screen bg-gradient-to-b from-primary-700 to-primary-900 flex flex-col items-center justify-center overflow-hidden">
       <div className="relative w-48 h-56">
         {BALL_DELAYS.map((delay, i) => (
           <div
@@ -76,7 +76,7 @@ export function Splash({ onDone }: { onDone: () => void }) {
         Buckets
       </div>
       <div
-        className="mt-1 text-sm text-green-200 font-medium tracking-wide"
+        className="mt-1 text-sm text-primary-200 font-medium tracking-wide"
         style={{ animation: "pop-in 0.6s ease-out 1.3s both" }}
       >
         for degenerate golfers

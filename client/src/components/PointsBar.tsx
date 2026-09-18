@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 
-export function PointsBar({ value, max, color = "bg-green-500" }: { value: number; max: number; color?: string }) {
+export function PointsBar({ value, max, color = "bg-primary-500" }: { value: number; max: number; color?: string }) {
   const [width, setWidth] = useState(0);
 
   useEffect(() => {

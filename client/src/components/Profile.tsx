@@ -6,6 +6,7 @@ import { RoundHistoryTable } from "./RoundHistoryTable";
 import { EmailPreferences } from "./EmailPreferences";
 import { Closet } from "./Closet";
 import { AvatarIcon, type AvatarKey } from "./Avatars";
+import { Skeleton, SkeletonRows } from "./Skeleton";
 import type { RoundHistoryRow } from "../types";
 
 export function Profile({
@@ -46,7 +47,7 @@ export function Profile({
     <div className="min-h-screen bg-neutral-50 dark:bg-neutral-950 p-4">
       <div className="max-w-4xl mx-auto space-y-4">
         <div className="flex items-center justify-between">
-          <h1 className="text-2xl font-extrabold text-green-700 dark:text-green-400">Profile</h1>
+          <h1 className="text-2xl font-extrabold text-primary-700 dark:text-primary-400">Profile</h1>
           <button
             onClick={onBack}
             className="rounded-lg border border-neutral-300 dark:border-neutral-700 px-3 py-1.5 text-sm font-medium hover:bg-neutral-100 dark:hover:bg-neutral-800"
@@ -55,7 +56,7 @@ export function Profile({
           </button>
         </div>
 
-        <div className="bg-white dark:bg-neutral-900 rounded-2xl border border-neutral-200 dark:border-neutral-800 p-4 flex items-center justify-between">
+        <div className="bg-white dark:bg-neutral-900 rounded-2xl border border-neutral-200 dark:border-neutral-800 shadow-sm p-5 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="w-14 h-14 shrink-0">
               <AvatarIcon
@@ -71,7 +72,7 @@ export function Profile({
           </div>
           {rows && (
             <div className="text-right">
-              <div className="text-2xl font-extrabold text-green-700 dark:text-green-400">{wins}</div>
+              <div className="text-2xl font-extrabold text-primary-700 dark:text-primary-400">{wins}</div>
               <div className="text-xs text-neutral-500">
                 {wins === 1 ? "win" : "wins"} of {rows.length} {rows.length === 1 ? "round" : "rounds"}
               </div>
@@ -79,14 +80,20 @@ export function Profile({
           )}
         </div>
 
-        <div className="bg-white dark:bg-neutral-900 rounded-2xl border border-neutral-200 dark:border-neutral-800 p-4">
+        <div className="bg-white dark:bg-neutral-900 rounded-2xl border border-neutral-200 dark:border-neutral-800 shadow-sm p-5">
           <div className="text-sm font-semibold text-neutral-500 mb-2">
             Friends{friends ? ` (${friends.length})` : ""}
           </div>
-          {!friends && <p className="text-sm text-neutral-500">Loading…</p>}
+          {!friends && (
+            <div className="flex flex-wrap gap-2">
+              {Array.from({ length: 3 }, (_, i) => (
+                <Skeleton key={i} className="h-8 w-24 rounded-full" />
+              ))}
+            </div>
+          )}
           {friends && friends.length === 0 && (
             <p className="text-sm text-neutral-500">
-              No friends added yet — search for them or quick-add from a game on the 🤝 Friends page.
+              No friends added yet — search for them or quick-add from a game on the Friends page.
             </p>
           )}
           {friends && friends.length > 0 && (
@@ -96,7 +103,7 @@ export function Profile({
                   <button
                     type="button"
                     onClick={() => onViewFriend(f)}
-                    className="flex items-center gap-1.5 rounded-full border border-neutral-300 dark:border-neutral-700 pl-1.5 pr-3 py-1 text-sm font-medium hover:border-green-500 hover:text-green-700 dark:hover:text-green-400"
+                    className="flex items-center gap-1.5 rounded-full border border-neutral-300 dark:border-neutral-700 pl-1.5 pr-3 py-1 text-sm font-medium hover:border-primary-500 hover:text-primary-700 dark:hover:text-primary-400"
                   >
                     <span className="w-6 h-6 shrink-0">
                       <AvatarIcon
@@ -121,7 +128,7 @@ export function Profile({
               onClick={() => setTab(t)}
               className={`flex-1 rounded-lg py-2 text-sm font-semibold border ${
                 tab === t
-                  ? "bg-green-600 text-white border-green-600"
+                  ? "bg-primary-600 text-white border-primary-600"
                   : "border-neutral-300 dark:border-neutral-700 text-neutral-600 dark:text-neutral-300 hover:bg-neutral-50 dark:hover:bg-neutral-800"
               }`}
             >
@@ -136,8 +143,8 @@ export function Profile({
 
             <div>
               <div className="text-sm font-semibold text-neutral-500 mb-2">Every round you've played</div>
-              {error && <p className="text-sm text-red-500">{error}</p>}
-              {!rows && !error && <p className="text-sm text-neutral-500">Loading…</p>}
+              {error && <p className="text-sm text-danger-500">{error}</p>}
+              {!rows && !error && <SkeletonRows count={4} withAvatar={false} />}
               {rows && <RoundHistoryTable rows={rows} emptyMessage="No rounds yet — go host or join one!" />}
             </div>
           </>

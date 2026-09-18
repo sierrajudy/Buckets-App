@@ -41,8 +41,8 @@ export function SyncStatusBanner() {
     <div
       className={`max-w-2xl mx-auto mt-2 rounded-lg px-3 py-1.5 text-xs font-semibold text-center ${
         online
-          ? "bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300"
-          : "bg-red-100 text-red-800 dark:bg-red-950 dark:text-red-300"
+          ? "bg-warning-100 text-warning-800 dark:bg-warning-950 dark:text-warning-300"
+          : "bg-danger-100 text-danger-800 dark:bg-danger-950 dark:text-danger-300"
       }`}
     >
       {online

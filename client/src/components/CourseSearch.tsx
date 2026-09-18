@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { Star } from "lucide-react";
 import { fetchCourseTees, searchCourses, selectCourseTee } from "../lib/api";
 import {
   addFavoriteCourse,
@@ -148,7 +149,7 @@ export function CourseSearch({
             <button
               type="button"
               onClick={() => setEditingCourse(true)}
-              className="text-xs text-white/70 hover:text-green-400 shrink-0"
+              className="text-xs text-white/70 hover:text-primary-400 shrink-0"
             >
               Change course
             </button>
@@ -161,7 +162,7 @@ export function CourseSearch({
                   value={query}
                   onChange={(e) => setQuery(e.target.value)}
                   placeholder="Search any course (e.g. Pebble Beach)"
-                  className="w-full rounded-lg border border-white/40 bg-transparent text-white placeholder:text-white/40 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
+                  className="w-full rounded-lg border border-white/40 bg-transparent text-white placeholder:text-white/40 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
                 />
                 {searching && (
                   <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-white/60">…</span>
@@ -171,19 +172,19 @@ export function CourseSearch({
                 <button
                   type="button"
                   onClick={cancelEditing}
-                  className="text-xs text-white/70 hover:text-red-400 shrink-0"
+                  className="text-xs text-white/70 hover:text-danger-400 shrink-0"
                 >
                   Cancel
                 </button>
               )}
             </div>
 
-            {error && <p className="text-xs text-red-400">{error}</p>}
+            {error && <p className="text-xs text-danger-400">{error}</p>}
 
             {!results && favorites && favorites.length > 0 && (
               <div>
-                <div className="text-xs font-semibold text-white/60 uppercase tracking-wide mb-1">
-                  ⭐ Your favorites
+                <div className="flex items-center gap-1 text-xs font-semibold text-white/60 uppercase tracking-wide mb-1">
+                  <Star size={12} aria-hidden fill="currentColor" /> Your favorites
                 </div>
                 <div className="max-h-56 overflow-y-auto rounded-lg border border-white/20 divide-y divide-white/10">
                   {favorites.map((f) => (
@@ -229,9 +230,9 @@ export function CourseSearch({
                 type="button"
                 onClick={() => toggleFavorite(pendingCourse)}
                 title={isFavorited(pendingCourse.id) ? "Remove from favorites" : "Save as a favorite course"}
-                className="text-lg leading-none"
+                className={isFavorited(pendingCourse.id) ? "text-warning-400" : "text-white/60"}
               >
-                {isFavorited(pendingCourse.id) ? "⭐" : "☆"}
+                <Star size={18} fill={isFavorited(pendingCourse.id) ? "currentColor" : "none"} />
               </button>
             )}
           </div>
@@ -240,7 +241,7 @@ export function CourseSearch({
               value={selectedTeeKey}
               disabled={loadingTees || resolvingTee}
               onChange={(e) => handlePickTee(e.target.value)}
-              className="w-full rounded-lg border border-white/40 bg-transparent text-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500 disabled:opacity-50"
+              className="w-full rounded-lg border border-white/40 bg-transparent text-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 disabled:opacity-50"
             >
               <option value="" disabled className="text-black">
                 {loadingTees ? "Loading tees…" : resolvingTee ? "Loading course…" : "Pick a tee"}
@@ -288,9 +289,9 @@ function CourseRow({
           onToggleFavorite(course);
         }}
         title={favorited ? "Remove from favorites" : "Save as a favorite course"}
-        className="shrink-0 text-lg leading-none px-2"
+        className={`shrink-0 px-2 ${favorited ? "text-warning-400" : "text-white/60"}`}
       >
-        {favorited ? "⭐" : "☆"}
+        <Star size={16} fill={favorited ? "currentColor" : "none"} />
       </button>
     </div>
   );

@@ -51,7 +51,7 @@ export function AddedToRoundToast() {
   return (
     <div className="fixed top-4 inset-x-0 z-[100] flex justify-center px-4 pointer-events-none">
       <div
-        className="pointer-events-auto w-full max-w-sm bg-neutral-900 border border-green-500/40 rounded-2xl shadow-lg p-4 flex items-center gap-3"
+        className="pointer-events-auto w-full max-w-sm bg-neutral-900 border border-primary-500/40 rounded-2xl shadow-lg p-4 flex items-center gap-3"
         style={{ animation: "pop-in 0.3s ease-out" }}
       >
         <div className="text-2xl shrink-0">⛳</div>
@@ -66,7 +66,7 @@ export function AddedToRoundToast() {
             type="button"
             disabled={busy}
             onClick={handleOpen}
-            className="rounded-lg bg-green-600 hover:bg-green-700 disabled:opacity-50 text-white text-xs font-semibold px-3 py-1.5"
+            className="rounded-lg bg-primary-600 hover:bg-primary-700 disabled:opacity-50 text-white text-xs font-semibold px-3 py-1.5"
           >
             Open
           </button>

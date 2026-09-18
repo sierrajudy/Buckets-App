@@ -24,12 +24,12 @@ export function HoleBreakdownModal({
   return (
     <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4" onClick={onClose}>
       <div
-        className="w-full max-w-2xl max-h-[85vh] bg-white dark:bg-neutral-900 rounded-2xl shadow-lg border border-green-100 dark:border-green-900 flex flex-col overflow-hidden"
+        className="w-full max-w-2xl max-h-[85vh] bg-white dark:bg-neutral-900 rounded-2xl shadow-lg border border-primary-100 dark:border-primary-900 flex flex-col overflow-hidden"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between px-6 py-4 border-b border-neutral-200 dark:border-neutral-800 shrink-0">
           <div>
-            <h2 className="text-xl font-extrabold text-green-700 dark:text-green-400">Hole-by-hole</h2>
+            <h2 className="text-xl font-extrabold text-primary-700 dark:text-primary-400">Hole-by-hole</h2>
             {course && <p className="text-xs text-neutral-500">{course}</p>}
           </div>
           <button
@@ -68,12 +68,12 @@ export function HoleBreakdownModal({
                     return (
                       <td
                         key={name}
-                        className={`px-3 py-2 text-center ${won ? "bg-green-50 dark:bg-green-950/40" : ""}`}
+                        className={`px-3 py-2 text-center ${won ? "bg-primary-50 dark:bg-primary-950/40" : ""}`}
                       >
                         <div className="flex flex-col items-center leading-tight">
                           <span className="font-bold">{strokes || "–"}</span>
                           {strokes > 0 && (
-                            <span className="text-[10px] text-green-600 dark:text-green-400">
+                            <span className="text-[10px] text-primary-600 dark:text-primary-400">
                               {pts > 0 ? `+${pts}` : "0"}
                             </span>
                           )}

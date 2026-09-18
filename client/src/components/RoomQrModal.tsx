@@ -29,7 +29,7 @@ export function RoomQrModal({ code, onClose }: { code: string; onClose: () => vo
         <div className="bg-white p-4 rounded-xl inline-block">
           <QRCodeSVG value={link} size={220} />
         </div>
-        <div className="font-mono text-2xl font-black tracking-[0.25em] text-green-700 dark:text-green-400">
+        <div className="font-mono text-2xl font-black tracking-[0.25em] text-primary-700 dark:text-primary-400">
           {code}
         </div>
         <p className="text-xs text-neutral-500 dark:text-neutral-400">Or share the room code above to join manually</p>

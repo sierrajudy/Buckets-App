@@ -111,7 +111,7 @@ export const RecapCard = forwardRef<HTMLDivElement, { round: RoundSummary; playe
         </div>
 
         {round.losers.length > 0 && (
-          <div className="text-center text-sm text-amber-300">
+          <div className="text-center text-sm text-warning-300">
             🍺 {round.losers.join(" & ")} {round.losers.length > 1 ? "are" : "is"} buying
           </div>
         )}

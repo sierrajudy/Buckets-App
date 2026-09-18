@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { Search } from "lucide-react";
 import {
   addFriend,
   fetchFriendsOverview,
@@ -66,7 +67,7 @@ export function Friends({ onBack }: { onBack: () => void }) {
     <div className="min-h-screen bg-neutral-50 dark:bg-neutral-950 p-4">
       <div className="max-w-2xl mx-auto space-y-4">
         <div className="flex items-center justify-between">
-          <h1 className="text-2xl font-extrabold text-green-700 dark:text-green-400">Friends</h1>
+          <h1 className="text-2xl font-extrabold text-primary-700 dark:text-primary-400">Friends</h1>
           <button
             onClick={onBack}
             className="rounded-lg border border-neutral-300 dark:border-neutral-700 px-3 py-1.5 text-sm font-medium hover:bg-neutral-100 dark:hover:bg-neutral-800"
@@ -75,18 +76,18 @@ export function Friends({ onBack }: { onBack: () => void }) {
           </button>
         </div>
 
-        {error && <p className="text-sm text-red-500">{error}</p>}
+        {error && <p className="text-sm text-danger-500">{error}</p>}
 
-        <div className="bg-white dark:bg-neutral-900 rounded-2xl border-2 border-green-500 p-4 space-y-3">
-          <label className="block text-base font-bold text-neutral-800 dark:text-neutral-100">
-            🔍 Search for friends
+        <div className="bg-white dark:bg-neutral-900 rounded-2xl border-2 border-primary-500 p-4 space-y-3">
+          <label className="flex items-center gap-1.5 text-base font-bold text-neutral-800 dark:text-neutral-100">
+            <Search size={17} aria-hidden /> Search for friends
           </label>
           <input
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Search by name or email…"
             autoFocus
-            className="w-full rounded-lg border border-neutral-300 dark:border-neutral-700 bg-transparent px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
+            className="w-full rounded-lg border border-neutral-300 dark:border-neutral-700 bg-transparent px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
           />
           {searching && <p className="text-xs text-neutral-500">Searching…</p>}
           {results.length > 0 && (
@@ -103,7 +104,7 @@ export function Friends({ onBack }: { onBack: () => void }) {
                     <button
                       disabled={busyId === r.id}
                       onClick={() => handleAdd(r.id)}
-                      className="shrink-0 rounded-lg border border-green-600 text-green-700 dark:text-green-400 text-xs font-semibold px-3 py-1.5 hover:bg-green-50 dark:hover:bg-green-950 disabled:opacity-50"
+                      className="shrink-0 rounded-lg border border-primary-600 text-primary-700 dark:text-primary-400 text-xs font-semibold px-3 py-1.5 hover:bg-primary-50 dark:hover:bg-primary-950 disabled:opacity-50"
                     >
                       {busyId === r.id ? "…" : "+ Add"}
                     </button>
@@ -125,7 +126,7 @@ export function Friends({ onBack }: { onBack: () => void }) {
                 <button
                   disabled={busyId === u.id}
                   onClick={() => handleAdd(u.id)}
-                  className="shrink-0 rounded-lg border border-green-600 text-green-700 dark:text-green-400 text-xs font-semibold px-3 py-1.5 hover:bg-green-50 dark:hover:bg-green-950"
+                  className="shrink-0 rounded-lg border border-primary-600 text-primary-700 dark:text-primary-400 text-xs font-semibold px-3 py-1.5 hover:bg-primary-50 dark:hover:bg-primary-950"
                 >
                   {busyId === u.id ? "…" : "+ Add"}
                 </button>
@@ -149,7 +150,7 @@ export function Friends({ onBack }: { onBack: () => void }) {
               <button
                 disabled={busyId === f.id}
                 onClick={() => handleRemove(f.id)}
-                className="shrink-0 text-xs text-neutral-400 hover:text-red-500"
+                className="shrink-0 text-xs text-neutral-400 hover:text-danger-500"
               >
                 Remove
               </button>
@@ -163,7 +164,7 @@ export function Friends({ onBack }: { onBack: () => void }) {
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <div className="bg-white dark:bg-neutral-900 rounded-2xl border border-neutral-200 dark:border-neutral-800 p-4 space-y-1">
+    <div className="bg-white dark:bg-neutral-900 rounded-2xl border border-neutral-200 dark:border-neutral-800 shadow-sm p-5 space-y-1">
       <div className="text-sm font-semibold text-neutral-500 mb-2">{title}</div>
       <ul className="space-y-2">{children}</ul>
     </div>

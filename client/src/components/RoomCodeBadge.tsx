@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Eye, QrCode } from "lucide-react";
 import { useRoom } from "../store";
 import { RoomQrModal } from "./RoomQrModal";
 
@@ -25,9 +26,9 @@ export function RoomCodeBadge({ variant = "light" }: { variant?: "light" | "dark
         <span className="tracking-widest font-mono">{state.code}</span>
         <span className="opacity-40">·</span>
         <span className="flex items-center gap-0.5" title={`${spectatorCount} watching`}>
-          👀 {spectatorCount}
+          <Eye size={13} aria-hidden /> {spectatorCount}
         </span>
-        <span aria-hidden>📷</span>
+        <QrCode size={13} aria-hidden />
       </button>
       {showQr && <RoomQrModal code={state.code} onClose={() => setShowQr(false)} />}
     </>

@@ -54,17 +54,17 @@ export function RoundSummaryTable({
               <tr
                 key={p.name}
                 className={`border-b border-neutral-100 dark:border-neutral-800 last:border-0 ${
-                  p.won ? "bg-green-50 dark:bg-green-950/40" : ""
+                  p.won ? "bg-primary-50 dark:bg-primary-950/40" : ""
                 }`}
               >
                 <td className="px-4 py-2.5 font-semibold">
                   {p.name}
-                  {p.won && <span className="ml-1.5 text-green-600">🏆</span>}
+                  {p.won && <span className="ml-1.5 text-primary-600">🏆</span>}
                 </td>
                 <td className="px-3 py-2.5 text-right">
                   <div className="flex items-center justify-end gap-2">
                     <span className="w-14">
-                      <PointsBar value={p.total} max={maxTotal} color={p.won ? "bg-amber-500" : "bg-green-500"} />
+                      <PointsBar value={p.total} max={maxTotal} color={p.won ? "bg-warning-500" : "bg-primary-500"} />
                     </span>
                     <span className="font-bold w-6 text-right">{p.total}</span>
                   </div>

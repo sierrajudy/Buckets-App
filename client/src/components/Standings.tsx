@@ -4,6 +4,7 @@ import { useRoom } from "../store";
 import { RoundSummaryTable } from "./RoundSummaryTable";
 import { PointsBar } from "./PointsBar";
 import { HoleBreakdownModal } from "./HoleBreakdownModal";
+import { SkeletonRows } from "./Skeleton";
 
 const MEDALS = ["🥇", "🥈", "🥉"];
 import type { RoomState, RoundHistoryRow, RoundPlayerSummary, StandingsRow } from "../types";
@@ -54,7 +55,7 @@ export function Standings({ onBack }: { onBack: () => void }) {
     <div className="min-h-screen bg-neutral-50 dark:bg-neutral-950 p-4">
       <div className="max-w-4xl mx-auto space-y-6">
         <div className="flex items-center justify-between">
-          <h1 className="text-2xl font-extrabold text-green-700 dark:text-green-400">Standings</h1>
+          <h1 className="text-2xl font-extrabold text-primary-700 dark:text-primary-400">Standings</h1>
           <button
             onClick={onBack}
             className="rounded-lg border border-neutral-300 dark:border-neutral-700 px-3 py-1.5 text-sm font-medium hover:bg-neutral-100 dark:hover:bg-neutral-800"
@@ -71,7 +72,7 @@ export function Standings({ onBack }: { onBack: () => void }) {
               <button
                 type="button"
                 onClick={() => setShowCurrentBreakdown(true)}
-                className="mt-2 text-sm font-semibold text-green-700 dark:text-green-400 hover:underline"
+                className="mt-2 text-sm font-semibold text-primary-700 dark:text-primary-400 hover:underline"
               >
                 See hole-by-hole breakdown →
               </button>
@@ -90,7 +91,7 @@ export function Standings({ onBack }: { onBack: () => void }) {
               <button
                 type="button"
                 onClick={() => setShowLastBreakdown(true)}
-                className="mt-2 text-sm font-semibold text-green-700 dark:text-green-400 hover:underline"
+                className="mt-2 text-sm font-semibold text-primary-700 dark:text-primary-400 hover:underline"
               >
                 See hole-by-hole breakdown →
               </button>
@@ -101,16 +102,16 @@ export function Standings({ onBack }: { onBack: () => void }) {
         <div>
           <div className="text-sm font-semibold text-neutral-500 mb-2">All-time leaderboard</div>
 
-          {error && <p className="text-sm text-red-500">{error}</p>}
+          {error && <p className="text-sm text-danger-500">{error}</p>}
 
-          {!rows && !error && <p className="text-sm text-neutral-500">Loading…</p>}
+          {!rows && !error && <SkeletonRows count={5} withAvatar={false} />}
 
           {rows && rows.length === 0 && (
             <p className="text-sm text-neutral-500">No rounds recorded yet. Play a round to start building history.</p>
           )}
 
           {rows && rows.length > 0 && (
-            <div className="overflow-x-auto rounded-xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900">
+            <div className="overflow-x-auto rounded-xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 shadow-sm">
               <table className="w-full text-sm">
                 <thead>
                   <tr className="text-left text-neutral-500 border-b border-neutral-200 dark:border-neutral-800">
@@ -137,7 +138,7 @@ export function Standings({ onBack }: { onBack: () => void }) {
                             {r.name}
                           </td>
                           <td className="px-3 py-2.5 text-right">{r.roundsPlayed}</td>
-                          <td className="px-3 py-2.5 text-right text-green-700 dark:text-green-400 font-semibold">
+                          <td className="px-3 py-2.5 text-right text-primary-700 dark:text-primary-400 font-semibold">
                             {r.matchWins}
                           </td>
                           <td className="px-3 py-2.5 text-right">{r.holesWon}</td>
