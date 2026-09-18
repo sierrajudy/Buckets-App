@@ -52,8 +52,8 @@ export function Auth() {
       setTimeout(() => {
         setTaglineIndex((i) => (i + 1) % TAGLINES.length);
         setTaglineFading(false);
-      }, 250);
-    }, 3000);
+      }, 600);
+    }, 5500);
     return () => clearInterval(id);
   }, [mode]);
 
@@ -108,7 +108,7 @@ export function Auth() {
                 Sign in to play and keep your stats across every round
               </p>
               <p
-                className={`text-sm font-semibold text-primary-600 dark:text-primary-400 transition-opacity duration-[250ms] ${
+                className={`text-sm font-semibold text-primary-600 dark:text-primary-400 transition-opacity duration-[600ms] ${
                   taglineFading ? "opacity-0" : "opacity-100"
                 }`}
               >
