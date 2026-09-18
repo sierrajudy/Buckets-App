@@ -121,12 +121,23 @@ export function updateEquippedCostumeForName(name: string, costume: string | nul
   return touched;
 }
 
+/** The first avatar (in AVATAR_KEYS order) nobody currently in the room is
+ * using — auto-assigned to every new player exactly the way a guest always
+ * has, so nobody has to stop and pick one before they can be seated. They
+ * can still change it themselves any time before the round starts (see
+ * setPlayerAvatar); this just picks a sensible default. With AVATAR_KEYS
+ * far outnumbering the 4-player room cap, there's always one free. */
+function nextFreeAvatar(existingPlayers: Player[]): AvatarKey | null {
+  const taken = new Set(existingPlayers.map((p) => p.avatar));
+  return AVATAR_KEYS.find((a) => !taken.has(a)) ?? null;
+}
+
 export function createRoom(hostName: string, equippedCostume: string | null = null): { room: Room; player: Player } {
   const code = generateRoomCode();
   const player: Player = {
     id: uuid(),
     name: hostName.trim(),
-    avatar: null,
+    avatar: nextFreeAvatar([]),
     connected: true,
     socketId: null,
     handicap: 0,
@@ -192,7 +203,7 @@ export function joinRoom(room: Room, name: string, equippedCostume: string | nul
   const player: Player = {
     id: uuid(),
     name: trimmed,
-    avatar: null,
+    avatar: nextFreeAvatar(room.players),
     connected: true,
     socketId: null,
     handicap: 0,
@@ -214,10 +225,8 @@ export function joinRoom(room: Room, name: string, equippedCostume: string | nul
  * all — no login, no email, and (since there's no account) nothing saved
  * to a personal round history afterward. The round itself still records
  * their name and scores same as anyone, and any other player can enter
- * their strokes, same as everyone else. Auto-assigned an available
- * avatar since there's no session on the other end to pick one — with
- * only 8 avatars and a 4-player cap there's always one free. Allowed
- * mid-round too (someone shows up late), not just from the lobby. */
+ * their strokes, same as everyone else. Allowed mid-round too (someone
+ * shows up late), not just from the lobby. */
 export function addGuest(room: Room, name: string): Player | { error: string } {
   if (room.phase !== "lobby" && room.phase !== "playing") {
     return { error: "Can't add a guest right now." };
@@ -227,13 +236,10 @@ export function addGuest(room: Room, name: string): Player | { error: string } {
   if (!trimmed) return { error: "Name is required." };
   if (isNameTaken(room, trimmed)) return { error: "That name is already taken in this room." };
 
-  const takenAvatars = new Set(room.players.map((p) => p.avatar));
-  const avatar = AVATAR_KEYS.find((a) => !takenAvatars.has(a)) ?? null;
-
   const player: Player = {
     id: uuid(),
     name: trimmed,
-    avatar,
+    avatar: nextFreeAvatar(room.players),
     connected: true,
     socketId: null,
     handicap: 0,
@@ -272,13 +278,13 @@ export type AddFriendToRoomResult =
  * no accept step on their end, unlike an ordinary invite; the caller
  * notifies them separately (see room:addFriendToRoom in socketHandlers.ts).
  * Pre-game (or mid-round, same as addGuest) this fills an open player slot
- * if there is one — avatar is left null, since a real account holder picks
- * their own when they actually show up, unlike a guest who never will.
- * Once the roster's full or the round's past "playing", they're seated as a
- * spectator instead. Idempotent: adding someone already seated under that
- * name just returns what's already there (with alreadyPresent: true) rather
- * than erroring or creating a duplicate — a repeat click, or the friend
- * having already joined themselves in the meantime, is harmless. */
+ * if there is one — auto-assigned an avatar same as everyone else, which
+ * they can change themselves once they actually show up. Once the roster's
+ * full or the round's past "playing", they're seated as a spectator
+ * instead. Idempotent: adding someone already seated under that name just
+ * returns what's already there (with alreadyPresent: true) rather than
+ * erroring or creating a duplicate — a repeat click, or the friend having
+ * already joined themselves in the meantime, is harmless. */
 export function addFriendToRoom(room: Room, friend: { name: string; equippedCostume: string | null }): AddFriendToRoomResult {
   const trimmed = friend.name.trim();
   if (!trimmed) return { error: "Name is required." };
@@ -292,7 +298,7 @@ export function addFriendToRoom(room: Room, friend: { name: string; equippedCost
     const player: Player = {
       id: uuid(),
       name: trimmed,
-      avatar: null,
+      avatar: nextFreeAvatar(room.players),
       connected: false,
       socketId: null,
       handicap: 0,
