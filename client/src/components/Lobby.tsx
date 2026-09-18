@@ -11,6 +11,7 @@ import { BaseballBackdrop } from "./BaseballBackdrop";
 import { QuickAddFriendButton } from "./QuickAddFriendButton";
 import { WeatherChip } from "./WeatherChip";
 import { AddFriendToRoundButton } from "./AddFriendToRoundButton";
+import { RoomQrModal } from "./RoomQrModal";
 import { fetchFriendsOverview } from "../lib/friendsApi";
 import type { GameMode } from "../types";
 
@@ -47,6 +48,7 @@ export function Lobby({
   const [startError, setStartError] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
   const [showRules, setShowRules] = useState(false);
+  const [showQr, setShowQr] = useState(false);
   const [showAddGuest, setShowAddGuest] = useState(false);
   const [guestName, setGuestName] = useState("");
   const [addingGuest, setAddingGuest] = useState(false);
@@ -184,6 +186,13 @@ export function Lobby({
             {state.code}
           </button>
           <div className="text-xs text-neutral-400 mt-1">{copied ? "Copied!" : "Tap to copy · share with your group"}</div>
+          <button
+            type="button"
+            onClick={() => setShowQr(true)}
+            className="mt-2 inline-flex items-center gap-1.5 text-xs font-semibold text-neutral-500 hover:text-green-600 dark:hover:text-green-400"
+          >
+            📷 Show QR code
+          </button>
           <div className="text-xs text-neutral-500 mt-2">
             👀 {state.spectators.length} {state.spectators.length === 1 ? "person" : "people"} watching
           </div>
@@ -458,6 +467,7 @@ export function Lobby({
       </div>
 
       {showRules && <RulesModal onClose={() => setShowRules(false)} initialMode={state?.gameMode ?? "standard"} />}
+      {showQr && <RoomQrModal code={state.code} onClose={() => setShowQr(false)} />}
     </div>
   );
 }

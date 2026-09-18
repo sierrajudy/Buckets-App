@@ -1,5 +1,6 @@
 import { createContext, useContext, useEffect, useRef, useState, type ReactNode } from "react";
 import { socket } from "./lib/socket";
+import { enqueueScoreAction, flushScoreQueue } from "./lib/scoreQueue";
 import type { AvatarKey, GameMode, RoomState, Teams } from "./types";
 
 const SESSION_KEY = "buckets:session";
@@ -98,6 +99,7 @@ export function RoomProvider({ children }: { children: ReactNode }) {
           if (res.ok) {
             setPlayerId(res.playerId as string);
             setState(res.state as RoomState);
+            flushScoreQueue(session.code);
           } else {
             localStorage.removeItem(SESSION_KEY);
           }
@@ -109,15 +111,32 @@ export function RoomProvider({ children }: { children: ReactNode }) {
       }
     }
 
+    /** The browser's own connectivity signal, distinct from the socket's —
+     * a phone can regain cell signal and fire "online" a moment before (or
+     * without ever needing) a full socket reconnect cycle, so this is a
+     * second, independent trigger to retry anything still queued rather
+     * than relying solely on "connect". */
+    function flushCurrentQueue() {
+      const raw = localStorage.getItem(SESSION_KEY);
+      if (!raw) return;
+      try {
+        flushScoreQueue((JSON.parse(raw) as Session).code);
+      } catch {
+        // malformed session — attemptRejoin's own catch already handles clearing it
+      }
+    }
+
     socket.on("room:state", onState);
     socket.on("spectator:reacted", onReaction);
     socket.on("connect", attemptRejoin);
+    window.addEventListener("online", flushCurrentQueue);
     if (socket.connected) attemptRejoin();
 
     return () => {
       socket.off("room:state", onState);
       socket.off("spectator:reacted", onReaction);
       socket.off("connect", attemptRejoin);
+      window.removeEventListener("online", flushCurrentQueue);
     };
   }, []);
 
@@ -208,24 +227,34 @@ export function RoomProvider({ children }: { children: ReactNode }) {
     setPlayerId(null);
   }
 
+  // These five go through the offline queue (scoreQueue.ts) instead of a
+  // bare socket.emit — a course with patchy signal is exactly where you'd
+  // otherwise lose a stroke entry silently. Queued actions persist to
+  // localStorage and retry on reconnect, so a dropped connection mid-round
+  // delays a score landing rather than losing it.
   function setStrokes(holeNumber: number, targetName: string, strokes: number | null) {
-    socket.emit("hole:setStrokes", { holeNumber, targetName, strokes });
+    if (!state) return;
+    enqueueScoreAction(state.code, "hole:setStrokes", { holeNumber, targetName, strokes });
   }
 
   function toggleBucket(holeNumber: number, targetName: string) {
-    socket.emit("hole:toggleBucket", { holeNumber, targetName });
+    if (!state) return;
+    enqueueScoreAction(state.code, "hole:toggleBucket", { holeNumber, targetName });
   }
 
   function setPgeEnabled(holeNumber: number, enabled: boolean) {
-    socket.emit("hole:setPgeEnabled", { holeNumber, enabled });
+    if (!state) return;
+    enqueueScoreAction(state.code, "hole:setPgeEnabled", { holeNumber, enabled });
   }
 
   function togglePgeWinner(holeNumber: number, targetName: string) {
-    socket.emit("hole:togglePgeWinner", { holeNumber, targetName });
+    if (!state) return;
+    enqueueScoreAction(state.code, "hole:togglePgeWinner", { holeNumber, targetName });
   }
 
   function setWolfChoice(holeNumber: number, partner: string | null, alone: boolean) {
-    socket.emit("hole:setWolfChoice", { holeNumber, partner, alone });
+    if (!state) return;
+    enqueueScoreAction(state.code, "hole:setWolfChoice", { holeNumber, partner, alone });
   }
 
   function resolvePuttOff(winner: string) {

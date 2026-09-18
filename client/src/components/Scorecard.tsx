@@ -5,6 +5,7 @@ import { GolfCart } from "./GolfCart";
 import { CANNON_STAGGER_MS, DrivingRange } from "./DrivingRange";
 import { HecklerGuy } from "./HecklerGuy";
 import { RoomCodeBadge } from "./RoomCodeBadge";
+import { SyncStatusBanner } from "./SyncStatusBanner";
 import { AddFriendToRoundButton } from "./AddFriendToRoundButton";
 import { EmojiReactionBar } from "./EmojiReactionBar";
 import { PredictionPicker } from "./PredictionPicker";
@@ -298,6 +299,8 @@ export function Scorecard() {
             <RoomCodeBadge />
           </div>
         </div>
+
+        <SyncStatusBanner />
 
         <div className="max-w-2xl mx-auto mt-3 relative h-6">
           <div className="absolute inset-x-0 top-1/2 -translate-y-1/2 h-3 rounded-full bg-gradient-to-r from-green-500 to-green-700 dark:from-green-700 dark:to-green-900 overflow-hidden">

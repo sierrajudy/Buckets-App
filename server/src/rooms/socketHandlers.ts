@@ -278,56 +278,93 @@ export function registerRoomHandlers(io: Server) {
       data.spectatorId = undefined;
     });
 
-    socket.on("hole:setStrokes", (payload: { holeNumber: number; targetName: string; strokes: number }) => {
+    // All five below take an optional ack — the client's offline queue
+    // (see scoreQueue.ts) relies on it to know whether a scoring action it
+    // fired while reconnecting actually landed, versus needing to stay
+    // queued for another retry. A rejection (wrong phase, not a real
+    // player/hole/target) is returned via ack rather than just dropped, so
+    // the client can stop retrying something that will never succeed —
+    // only a timeout (no ack at all, meaning the socket dropped mid-flight)
+    // should keep an action queued.
+    socket.on("hole:setStrokes", (payload: { holeNumber: number; targetName: string; strokes: number }, ack?: Ack) => {
       const room = data.roomCode ? getRoom(data.roomCode) : undefined;
-      if (!room || !isPlayerInRoom(room, data.playerId) || room.phase !== "playing") return;
+      if (!room || !isPlayerInRoom(room, data.playerId) || room.phase !== "playing") {
+        return ack?.({ ok: false, error: "Can't score right now." });
+      }
       const entry = room.entries[payload?.holeNumber];
-      if (!entry) return;
-      if (!room.players.some((p) => p.name === payload.targetName)) return;
+      if (!entry) return ack?.({ ok: false, error: "Invalid hole." });
+      if (!room.players.some((p) => p.name === payload.targetName)) return ack?.({ ok: false, error: "Invalid player." });
       const strokes = Number(payload.strokes);
       entry.strokes[payload.targetName] = Number.isFinite(strokes) && strokes > 0 ? strokes : null;
-      recomputeAndMaybeFinish(room).then(() => broadcast(io, room));
+      recomputeAndMaybeFinish(room).then(() => {
+        broadcast(io, room);
+        ack?.({ ok: true });
+      });
     });
 
-    socket.on("hole:toggleBucket", (payload: { holeNumber: number; targetName: string }) => {
+    socket.on("hole:toggleBucket", (payload: { holeNumber: number; targetName: string }, ack?: Ack) => {
       const room = data.roomCode ? getRoom(data.roomCode) : undefined;
-      if (!room || !isPlayerInRoom(room, data.playerId) || room.phase !== "playing") return;
+      if (!room || !isPlayerInRoom(room, data.playerId) || room.phase !== "playing") {
+        return ack?.({ ok: false, error: "Can't score right now." });
+      }
       const entry = room.entries[payload?.holeNumber];
-      if (!entry) return;
+      if (!entry) return ack?.({ ok: false, error: "Invalid hole." });
       entry.bucketWinners = entry.bucketWinners.includes(payload.targetName)
         ? entry.bucketWinners.filter((n) => n !== payload.targetName)
         : [...entry.bucketWinners, payload.targetName];
-      recomputeAndMaybeFinish(room).then(() => broadcast(io, room));
+      recomputeAndMaybeFinish(room).then(() => {
+        broadcast(io, room);
+        ack?.({ ok: true });
+      });
     });
 
-    socket.on("hole:setPgeEnabled", (payload: { holeNumber: number; enabled: boolean }) => {
+    socket.on("hole:setPgeEnabled", (payload: { holeNumber: number; enabled: boolean }, ack?: Ack) => {
       const room = data.roomCode ? getRoom(data.roomCode) : undefined;
-      if (!room || !isPlayerInRoom(room, data.playerId) || room.phase !== "playing") return;
+      if (!room || !isPlayerInRoom(room, data.playerId) || room.phase !== "playing") {
+        return ack?.({ ok: false, error: "Can't score right now." });
+      }
       const entry = room.entries[payload?.holeNumber];
-      if (!entry) return;
+      if (!entry) return ack?.({ ok: false, error: "Invalid hole." });
       entry.pgeEnabled = Boolean(payload.enabled);
       if (!entry.pgeEnabled) entry.pgeWinners = [];
-      recomputeAndMaybeFinish(room).then(() => broadcast(io, room));
+      recomputeAndMaybeFinish(room).then(() => {
+        broadcast(io, room);
+        ack?.({ ok: true });
+      });
     });
 
-    socket.on("hole:togglePgeWinner", (payload: { holeNumber: number; targetName: string }) => {
+    socket.on("hole:togglePgeWinner", (payload: { holeNumber: number; targetName: string }, ack?: Ack) => {
       const room = data.roomCode ? getRoom(data.roomCode) : undefined;
-      if (!room || !isPlayerInRoom(room, data.playerId) || room.phase !== "playing") return;
+      if (!room || !isPlayerInRoom(room, data.playerId) || room.phase !== "playing") {
+        return ack?.({ ok: false, error: "Can't score right now." });
+      }
       const entry = room.entries[payload?.holeNumber];
-      if (!entry || !entry.pgeEnabled) return;
+      if (!entry || !entry.pgeEnabled) return ack?.({ ok: false, error: "PG&E isn't enabled on this hole." });
       entry.pgeWinners = entry.pgeWinners.includes(payload.targetName)
         ? entry.pgeWinners.filter((n) => n !== payload.targetName)
         : [...entry.pgeWinners, payload.targetName];
-      recomputeAndMaybeFinish(room).then(() => broadcast(io, room));
+      recomputeAndMaybeFinish(room).then(() => {
+        broadcast(io, room);
+        ack?.({ ok: true });
+      });
     });
 
-    socket.on("hole:setWolfChoice", (payload: { holeNumber: number; partner: string | null; alone: boolean }) => {
-      const room = data.roomCode ? getRoom(data.roomCode) : undefined;
-      if (!room || !isPlayerInRoom(room, data.playerId) || room.phase !== "playing") return;
-      if (setWolfChoice(room, Number(payload?.holeNumber), payload?.partner ?? null, Boolean(payload?.alone))) {
-        recomputeAndMaybeFinish(room).then(() => broadcast(io, room));
-      }
-    });
+    socket.on(
+      "hole:setWolfChoice",
+      (payload: { holeNumber: number; partner: string | null; alone: boolean }, ack?: Ack) => {
+        const room = data.roomCode ? getRoom(data.roomCode) : undefined;
+        if (!room || !isPlayerInRoom(room, data.playerId) || room.phase !== "playing") {
+          return ack?.({ ok: false, error: "Can't score right now." });
+        }
+        if (!setWolfChoice(room, Number(payload?.holeNumber), payload?.partner ?? null, Boolean(payload?.alone))) {
+          return ack?.({ ok: false, error: "Invalid wolf choice." });
+        }
+        recomputeAndMaybeFinish(room).then(() => {
+          broadcast(io, room);
+          ack?.({ ok: true });
+        });
+      },
+    );
 
     socket.on("room:confirmFinish", (_payload: unknown, ack?: Ack) => {
       const room = data.roomCode ? getRoom(data.roomCode) : undefined;
