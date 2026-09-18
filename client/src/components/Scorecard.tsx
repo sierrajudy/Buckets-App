@@ -14,6 +14,7 @@ import { WolfHoleTransition, pickWolfTransitionVariant, type WolfTransitionVaria
 import { HighLowBackdrop } from "./HighLowBackdrop";
 import { BucketsBackdrop } from "./BucketsBackdrop";
 import { BaseballBackdrop } from "./BaseballBackdrop";
+import { countPendingMatches, getLatestPendingPayload, onPendingCountChange } from "../lib/scoreQueue";
 import type { AvatarKey, HoleResult } from "../types";
 
 function sumTeamPoints(holes: HoleResult[]): [number, number] {
@@ -116,6 +117,13 @@ export function Scorecard() {
   const [showEndConfirm, setShowEndConfirm] = useState(false);
   const [ending, setEnding] = useState(false);
   const [finishError, setFinishError] = useState<string | null>(null);
+  // Doesn't read the count itself — just a tick to force this component to
+  // re-render whenever the offline score queue changes, so the optimistic
+  // overrides below (getLatestPendingPayload/countPendingMatches) recompute
+  // the instant something's enqueued or confirmed, not just on the next
+  // unrelated re-render.
+  const [, setPendingTick] = useState(0);
+  useEffect(() => onPendingCountChange(() => setPendingTick((t) => t + 1)), []);
   const prevStepIndex = useRef(stepIndex);
   const resultsRef = useRef(results);
   const playersRef = useRef(players);
@@ -166,6 +174,15 @@ export function Scorecard() {
   // is synced to) are unrelated and stay host-only, further down.
   const canScore = !isSpectator && Boolean(me);
   const result = results[stepIndex];
+  // Same optimistic-override idea as the per-player values below, for the
+  // one hole-level (not per-player) toggle: whether PG&E is even on for
+  // this hole.
+  const pendingPgeEnabled = getLatestPendingPayload(
+    state.code,
+    "hole:setPgeEnabled",
+    (pl) => pl.holeNumber === result.holeNumber,
+  );
+  const pgeEnabled = pendingPgeEnabled !== undefined ? Boolean(pendingPgeEnabled.enabled) : result.pgeEnabled;
   const isLastHole = stepIndex === results.length - 1;
   const holeComplete = players.every((p) => (result.strokes[p.name] ?? 0) > 0);
   // holeWinners has 2 names whenever a High Low team wins the hole outright
@@ -441,7 +458,18 @@ export function Scorecard() {
           </div>
         )}
 
-        {isWolf && result.wolf && (
+        {isWolf && result.wolf && (() => {
+          // Same optimistic-override idea again — setWolfChoice carries the
+          // resulting partner/alone directly, so a still-queued choice can
+          // be read straight back out of the pending queue.
+          const pendingWolfChoice = getLatestPendingPayload(
+            state.code,
+            "hole:setWolfChoice",
+            (pl) => pl.holeNumber === result.holeNumber,
+          );
+          const wolfPartner = pendingWolfChoice !== undefined ? (pendingWolfChoice.partner as string | null) : result.wolf!.partner;
+          const wolfAlone = pendingWolfChoice !== undefined ? Boolean(pendingWolfChoice.alone) : result.wolf!.alone;
+          return (
           <div className={`${cardBgCls} rounded-xl border ${cardBorderCls} p-4 space-y-3`}>
             <div className="text-sm font-extrabold text-white">🐺 {result.wolf.wolfName} is the wolf this hole</div>
 
@@ -455,7 +483,7 @@ export function Scorecard() {
                       type="button"
                       onClick={() => setWolfChoice(result.holeNumber, p.name, false)}
                       className={`rounded-full border px-3 py-1.5 text-xs font-semibold ${
-                        result.wolf!.partner === p.name
+                        wolfPartner === p.name
                           ? "border-indigo-600 bg-indigo-100 text-indigo-800 dark:bg-indigo-900 dark:text-indigo-200"
                           : "border-white/30 text-white/70"
                       }`}
@@ -467,7 +495,7 @@ export function Scorecard() {
                   type="button"
                   onClick={() => setWolfChoice(result.holeNumber, null, true)}
                   className={`rounded-full border px-3 py-1.5 text-xs font-semibold ${
-                    result.wolf.alone
+                    wolfAlone
                       ? "border-indigo-600 bg-indigo-100 text-indigo-800 dark:bg-indigo-900 dark:text-indigo-200"
                       : "border-white/30 text-white/70"
                   }`}
@@ -479,10 +507,10 @@ export function Scorecard() {
 
             {!canScore && (
               <div className="text-sm text-white/70">
-                {result.wolf.alone
+                {wolfAlone
                   ? "Going alone against the other three."
-                  : result.wolf.partner
-                    ? `Partnered with ${result.wolf.partner}.`
+                  : wolfPartner
+                    ? `Partnered with ${wolfPartner}.`
                     : "Waiting on the wolf's call — partner up or go alone."}
               </div>
             )}
@@ -508,7 +536,8 @@ export function Scorecard() {
               </div>
             )}
           </div>
-        )}
+          );
+        })()}
 
         {isBaseball && result.baseball?.rankGroups && (
           <div className={`${cardBgCls} rounded-xl border ${cardBorderCls} p-4 space-y-2`}>
@@ -533,9 +562,37 @@ export function Scorecard() {
 
         <div className="space-y-3">
           {players.map((p) => {
-            const strokes = result.strokes[p.name] ?? 0;
-            const wonBucket = result.bucketWinners.includes(p.name);
-            const wonPge = result.pgeWinners.includes(p.name);
+            // Each of these prefers a still-queued (unconfirmed) local edit
+            // over server state — see getLatestPendingPayload/
+            // countPendingMatches in scoreQueue.ts for why: without this, a
+            // score entered while offline (or mid-reconnect) visibly
+            // reverts instead of showing what was just typed, until the
+            // action actually reaches the server.
+            const pendingStrokes = state
+              ? getLatestPendingPayload(
+                  state.code,
+                  "hole:setStrokes",
+                  (pl) => pl.holeNumber === result.holeNumber && pl.targetName === p.name,
+                )
+              : undefined;
+            const strokes =
+              pendingStrokes !== undefined ? (pendingStrokes.strokes as number | null) ?? 0 : result.strokes[p.name] ?? 0;
+            const shouldFlipBucket = state
+              ? countPendingMatches(
+                  state.code,
+                  "hole:toggleBucket",
+                  (pl) => pl.holeNumber === result.holeNumber && pl.targetName === p.name,
+                ) % 2 === 1
+              : false;
+            const wonBucket = shouldFlipBucket ? !result.bucketWinners.includes(p.name) : result.bucketWinners.includes(p.name);
+            const shouldFlipPgeWinner = state
+              ? countPendingMatches(
+                  state.code,
+                  "hole:togglePgeWinner",
+                  (pl) => pl.holeNumber === result.holeNumber && pl.targetName === p.name,
+                ) % 2 === 1
+              : false;
+            const wonPge = shouldFlipPgeWinner ? !result.pgeWinners.includes(p.name) : result.pgeWinners.includes(p.name);
             const tiedThisHole = tiedHole && result.holeWinners.includes(p.name);
             return (
               <div
@@ -624,7 +681,7 @@ export function Scorecard() {
                       </span>
                       Won bucket
                     </label>
-                    {result.pgeEnabled && (
+                    {pgeEnabled && (
                       <label
                         className={`flex items-center gap-2 text-sm text-white ${canScore ? "cursor-pointer" : "cursor-default opacity-70"}`}
                       >
@@ -658,7 +715,7 @@ export function Scorecard() {
             <input
               type="checkbox"
               disabled={!canScore}
-              checked={result.pgeEnabled}
+              checked={pgeEnabled}
               onChange={(e) => setPgeEnabled(result.holeNumber, e.target.checked)}
               className="w-4 h-4 accent-yellow-500"
             />

@@ -122,3 +122,43 @@ export function pendingScoreCount(roomCode: string): number {
 export function clearScoreQueue(roomCode: string): void {
   saveQueue(roomCode, []);
 }
+
+/** The payload of the most recently queued action matching `event` and
+ * `matches`, or undefined if nothing for that field is still pending.
+ *
+ * The Scorecard's inputs are controlled by server state (`result.strokes`,
+ * etc.) — normally fine, since a round trip is near-instant, but while an
+ * action sits in the offline queue that state hasn't moved, so the input
+ * silently reverts to whatever it showed before instead of the number just
+ * typed. Reading the queue itself back out as an optimistic override (for
+ * "set to this exact value" actions like setStrokes/setPgeEnabled/
+ * setWolfChoice, which carry the resulting value directly) fixes that: the
+ * UI shows what you just entered immediately, then quietly falls back to
+ * real server state once the action is confirmed and removed from the
+ * queue. See countPendingMatches for the equivalent on toggle-style actions,
+ * which don't carry a resulting value to read back this way. */
+export function getLatestPendingPayload(
+  roomCode: string,
+  event: string,
+  matches: (payload: Record<string, unknown>) => boolean,
+): Record<string, unknown> | undefined {
+  const queue = loadQueue(roomCode);
+  for (let i = queue.length - 1; i >= 0; i--) {
+    const item = queue[i];
+    if (item.event === event && matches(item.payload)) return item.payload;
+  }
+  return undefined;
+}
+
+/** How many queued (unconfirmed) actions match `event`/`matches` — for
+ * toggle-style actions (toggleBucket, togglePgeWinner) that flip a boolean
+ * without carrying the resulting value. An odd count means the optimistic
+ * state is the opposite of whatever server state currently says; even
+ * (including zero) means it matches. */
+export function countPendingMatches(
+  roomCode: string,
+  event: string,
+  matches: (payload: Record<string, unknown>) => boolean,
+): number {
+  return loadQueue(roomCode).filter((item) => item.event === event && matches(item.payload)).length;
+}
