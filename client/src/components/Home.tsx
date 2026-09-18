@@ -77,8 +77,8 @@ export function Home({
   }
 
   return (
-    <div className="relative min-h-screen bg-gradient-to-b from-primary-50 to-white dark:from-primary-950 dark:to-neutral-950 flex items-center justify-center p-4">
-      <div className="absolute top-4 right-4 flex items-center gap-2">
+    <div className="min-h-screen bg-gradient-to-b from-primary-50 to-white dark:from-primary-950 dark:to-neutral-950 flex flex-col p-4">
+      <div className="flex items-center justify-end gap-2 pt-2 pb-6 sm:pb-10">
         <button
           type="button"
           onClick={() => setShowRules(true)}
@@ -104,7 +104,7 @@ export function Home({
 
       <form
         onSubmit={handleSubmit}
-        className="w-full max-w-md bg-white dark:bg-neutral-900 rounded-2xl shadow-lg border border-primary-100 dark:border-primary-900 p-6 space-y-5"
+        className="w-full max-w-md mx-auto mb-4 bg-white dark:bg-neutral-900 rounded-2xl shadow-lg border border-primary-100 dark:border-primary-900 p-6 space-y-5"
       >
         <div className="text-center space-y-1">
           <h1 className="text-3xl font-extrabold text-primary-700 dark:text-primary-400 tracking-tight">Buckets</h1>

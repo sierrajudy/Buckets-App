@@ -1,6 +1,32 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { Check, Circle, X } from "lucide-react";
 import { useAuth } from "../authStore";
 import { forgotPassword } from "../lib/authApi";
+import { AuthBackdrop } from "./AuthBackdrop";
+
+const TAGLINES = [
+  "for degenerate golfers",
+  "bring your own excuses",
+  "handicaps optional, humility mandatory",
+  "front nine hero, back nine cautionary tale",
+];
+
+function Requirement({ met, invalid, children }: { met: boolean; invalid?: boolean; children: React.ReactNode }) {
+  return (
+    <li
+      className={`flex items-center gap-1.5 ${
+        met
+          ? "text-primary-600 dark:text-primary-400"
+          : invalid
+            ? "text-danger-500"
+            : "text-neutral-400 dark:text-neutral-500"
+      }`}
+    >
+      {met ? <Check size={14} /> : invalid ? <X size={14} /> : <Circle size={14} />}
+      {children}
+    </li>
+  );
+}
 
 export function Auth() {
   const { signup, login } = useAuth();
@@ -12,6 +38,24 @@ export function Auth() {
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [forgotSent, setForgotSent] = useState(false);
+  const [taglineIndex, setTaglineIndex] = useState(0);
+  const [taglineFading, setTaglineFading] = useState(false);
+
+  // Rotates the personality line under the title — paused on the "forgot
+  // password" screen, which shows a functional message in that spot instead.
+  // Driven by React state + a CSS transition (not a raw @keyframes animation)
+  // so the fade and the text swap can't drift out of sync with each other.
+  useEffect(() => {
+    if (mode === "forgot") return;
+    const id = setInterval(() => {
+      setTaglineFading(true);
+      setTimeout(() => {
+        setTaglineIndex((i) => (i + 1) % TAGLINES.length);
+        setTaglineFading(false);
+      }, 250);
+    }, 3000);
+    return () => clearInterval(id);
+  }, [mode]);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -49,17 +93,29 @@ export function Auth() {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-primary-50 to-white dark:from-primary-950 dark:to-neutral-950 flex items-center justify-center p-4">
+      <AuthBackdrop />
       <form
         onSubmit={handleSubmit}
-        className="w-full max-w-md bg-white dark:bg-neutral-900 rounded-2xl shadow-lg border border-primary-100 dark:border-primary-900 p-6 space-y-5"
+        className="relative z-10 w-full max-w-md bg-white dark:bg-neutral-900 rounded-2xl shadow-lg border border-primary-100 dark:border-primary-900 p-6 space-y-5"
       >
         <div className="text-center space-y-1">
           <h1 className="text-3xl font-extrabold text-primary-700 dark:text-primary-400 tracking-tight">Buckets</h1>
-          <p className="text-sm text-neutral-500 dark:text-neutral-400">
-            {mode === "forgot"
-              ? "Reset your password"
-              : "Sign in to play and keep your stats across every round — for degenerate golfers"}
-          </p>
+          {mode === "forgot" ? (
+            <p className="text-sm text-neutral-500 dark:text-neutral-400">Reset your password</p>
+          ) : (
+            <div className="space-y-0.5">
+              <p className="text-sm text-neutral-500 dark:text-neutral-400">
+                Sign in to play and keep your stats across every round
+              </p>
+              <p
+                className={`text-sm font-semibold text-primary-600 dark:text-primary-400 transition-opacity duration-[250ms] ${
+                  taglineFading ? "opacity-0" : "opacity-100"
+                }`}
+              >
+                {TAGLINES[taglineIndex]}
+              </p>
+            </div>
+          )}
         </div>
 
         {mode !== "forgot" && (
@@ -145,6 +201,18 @@ export function Auth() {
                   className="w-full rounded-lg border border-neutral-300 dark:border-neutral-700 bg-transparent px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
                 />
               </div>
+            )}
+
+            {mode === "signup" && (password.length > 0 || confirmPassword.length > 0) && (
+              <ul className="-mt-2 space-y-1 text-xs">
+                <Requirement met={password.length >= 6}>At least 6 characters</Requirement>
+                <Requirement
+                  met={confirmPassword.length > 0 && confirmPassword === password}
+                  invalid={confirmPassword.length > 0 && confirmPassword !== password}
+                >
+                  Passwords match
+                </Requirement>
+              </ul>
             )}
 
             {mode === "login" && (
