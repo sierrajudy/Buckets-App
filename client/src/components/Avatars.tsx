@@ -16,8 +16,12 @@ export const AVATAR_META: Record<AvatarKey, { label: string; color: string }> = 
   cap: { label: "Cap", color: "#ec4899" },
   sun: { label: "Sun", color: "#fbbf24" },
   trophy: { label: "Trophy", color: "#facc15" },
-  cooler: { label: "Cooler", color: "#ef4444" },
-  umbrella: { label: "Umbrella", color: "#3b82f6" },
+  glove: { label: "Golf Glove", color: "#f8fafc" },
+  shoe: { label: "Golf Shoe", color: "#1e293b" },
+  tree: { label: "Sequoia Tree", color: "#15803d" },
+  divot: { label: "Divot", color: "#78350f" },
+  marker: { label: "Ball Marker", color: "#e5e7eb" },
+  shirt: { label: "Collared Shirt", color: "#0ea5e9" },
 };
 
 function Face({
@@ -237,32 +241,107 @@ function TrophyAvatar() {
   );
 }
 
-function CoolerAvatar() {
+function GloveAvatar() {
   return (
-    <svg viewBox="0 0 120 120" width="100%" height="100%" role="img" aria-label="Cooler avatar">
-      <rect x="48" y="28" width="24" height="14" rx="4" fill="#f8fafc" stroke="#0f172a" strokeWidth="2.5" />
-      <rect x="24" y="40" width="72" height="60" rx="10" fill="#ef4444" stroke="#0f172a" strokeWidth="3" />
-      <line x1="24" y1="58" x2="96" y2="58" stroke="#0f172a" strokeWidth="3" />
-      <rect x="34" y="46" width="10" height="6" rx="2" fill="#fecaca" />
-      <rect x="76" y="46" width="10" height="6" rx="2" fill="#fecaca" />
-      <Face x={60} y={80} width={38} height={18} />
+    <svg viewBox="0 0 120 120" width="100%" height="100%" role="img" aria-label="Golf glove avatar">
+      <path
+        d="M34 100 Q26 60 34 30 Q38 14 48 16 Q54 18 52 32 Q58 14 68 18 Q72 22 66 36 Q74 20 82 26 Q86 30 78 44 Q92 34 96 44 Q100 52 86 62 Q94 74 88 92 Q84 104 70 106 L44 106 Q36 106 34 100 Z"
+        fill="#f8fafc"
+        stroke="#0f172a"
+        strokeWidth="3"
+        strokeLinejoin="round"
+      />
+      <path d="M40 70 L80 70" stroke="#cbd5e1" strokeWidth="2.5" strokeLinecap="round" />
+      <rect x="42" y="90" width="34" height="8" rx="4" fill="#3b82f6" stroke="#0f172a" strokeWidth="2" />
+      <Face x={58} y={80} width={36} height={18} />
     </svg>
   );
 }
 
-function UmbrellaAvatar() {
+function ShoeAvatar() {
   return (
-    <svg viewBox="0 0 120 120" width="100%" height="100%" role="img" aria-label="Umbrella avatar">
-      <rect x="57" y="52" width="6" height="56" rx="3" fill="#78716c" stroke="#0f172a" strokeWidth="2" />
-      <path d="M12 54 Q60 6 108 54 Z" fill="#3b82f6" stroke="#0f172a" strokeWidth="3" strokeLinejoin="round" />
+    <svg viewBox="0 0 120 120" width="100%" height="100%" role="img" aria-label="Golf shoe avatar">
       <path
-        d="M12 54 L28 60 L44 54 L60 60 L76 54 L92 60 L108 54"
-        fill="none"
+        d="M10 96 Q8 106 22 108 L100 108 Q110 108 108 96 Q100 90 86 90 L30 90 Q16 90 10 96 Z"
+        fill="#1e293b"
         stroke="#0f172a"
-        strokeWidth="2.5"
+        strokeWidth="3"
+      />
+      {[24, 40, 56, 72, 88].map((x, i) => (
+        <path key={i} d={`M${x} 108 L${x - 4} 116 L${x + 4} 116 Z`} fill="#1e293b" stroke="#0f172a" strokeWidth="1.5" />
+      ))}
+      <path
+        d="M14 90 Q10 56 34 40 Q46 30 60 32 Q84 34 96 52 Q106 64 100 90 Z"
+        fill="#f8fafc"
+        stroke="#0f172a"
+        strokeWidth="3"
+      />
+      <path d="M14 90 Q10 70 26 62 Q34 58 40 66 Q42 78 34 90 Z" fill="#e2e8f0" stroke="#0f172a" strokeWidth="2.5" />
+      <line x1="52" y1="48" x2="70" y2="56" stroke="#0f172a" strokeWidth="2.5" strokeLinecap="round" />
+      <line x1="50" y1="58" x2="70" y2="66" stroke="#0f172a" strokeWidth="2.5" strokeLinecap="round" />
+      <line x1="50" y1="68" x2="68" y2="76" stroke="#0f172a" strokeWidth="2.5" strokeLinecap="round" />
+      <Face x={70} y={68} width={34} height={17} />
+    </svg>
+  );
+}
+
+function TreeAvatar() {
+  return (
+    <svg viewBox="0 0 120 120" width="100%" height="100%" role="img" aria-label="Sequoia tree avatar">
+      <rect x="50" y="64" width="20" height="44" rx="4" fill="#92400e" stroke="#0f172a" strokeWidth="3" />
+      <path d="M60 6 L84 44 L36 44 Z" fill="#15803d" stroke="#0f172a" strokeWidth="3" strokeLinejoin="round" />
+      <path d="M60 24 L92 62 L28 62 Z" fill="#16a34a" stroke="#0f172a" strokeWidth="3" strokeLinejoin="round" />
+      <path d="M60 42 L98 82 L22 82 Z" fill="#15803d" stroke="#0f172a" strokeWidth="3" strokeLinejoin="round" />
+      <Face x={60} y={70} width={32} height={16} />
+    </svg>
+  );
+}
+
+function DivotAvatar() {
+  return (
+    <svg viewBox="0 0 120 120" width="100%" height="100%" role="img" aria-label="Divot avatar">
+      <ellipse cx="60" cy="70" rx="46" ry="18" fill="#78350f" stroke="#0f172a" strokeWidth="3" />
+      <path
+        d="M16 66 Q60 40 104 66 Q100 52 60 46 Q20 52 16 66 Z"
+        fill="#4ade80"
+        stroke="#0f172a"
+        strokeWidth="3"
         strokeLinejoin="round"
       />
-      <Face x={60} y={40} width={36} height={18} />
+      {[28, 40, 52, 64, 76, 88].map((x, i) => (
+        <path key={i} d={`M${x} 50 L${x - 3} 38 M${x} 50 L${x + 3} 36`} stroke="#16a34a" strokeWidth="2.5" strokeLinecap="round" />
+      ))}
+      <circle cx="14" cy="40" r="3" fill="#78350f" opacity="0.7" />
+      <circle cx="106" cy="36" r="2.5" fill="#78350f" opacity="0.6" />
+      <Face x={60} y={64} width={40} height={18} />
+    </svg>
+  );
+}
+
+function BallMarkerAvatar() {
+  return (
+    <svg viewBox="0 0 120 120" width="100%" height="100%" role="img" aria-label="Ball marker avatar">
+      <ellipse cx="60" cy="100" rx="40" ry="8" fill="#0f172a" opacity="0.15" />
+      <circle cx="60" cy="60" r="46" fill="#e5e7eb" stroke="#0f172a" strokeWidth="3" />
+      <circle cx="60" cy="60" r="36" fill="#f8fafc" stroke="#94a3b8" strokeWidth="2.5" />
+      <circle cx="60" cy="60" r="36" fill="none" stroke="#0f172a" strokeWidth="1.5" strokeDasharray="4 5" />
+      <Face x={60} y={62} width={40} height={20} />
+    </svg>
+  );
+}
+
+function ShirtAvatar() {
+  return (
+    <svg viewBox="0 0 120 120" width="100%" height="100%" role="img" aria-label="Collared shirt avatar">
+      <path d="M30 30 L10 38 Q6 52 18 60 L34 50 Z" fill="#0ea5e9" stroke="#0f172a" strokeWidth="2.5" strokeLinejoin="round" />
+      <path d="M90 30 L110 38 Q114 52 102 60 L86 50 Z" fill="#0ea5e9" stroke="#0f172a" strokeWidth="2.5" strokeLinejoin="round" />
+      <path d="M34 30 Q60 20 86 30 L92 100 Q60 110 28 100 Z" fill="#0ea5e9" stroke="#0f172a" strokeWidth="3" strokeLinejoin="round" />
+      <path d="M46 28 L60 44 L52 30 Z" fill="#f8fafc" stroke="#0f172a" strokeWidth="2" strokeLinejoin="round" />
+      <path d="M74 28 L60 44 L68 30 Z" fill="#f8fafc" stroke="#0f172a" strokeWidth="2" strokeLinejoin="round" />
+      <line x1="60" y1="44" x2="60" y2="70" stroke="#0f172a" strokeWidth="2" />
+      <circle cx="60" cy="52" r="2" fill="#0f172a" />
+      <circle cx="60" cy="62" r="2" fill="#0f172a" />
+      <Face x={60} y={72} width={38} height={19} />
     </svg>
   );
 }
@@ -299,6 +378,10 @@ const WOLF_EAR_OFFSETS: Partial<Record<AvatarKey, { cx?: number; cy?: number; ro
   // The clubhead (the big rounded blob) is the "head" here, not the grip
   // up at the top of the shaft — ears sit just above its top edge (~y=46).
   club: { cx: 62, cy: 48, scale: 0.85 },
+  // The shoe's "head" is its ankle opening, not empty space above the toe.
+  shoe: { cx: 60, cy: 30, scale: 0.85 },
+  // Sits right above the shirt's collar, where a head would actually be.
+  shirt: { cx: 60, cy: 22, scale: 0.85 },
 };
 
 const AVATAR_COMPONENTS: Record<AvatarKey, () => React.JSX.Element> = {
@@ -312,8 +395,12 @@ const AVATAR_COMPONENTS: Record<AvatarKey, () => React.JSX.Element> = {
   cap: CapAvatar,
   sun: SunAvatar,
   trophy: TrophyAvatar,
-  cooler: CoolerAvatar,
-  umbrella: UmbrellaAvatar,
+  glove: GloveAvatar,
+  shoe: ShoeAvatar,
+  tree: TreeAvatar,
+  divot: DivotAvatar,
+  marker: BallMarkerAvatar,
+  shirt: ShirtAvatar,
 };
 
 export function AvatarIcon({

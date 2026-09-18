@@ -51,6 +51,8 @@ const HEAD_ANCHORS: Partial<Record<AvatarKey, Anchor>> = {
   flag: { cx: 74, cy: 15, rotate: 18, scale: 0.75 },
   beer: { cx: 54, cy: 20, scale: 0.85 },
   club: { cx: 62, cy: 48, scale: 0.85 },
+  shoe: { cx: 60, cy: 30, scale: 0.85 },
+  shirt: { cx: 60, cy: 22, scale: 0.85 },
 };
 
 /** Each avatar's actual face center — lifted straight from that avatar's
@@ -67,8 +69,12 @@ const FACE_ANCHORS: Record<AvatarKey, Anchor> = {
   cap: { cx: 58, cy: 48 },
   sun: { cx: 60, cy: 62 },
   trophy: { cx: 60, cy: 48 },
-  cooler: { cx: 60, cy: 80 },
-  umbrella: { cx: 60, cy: 40 },
+  glove: { cx: 58, cy: 80 },
+  shoe: { cx: 70, cy: 68 },
+  tree: { cx: 60, cy: 70 },
+  divot: { cx: 60, cy: 64 },
+  marker: { cx: 60, cy: 62 },
+  shirt: { cx: 60, cy: 72 },
 };
 
 function headAnchor(avatar: AvatarKey | null): Anchor {

@@ -1,4 +1,21 @@
-export const AVATAR_KEYS = ["ball", "club", "tee", "beer", "bag", "flag", "cart", "cap", "sun", "trophy", "cooler", "umbrella"] as const;
+export const AVATAR_KEYS = [
+  "ball",
+  "club",
+  "tee",
+  "beer",
+  "bag",
+  "flag",
+  "cart",
+  "cap",
+  "sun",
+  "trophy",
+  "glove",
+  "shoe",
+  "tree",
+  "divot",
+  "marker",
+  "shirt",
+] as const;
 export type AvatarKey = (typeof AVATAR_KEYS)[number];
 
 export type RoomPhase = "lobby" | "playing" | "puttoff" | "celebration";
