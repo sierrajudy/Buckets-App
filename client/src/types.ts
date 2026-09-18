@@ -111,6 +111,7 @@ export interface CourseStats {
   totalYards: number;
   courseRating: number;
   slopeRating: number;
+  location: string | null;
 }
 
 export interface RoomState {
@@ -186,6 +187,7 @@ export interface CourseTeeOption {
 
 export interface CourseTees {
   name: string;
+  location: string | null;
   tees: CourseTeeOption[];
 }
 
@@ -216,4 +218,5 @@ export interface CourseSelection {
   totalYards: number;
   courseRating: number;
   slopeRating: number;
+  location: string | null;
 }

@@ -3,6 +3,7 @@ import { useRoom } from "../store";
 import { AvatarIcon } from "./Avatars";
 import { EmojiReactionBar } from "./EmojiReactionBar";
 import { QuickAddFriendButton } from "./QuickAddFriendButton";
+import { ShareRecapModal } from "./ShareRecapModal";
 import { joinNames } from "../lib/format";
 import { deleteRound } from "../lib/api";
 import { fetchFriendsOverview } from "../lib/friendsApi";
@@ -59,6 +60,7 @@ export function Celebration({
   const [deleted, setDeleted] = useState(false);
   const [deleteError, setDeleteError] = useState<string | null>(null);
   const [achievementPopupDismissed, setAchievementPopupDismissed] = useState(false);
+  const [showShareRecap, setShowShareRecap] = useState(false);
   // Same idea as Lobby's quick-add — see relatedFriendNames there for why
   // this is a name set rather than looking anything up by id.
   const [relatedFriendNames, setRelatedFriendNames] = useState<Set<string>>(new Set());
@@ -353,6 +355,15 @@ export function Celebration({
           </div>
         )}
 
+        <button
+          type="button"
+          onClick={() => setShowShareRecap(true)}
+          className={`w-full rounded-2xl p-4 ${cardBgCls} border border-neutral-800 text-center hover:border-neutral-700`}
+        >
+          <div className="text-sm font-semibold text-white">📤 Share this round</div>
+          <div className="text-xs text-neutral-400 mt-1">Get a recap image to send to the group chat</div>
+        </button>
+
         <div className={`rounded-2xl p-4 ${cardBgCls} border border-neutral-800 text-center space-y-3`}>
           <p className="text-sm text-neutral-300">
             Enjoying Buckets? Venmo{" "}
@@ -500,6 +511,10 @@ export function Celebration({
             </div>
           </div>
         </div>
+      )}
+
+      {showShareRecap && (
+        <ShareRecapModal round={round} players={state.players} onClose={() => setShowShareRecap(false)} />
       )}
     </div>
   );

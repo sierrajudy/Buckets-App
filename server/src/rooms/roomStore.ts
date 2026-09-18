@@ -678,7 +678,13 @@ export function serializeRoomState(room: Room): RoomStateForClient {
   const tiedLeaders = room.phase === "puttoff" ? findTiedLeaders(totals, names) : [];
   const course = getCourse(room.courseId);
   const courseStats = course
-    ? { teeLabel: course.teeLabel, totalYards: course.totalYards, courseRating: course.courseRating, slopeRating: course.slopeRating }
+    ? {
+        teeLabel: course.teeLabel,
+        totalYards: course.totalYards,
+        courseRating: course.courseRating,
+        slopeRating: course.slopeRating,
+        location: course.location ?? null,
+      }
     : null;
   return {
     code: room.code,

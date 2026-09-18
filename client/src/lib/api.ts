@@ -70,6 +70,18 @@ export async function fetchAchievements(): Promise<AchievementsResponse> {
   return jsonOrServerError<AchievementsResponse>(res);
 }
 
+export interface CurrentWeather {
+  tempF: number;
+  windMph: number;
+  condition: string;
+  emoji: string;
+}
+
+export async function fetchWeather(location: string): Promise<CurrentWeather> {
+  const res = await fetch(`/api/weather?location=${encodeURIComponent(location)}`);
+  return jsonOrServerError<CurrentWeather>(res);
+}
+
 export async function equipCostume(costume: string | null): Promise<{ ok: true; equippedCostume: string | null }> {
   const token = getStoredToken();
   const res = await fetch("/api/achievements/equip", {

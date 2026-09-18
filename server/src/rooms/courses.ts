@@ -8,6 +8,10 @@ export interface Course {
   totalYards: number;
   courseRating: number;
   slopeRating: number;
+  /** "City, State, Country" as GolfCourseAPI reports it, for the Lobby's
+   * weather chip — null for older cached/snapshotted courses that predate
+   * this field. */
+  location: string | null;
 }
 
 /** Courses only exist once a host has searched GolfCourseAPI and picked a

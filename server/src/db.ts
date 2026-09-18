@@ -183,4 +183,21 @@ export async function initDb(): Promise<void> {
   // outright. A no-op on every startup after the first, once there's
   // nothing left in either state.
   await db.execute(`UPDATE friend_requests SET status = 'accepted', responded_at = datetime('now') WHERE status != 'accepted'`);
+
+  // A user's saved courses for one-tap re-selection from the Lobby instead
+  // of re-searching GolfCourseAPI every time. course_id is GolfCourseAPI's
+  // own club/course id (the id CourseSearchResult carries) — deliberately
+  // NOT the room-registered "gca-<id>-<teeKey>" composite id, since a
+  // favorite is about the course itself, not any one specific tee; picking
+  // a favorite still goes through the normal tee-selection step.
+  await db.execute(`
+    CREATE TABLE IF NOT EXISTS favorite_courses (
+      user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      course_id TEXT NOT NULL,
+      name TEXT NOT NULL,
+      location TEXT,
+      added_at TEXT NOT NULL DEFAULT (datetime('now')),
+      PRIMARY KEY (user_id, course_id)
+    )
+  `);
 }

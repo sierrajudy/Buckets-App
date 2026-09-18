@@ -59,6 +59,7 @@ coursesRouter.get("/:id/tee", async (req, res) => {
       totalYards: tee.totalYards,
       courseRating: tee.courseRating,
       slopeRating: tee.slopeRating,
+      location: tee.location,
     };
     registerCourse(course);
     res.json(course);

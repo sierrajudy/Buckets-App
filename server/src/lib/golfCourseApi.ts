@@ -79,7 +79,13 @@ export interface TeeOption {
 
 export interface CourseTees {
   name: string;
+  location: string | null;
   tees: TeeOption[];
+}
+
+function formatLocation(location: { city?: string; state?: string; country?: string }): string | null {
+  const parts = [location.city, location.state, location.country].filter(Boolean);
+  return parts.length > 0 ? parts.join(", ") : null;
 }
 
 function teeKey(gender: "male" | "female", teeName: string): string {
@@ -111,11 +117,12 @@ export async function fetchGolfCourseTees(id: string): Promise<CourseTees> {
     }
   }
 
-  return { name: courseDisplayName(course.club_name, course.course_name), tees };
+  return { name: courseDisplayName(course.club_name, course.course_name), location: formatLocation(course.location), tees };
 }
 
 export interface ResolvedTee {
   name: string;
+  location: string | null;
   teeLabel: string;
   courseRating: number;
   slopeRating: number;
@@ -142,6 +149,7 @@ export async function fetchGolfCourseTeeDetail(
 
   return {
     name: courseDisplayName(course.club_name, course.course_name),
+    location: formatLocation(course.location),
     teeLabel: teeLabel(gender, tee.tee_name),
     courseRating: tee.course_rating,
     slopeRating: tee.slope_rating,

@@ -9,6 +9,7 @@ import { HighLowBackdrop } from "./HighLowBackdrop";
 import { BucketsBackdrop } from "./BucketsBackdrop";
 import { BaseballBackdrop } from "./BaseballBackdrop";
 import { QuickAddFriendButton } from "./QuickAddFriendButton";
+import { WeatherChip } from "./WeatherChip";
 import { AddFriendToRoundButton } from "./AddFriendToRoundButton";
 import { fetchFriendsOverview } from "../lib/friendsApi";
 import type { GameMode } from "../types";
@@ -252,6 +253,8 @@ export function Lobby({
               )}
             </>
           )}
+
+          <WeatherChip location={state.courseStats?.location ?? null} />
 
           {state.courseId &&
             (isHost ? (

@@ -231,6 +231,7 @@ export interface CourseStats {
   totalYards: number;
   courseRating: number;
   slopeRating: number;
+  location: string | null;
 }
 
 export interface RoomStateForClient {

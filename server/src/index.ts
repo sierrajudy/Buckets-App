@@ -12,6 +12,8 @@ import { standingsRouter } from "./routes/standings.js";
 import { authRouter } from "./routes/auth.js";
 import { myRoundsRouter } from "./routes/myRounds.js";
 import { coursesRouter } from "./routes/courses.js";
+import { favoriteCoursesRouter } from "./routes/favoriteCourses.js";
+import { weatherRouter } from "./routes/weather.js";
 import { createAchievementsRouter } from "./routes/achievements.js";
 import { roomsRouter } from "./routes/rooms.js";
 import { friendsRouter } from "./routes/friends.js";
@@ -52,6 +54,8 @@ async function main() {
   app.use("/api/standings", standingsRouter);
   app.use("/api/my-rounds", myRoundsRouter);
   app.use("/api/courses", coursesRouter);
+  app.use("/api/favorite-courses", favoriteCoursesRouter);
+  app.use("/api/weather", weatherRouter);
   app.use("/api/achievements", createAchievementsRouter(io));
   app.use("/api/rooms", roomsRouter);
   app.use("/api/friends", friendsRouter);

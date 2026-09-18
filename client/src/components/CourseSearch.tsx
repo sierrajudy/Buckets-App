@@ -1,5 +1,11 @@
 import { useEffect, useRef, useState } from "react";
 import { fetchCourseTees, searchCourses, selectCourseTee } from "../lib/api";
+import {
+  addFavoriteCourse,
+  fetchFavoriteCourses,
+  removeFavoriteCourse,
+  type FavoriteCourse,
+} from "../lib/favoriteCoursesApi";
 import type { CourseSearchResult, CourseSelection, CourseStats, CourseTeeOption } from "../types";
 
 const MIN_QUERY_LENGTH = 2;
@@ -27,15 +33,36 @@ export function CourseSearch({
   const requestId = useRef(0);
 
   const [editingCourse, setEditingCourse] = useState(false);
-  const [pendingCourse, setPendingCourse] = useState<{ id: string; name: string; tees: CourseTeeOption[] } | null>(
-    null,
-  );
+  const [pendingCourse, setPendingCourse] = useState<
+    { id: string; name: string; location: string | null; tees: CourseTeeOption[] } | null
+  >(null);
   const [loadingTees, setLoadingTees] = useState(false);
   const [selectedTeeKey, setSelectedTeeKey] = useState("");
   const [resolvingTee, setResolvingTee] = useState(false);
+  const [favorites, setFavorites] = useState<FavoriteCourse[] | null>(null);
 
   const hasSelection = Boolean(pendingCourse) || Boolean(confirmedCourseName);
   const displayName = pendingCourse?.name ?? confirmedCourseName;
+
+  useEffect(() => {
+    fetchFavoriteCourses()
+      .then(setFavorites)
+      .catch(() => setFavorites([]));
+  }, []);
+
+  function isFavorited(id: string): boolean {
+    return favorites?.some((f) => f.id === id) ?? false;
+  }
+
+  async function toggleFavorite(course: { id: string; name: string; location: string | null }) {
+    if (isFavorited(course.id)) {
+      setFavorites((favs) => (favs ?? []).filter((f) => f.id !== course.id));
+      await removeFavoriteCourse(course.id);
+    } else {
+      setFavorites((favs) => [...(favs ?? []), course]);
+      await addFavoriteCourse(course);
+    }
+  }
 
   useEffect(() => {
     if (!editingCourse) return;
@@ -67,17 +94,17 @@ export function CourseSearch({
     return () => clearTimeout(timer);
   }, [query, editingCourse]);
 
-  async function handlePickCourse(result: CourseSearchResult) {
+  async function handlePickCourse(result: { id: string; name: string; location: string | null }) {
     setError(null);
     setResults(null);
     setQuery("");
     setEditingCourse(false);
     setSelectedTeeKey("");
-    setPendingCourse({ id: result.id, name: result.name, tees: [] });
+    setPendingCourse({ id: result.id, name: result.name, location: result.location, tees: [] });
     setLoadingTees(true);
     try {
       const detail = await fetchCourseTees(result.id);
-      setPendingCourse({ id: result.id, name: detail.name, tees: detail.tees });
+      setPendingCourse({ id: result.id, name: detail.name, location: detail.location, tees: detail.tees });
     } catch (err) {
       setError(err instanceof Error ? err.message : "Couldn't load tees for that course.");
       setPendingCourse(null);
@@ -153,21 +180,32 @@ export function CourseSearch({
 
             {error && <p className="text-xs text-red-400">{error}</p>}
 
+            {!results && favorites && favorites.length > 0 && (
+              <div>
+                <div className="text-xs font-semibold text-white/60 uppercase tracking-wide mb-1">
+                  ⭐ Your favorites
+                </div>
+                <div className="max-h-56 overflow-y-auto rounded-lg border border-white/20 divide-y divide-white/10">
+                  {favorites.map((f) => (
+                    <CourseRow key={f.id} course={f} favorited onSelect={handlePickCourse} onToggleFavorite={toggleFavorite} />
+                  ))}
+                </div>
+              </div>
+            )}
+
             {results &&
               (results.length === 0 ? (
                 <p className="text-xs text-white/70">No courses found — try a different spelling or add a city.</p>
               ) : (
                 <div className="max-h-56 overflow-y-auto rounded-lg border border-white/20 divide-y divide-white/10">
                   {results.map((r) => (
-                    <button
+                    <CourseRow
                       key={r.id}
-                      type="button"
-                      onClick={() => handlePickCourse(r)}
-                      className="w-full text-left px-3 py-2 text-sm text-white hover:bg-white/10"
-                    >
-                      <div className="font-semibold">{r.name}</div>
-                      {r.location && <div className="text-xs text-white/60">{r.location}</div>}
-                    </button>
+                      course={r}
+                      favorited={isFavorited(r.id)}
+                      onSelect={handlePickCourse}
+                      onToggleFavorite={toggleFavorite}
+                    />
                   ))}
                 </div>
               ))}
@@ -184,7 +222,19 @@ export function CourseSearch({
 
       {!editingCourse && (pendingCourse || confirmedCourseStats) && (
         <div className="mt-3">
-          <label className="block text-sm font-medium text-white mb-1">Tee</label>
+          <div className="flex items-center justify-between mb-1">
+            <label className="block text-sm font-medium text-white">Tee</label>
+            {pendingCourse && (
+              <button
+                type="button"
+                onClick={() => toggleFavorite(pendingCourse)}
+                title={isFavorited(pendingCourse.id) ? "Remove from favorites" : "Save as a favorite course"}
+                className="text-lg leading-none"
+              >
+                {isFavorited(pendingCourse.id) ? "⭐" : "☆"}
+              </button>
+            )}
+          </div>
           {pendingCourse ? (
             <select
               value={selectedTeeKey}
@@ -207,5 +257,41 @@ export function CourseSearch({
         </div>
       )}
     </>
+  );
+}
+
+function CourseRow({
+  course,
+  favorited,
+  onSelect,
+  onToggleFavorite,
+}: {
+  course: { id: string; name: string; location: string | null };
+  favorited: boolean;
+  onSelect: (course: { id: string; name: string; location: string | null }) => void;
+  onToggleFavorite: (course: { id: string; name: string; location: string | null }) => void;
+}) {
+  return (
+    <div className="w-full flex items-center gap-1 px-1">
+      <button
+        type="button"
+        onClick={() => onSelect(course)}
+        className="flex-1 min-w-0 text-left px-2 py-2 text-sm text-white hover:bg-white/10 rounded"
+      >
+        <div className="font-semibold truncate">{course.name}</div>
+        {course.location && <div className="text-xs text-white/60 truncate">{course.location}</div>}
+      </button>
+      <button
+        type="button"
+        onClick={(e) => {
+          e.stopPropagation();
+          onToggleFavorite(course);
+        }}
+        title={favorited ? "Remove from favorites" : "Save as a favorite course"}
+        className="shrink-0 text-lg leading-none px-2"
+      >
+        {favorited ? "⭐" : "☆"}
+      </button>
+    </div>
   );
 }
