@@ -171,6 +171,9 @@ export interface RoundPlayerSummary {
   pge: number;
   won: boolean;
   strokes: number;
+  frontStrokes: number;
+  /** null for an old 9-hole round that never had a back nine to sum. */
+  backStrokes: number | null;
 }
 
 export interface RoundHistoryRow {

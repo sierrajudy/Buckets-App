@@ -47,6 +47,8 @@ export function RoundSummaryTable({
               <th className="px-3 py-2.5 font-semibold text-right whitespace-nowrap">Holes won</th>
               <th className="px-3 py-2.5 font-semibold text-right whitespace-nowrap">Buckets won</th>
               <th className="px-3 py-2.5 font-semibold text-right whitespace-nowrap">PG&amp;E</th>
+              <th className="px-3 py-2.5 font-semibold text-right whitespace-nowrap">Front 9</th>
+              <th className="px-3 py-2.5 font-semibold text-right whitespace-nowrap">Back 9</th>
               <th className="px-3 py-2.5 font-semibold text-right whitespace-nowrap">Total strokes</th>
             </tr>
           </thead>
@@ -73,6 +75,8 @@ export function RoundSummaryTable({
                 <td className="px-3 py-2.5 text-right">{p.holesWon}</td>
                 <td className="px-3 py-2.5 text-right">{p.buckets}</td>
                 <td className="px-3 py-2.5 text-right">{p.pge}</td>
+                <td className="px-3 py-2.5 text-right">{p.frontStrokes}</td>
+                <td className="px-3 py-2.5 text-right">{p.backStrokes ?? "–"}</td>
                 <td className="px-3 py-2.5 text-right">{p.strokes}</td>
               </tr>
             ))}

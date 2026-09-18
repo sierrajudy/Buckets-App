@@ -322,7 +322,14 @@ export function Celebration({
 
         {round.gameMode !== "highlow" && (
           <div className={`${cardBgCls} border border-neutral-800 rounded-2xl p-5`}>
-            <div className="text-sm text-neutral-400 mb-3">Strokes</div>
+            <div className="flex items-center justify-between mb-3">
+              <span className="text-sm text-neutral-400">Strokes</span>
+              {hasBackNine && (
+                <span className="text-[10px] font-semibold uppercase tracking-wide text-neutral-500">
+                  Front 9 + Back 9 = Total
+                </span>
+              )}
+            </div>
             <div className="space-y-1.5">
               {round.players.map((p) => (
                 <div key={p} className="flex items-center justify-between text-sm">

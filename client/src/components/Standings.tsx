@@ -13,6 +13,7 @@ import type { RoomState, RoundHistoryRow, RoundPlayerSummary, StandingsRow } fro
 function buildCurrentGamePlayers(state: RoomState | null): RoundPlayerSummary[] {
   if (!state || state.phase === "lobby") return [];
   const winners = state.phase === "celebration" ? (state.finishedRound?.winners ?? []) : [];
+  const hasBackNine = state.results.some((r) => r.holeNumber > 9);
 
   return state.players.map((p) => ({
     name: p.name,
@@ -22,6 +23,12 @@ function buildCurrentGamePlayers(state: RoomState | null): RoundPlayerSummary[] 
     pge: state.results.filter((r) => r.pgeEnabled && r.pgeWinners.includes(p.name)).length,
     won: winners.includes(p.name),
     strokes: state.results.reduce((sum, r) => sum + (r.strokes[p.name] ?? 0), 0),
+    frontStrokes: state.results
+      .filter((r) => r.holeNumber <= 9)
+      .reduce((sum, r) => sum + (r.strokes[p.name] ?? 0), 0),
+    backStrokes: hasBackNine
+      ? state.results.filter((r) => r.holeNumber > 9).reduce((sum, r) => sum + (r.strokes[p.name] ?? 0), 0)
+      : null,
   }));
 }
 

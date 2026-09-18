@@ -14,6 +14,9 @@ export interface RoundPlayerSummary {
   pge: number;
   won: boolean;
   strokes: number;
+  frontStrokes: number;
+  /** null for an old 9-hole round that never had a back nine to sum. */
+  backStrokes: number | null;
 }
 
 export interface RoundHistoryRow {
@@ -31,6 +34,7 @@ export interface RoundHistoryRow {
 }
 
 function summarizePlayers(players: string[], holes: HoleResult[], totals: Record<string, number>, winners: string[]) {
+  const hasBackNine = holes.some((h) => h.holeNumber > 9);
   return players.map((name) => ({
     name,
     total: totals[name] ?? 0,
@@ -39,6 +43,10 @@ function summarizePlayers(players: string[], holes: HoleResult[], totals: Record
     pge: holes.filter((h) => h.pgeEnabled && h.pgeWinners.includes(name)).length,
     won: winners.includes(name),
     strokes: holes.reduce((sum, h) => sum + (h.strokes[name] ?? 0), 0),
+    frontStrokes: holes.filter((h) => h.holeNumber <= 9).reduce((sum, h) => sum + (h.strokes[name] ?? 0), 0),
+    backStrokes: hasBackNine
+      ? holes.filter((h) => h.holeNumber > 9).reduce((sum, h) => sum + (h.strokes[name] ?? 0), 0)
+      : null,
   }));
 }
 
