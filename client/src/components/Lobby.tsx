@@ -226,7 +226,7 @@ export function Lobby({
               ))}
             </div>
           ) : (
-            <div className="font-semibold">{GAME_MODES.find((m) => m.key === state.gameMode)?.label}</div>
+            <div className="font-semibold text-white">{GAME_MODES.find((m) => m.key === state.gameMode)?.label}</div>
           )}
         </div>
 
@@ -251,7 +251,7 @@ export function Lobby({
           ) : (
             <>
               {state.course ? (
-                <div className="font-semibold">{state.course}</div>
+                <div className="font-semibold text-white">{state.course}</div>
               ) : (
                 <div className="font-semibold italic text-neutral-400">Host hasn't picked a course yet</div>
               )}
