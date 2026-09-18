@@ -11,20 +11,9 @@
  * padding of their own so the mountains never fight for legibility with
  * real controls near the bottom of the page. */
 
-interface Peak {
-  x: number;
-  h: number;
-}
+import { ridgePolygon, type RidgePoint } from "./backdropShapes";
 
-/** Builds one continuous ridge polygon from a left-to-right list of peak
- * heights, rather than separate triangles — that's what makes it read as a
- * single mountain range instead of a row of party hats. */
-function ridge(peaks: Peak[]): string {
-  const top = peaks.map(({ x, h }) => `${x},${90 - h}`).join(" ");
-  return `-10,90 ${top} 410,90`;
-}
-
-const BACK_RIDGE: Peak[] = [
+const BACK_RIDGE: RidgePoint[] = [
   { x: -10, h: 22 },
   { x: 30, h: 34 },
   { x: 70, h: 24 },
@@ -38,7 +27,7 @@ const BACK_RIDGE: Peak[] = [
   { x: 410, h: 22 },
 ];
 
-const FRONT_RIDGE: Peak[] = [
+const FRONT_RIDGE: RidgePoint[] = [
   { x: -10, h: 36 },
   { x: 25, h: 60 },
   { x: 60, h: 40 },
@@ -57,7 +46,7 @@ const FRONT_RIDGE: Peak[] = [
  * ridge is meant to read as hazy and distant, so it skips them. */
 const SNOW_CAPS = FRONT_RIDGE.filter((p) => p.h >= 54);
 
-function snowCap({ x, h }: Peak, key: number) {
+function snowCap({ x, h }: RidgePoint, key: number) {
   const w = 9;
   return (
     <polygon
@@ -98,8 +87,8 @@ export function HighLowBackdrop() {
         preserveAspectRatio="none"
         className="absolute inset-x-0 bottom-0 w-full h-40 sm:h-56"
       >
-        <polygon points={ridge(BACK_RIDGE)} className="fill-orange-900/40" />
-        <polygon points={ridge(FRONT_RIDGE)} className="fill-stone-900 opacity-85" />
+        <polygon points={ridgePolygon(BACK_RIDGE)} className="fill-orange-900/40" />
+        <polygon points={ridgePolygon(FRONT_RIDGE)} className="fill-stone-900 opacity-85" />
         {SNOW_CAPS.map(snowCap)}
         <path
           d="M -10 88 Q 60 84 120 88 T 240 87 T 360 89 T 410 88 L 410 90 L -10 90 Z"

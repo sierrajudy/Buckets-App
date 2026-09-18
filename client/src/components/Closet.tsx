@@ -30,12 +30,18 @@ export function Closet() {
   async function toggleEquip(costume: CostumeKey) {
     if (!data || busy) return;
     const next = data.equippedCostume === costume ? null : costume;
+    const previous = data;
+    // Optimistic: show the new costume the instant it's tapped instead of
+    // waiting on the round trip, and roll back only if the request actually
+    // fails — same fix as the Scorecard's sync issue, applied to this
+    // REST-backed equip flow instead of the socket-backed scoring one.
+    setData({ ...data, equippedCostume: next });
     setBusy(true);
     setError(null);
     try {
       await equipCostume(next);
-      setData({ ...data, equippedCostume: next });
     } catch {
+      setData(previous);
       setError("Couldn't update your costume — try again.");
     } finally {
       setBusy(false);

@@ -5,6 +5,7 @@ import { RoundSummaryTable } from "./RoundSummaryTable";
 import { PointsBar } from "./PointsBar";
 import { HoleBreakdownModal } from "./HoleBreakdownModal";
 import { SkeletonRows } from "./Skeleton";
+import { EmptyState } from "./EmptyState";
 
 const MEDALS = ["🥇", "🥈", "🥉"];
 import type { RoomState, RoundHistoryRow, RoundPlayerSummary, StandingsRow } from "../types";
@@ -107,7 +108,7 @@ export function Standings({ onBack }: { onBack: () => void }) {
           {!rows && !error && <SkeletonRows count={5} withAvatar={false} />}
 
           {rows && rows.length === 0 && (
-            <p className="text-sm text-neutral-500">No rounds recorded yet. Play a round to start building history.</p>
+            <EmptyState message="No rounds recorded yet. Play a round to start building history." />
           )}
 
           {rows && rows.length > 0 && (

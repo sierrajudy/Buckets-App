@@ -9,19 +9,9 @@
  * little extra bottom padding of their own so the fairway never fights for
  * legibility with real controls near the bottom of the page. */
 
-interface Mound {
-  x: number;
-  h: number;
-}
+import { ridgePolygon, type RidgePoint } from "./backdropShapes";
 
-/** One continuous rolling-fairway silhouette rather than separate hills, so
- * it reads as a single stretch of grass instead of a row of bumps. */
-function fairway(mounds: Mound[]): string {
-  const top = mounds.map(({ x, h }) => `${x},${90 - h}`).join(" ");
-  return `-10,90 ${top} 410,90`;
-}
-
-const BACK_FAIRWAY: Mound[] = [
+const BACK_FAIRWAY: RidgePoint[] = [
   { x: -10, h: 14 },
   { x: 60, h: 20 },
   { x: 140, h: 12 },
@@ -30,7 +20,7 @@ const BACK_FAIRWAY: Mound[] = [
   { x: 410, h: 18 },
 ];
 
-const FRONT_FAIRWAY: Mound[] = [
+const FRONT_FAIRWAY: RidgePoint[] = [
   { x: -10, h: 10 },
   { x: 90, h: 26 },
   { x: 180, h: 8 },
@@ -97,8 +87,8 @@ export function BucketsBackdrop() {
         preserveAspectRatio="none"
         className="absolute inset-x-0 bottom-0 w-full h-32 sm:h-44"
       >
-        <polygon points={fairway(BACK_FAIRWAY)} className="fill-green-950/60" />
-        <polygon points={fairway(FRONT_FAIRWAY)} className="fill-green-950 opacity-90" />
+        <polygon points={ridgePolygon(BACK_FAIRWAY)} className="fill-green-950/60" />
+        <polygon points={ridgePolygon(FRONT_FAIRWAY)} className="fill-green-950 opacity-90" />
         {LOOSE_BALLS.map((b, i) => (
           <circle key={i} cx={b.x} cy={b.y} r={b.r} className="fill-white/80" />
         ))}

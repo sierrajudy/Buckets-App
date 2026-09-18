@@ -33,6 +33,25 @@ export function Home({
   const [recentRooms, setRecentRooms] = useState<RecentRoom[]>([]);
   const [activeRooms, setActiveRooms] = useState<ActiveRoom[]>([]);
   const [rejoiningCode, setRejoiningCode] = useState<string | null>(null);
+  const [confirmingSignOut, setConfirmingSignOut] = useState(false);
+
+  // A bare click no longer signs out immediately — the button arms itself
+  // for a few seconds and a second click confirms, so a fat-fingered tap
+  // (this sits right next to "Get back in" room buttons) can't kick someone
+  // out of a round they were about to rejoin.
+  useEffect(() => {
+    if (!confirmingSignOut) return;
+    const t = setTimeout(() => setConfirmingSignOut(false), 3000);
+    return () => clearTimeout(t);
+  }, [confirmingSignOut]);
+
+  function handleSignOutClick() {
+    if (confirmingSignOut) {
+      logout();
+    } else {
+      setConfirmingSignOut(true);
+    }
+  }
 
   useEffect(() => {
     if (codeFromLink) window.history.replaceState(null, "", window.location.pathname);
@@ -115,8 +134,14 @@ export function Home({
           <span className="text-neutral-600 dark:text-neutral-300">
             Signed in as <span className="font-semibold text-neutral-900 dark:text-white">{user?.name}</span>
           </span>
-          <button type="button" onClick={logout} className="text-neutral-500 hover:text-danger-500 font-medium">
-            Sign out
+          <button
+            type="button"
+            onClick={handleSignOutClick}
+            className={`font-medium ${
+              confirmingSignOut ? "text-danger-500" : "text-neutral-500 hover:text-danger-500"
+            }`}
+          >
+            {confirmingSignOut ? "Click again to confirm" : "Sign out"}
           </button>
         </div>
 

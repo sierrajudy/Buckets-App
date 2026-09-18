@@ -5,6 +5,7 @@ import { fetchFriendAchievements, fetchRoundsWithFriend, type FriendAchievements
 import { RoundHistoryTable } from "./RoundHistoryTable";
 import { AvatarIcon, type AvatarKey } from "./Avatars";
 import { Skeleton, SkeletonRows, SkeletonStatGrid } from "./Skeleton";
+import { EmptyState } from "./EmptyState";
 import type { RoundHistoryRow, StandingsRow } from "../types";
 
 /** A friend's public profile — their all-time standings (the leaderboard
@@ -68,7 +69,7 @@ export function FriendProfile({
         <div className="bg-white dark:bg-neutral-900 rounded-2xl border border-neutral-200 dark:border-neutral-800 shadow-sm p-5">
           <div className="text-sm font-semibold text-neutral-500 mb-3">Standings</div>
           {standings === undefined && <SkeletonStatGrid />}
-          {standings === null && <p className="text-sm text-neutral-500">No rounds recorded for them yet.</p>}
+          {standings === null && <EmptyState message="No rounds recorded for them yet." />}
           {standings && (
             <div className="grid grid-cols-3 sm:grid-cols-6 gap-3 text-center">
               {(

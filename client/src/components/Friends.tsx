@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { Search } from "lucide-react";
+import { EmptyState } from "./EmptyState";
 import {
   addFriend,
   fetchFriendsOverview,
@@ -137,9 +138,7 @@ export function Friends({ onBack }: { onBack: () => void }) {
 
         <Section title={`Your friends${overview ? ` (${overview.friends.length})` : ""}`}>
           {overview && overview.friends.length === 0 && (
-            <p className="text-sm text-neutral-500 py-1">
-              No friends added yet — search above, or add someone you've played with.
-            </p>
+            <EmptyState message="No friends added yet — search above, or add someone you've played with." />
           )}
           {overview?.friends.map((f) => (
             <li key={f.id} className="flex items-center justify-between gap-2 text-sm">

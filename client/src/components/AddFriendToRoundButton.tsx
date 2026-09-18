@@ -40,6 +40,23 @@ export function AddFriendToRoundButton({ dark = false }: { dark?: boolean }) {
     setOpen((o) => !o);
   }
 
+  // The panel's position is computed once, at open — a `fixed` panel doesn't
+  // track the page scrolling underneath it, so without this it drifts away
+  // from its trigger button the moment the page scrolls while it's open.
+  // Closing on scroll/resize is simpler than continuously recomputing.
+  useEffect(() => {
+    if (!open) return;
+    function close() {
+      setOpen(false);
+    }
+    window.addEventListener("scroll", close, true);
+    window.addEventListener("resize", close);
+    return () => {
+      window.removeEventListener("scroll", close, true);
+      window.removeEventListener("resize", close);
+    };
+  }, [open]);
+
   useEffect(() => {
     if (!open || friends !== null) return;
     fetchFriendsOverview()

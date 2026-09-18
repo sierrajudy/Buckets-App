@@ -1,3 +1,4 @@
+import { EmptyState } from "./EmptyState";
 import type { RoundHistoryRow } from "../types";
 
 function formatDate(value: string): string {
@@ -19,7 +20,7 @@ function strokeSummary(holeStrokes: (number | null)[]): { front: number; back: n
 
 export function RoundHistoryTable({ rows, emptyMessage }: { rows: RoundHistoryRow[]; emptyMessage?: string }) {
   if (rows.length === 0) {
-    return <p className="text-sm text-neutral-500">{emptyMessage ?? "No rounds yet."}</p>;
+    return <EmptyState message={emptyMessage ?? "No rounds yet."} />;
   }
 
   // Old 9-hole rounds and new 18-hole rounds can both show up here, so size

@@ -8,17 +8,9 @@
  * plain in-flow content regardless of DOM order, same as those other
  * backdrops require. */
 
-interface Mound {
-  x: number;
-  h: number;
-}
+import { ridgePolygon, type RidgePoint } from "./backdropShapes";
 
-function fairway(mounds: Mound[]): string {
-  const top = mounds.map(({ x, h }) => `${x},${90 - h}`).join(" ");
-  return `-10,90 ${top} 410,90`;
-}
-
-const BACK_FAIRWAY: Mound[] = [
+const BACK_FAIRWAY: RidgePoint[] = [
   { x: -10, h: 10 },
   { x: 80, h: 16 },
   { x: 160, h: 8 },
@@ -27,7 +19,7 @@ const BACK_FAIRWAY: Mound[] = [
   { x: 410, h: 14 },
 ];
 
-const FRONT_FAIRWAY: Mound[] = [
+const FRONT_FAIRWAY: RidgePoint[] = [
   { x: -10, h: 6 },
   { x: 70, h: 20 },
   { x: 150, h: 5 },
@@ -61,8 +53,8 @@ export function AuthBackdrop() {
       ))}
 
       <svg viewBox="0 0 400 90" preserveAspectRatio="none" className="absolute inset-x-0 bottom-0 w-full h-40 sm:h-56">
-        <polygon points={fairway(BACK_FAIRWAY)} className="fill-primary-200/70 dark:fill-primary-900/40" />
-        <polygon points={fairway(FRONT_FAIRWAY)} className="fill-primary-300/70 dark:fill-primary-950/60" />
+        <polygon points={ridgePolygon(BACK_FAIRWAY)} className="fill-primary-200/70 dark:fill-primary-900/40" />
+        <polygon points={ridgePolygon(FRONT_FAIRWAY)} className="fill-primary-300/70 dark:fill-primary-950/60" />
       </svg>
 
       <svg

@@ -1,4 +1,5 @@
 import type { RoundPlayerSummary } from "../types";
+import { EmptyState } from "./EmptyState";
 import { PointsBar } from "./PointsBar";
 
 function formatDate(value: string): string {
@@ -20,7 +21,7 @@ export function RoundSummaryTable({
   emptyMessage?: string;
 }) {
   if (players.length === 0) {
-    return <p className="text-sm text-neutral-500">{emptyMessage ?? "No round to show yet."}</p>;
+    return <EmptyState message={emptyMessage ?? "No round to show yet."} />;
   }
 
   const sorted = [...players].sort((a, b) => b.total - a.total);

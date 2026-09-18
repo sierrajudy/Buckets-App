@@ -101,11 +101,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   async function updateProfileAvatar(avatar: string | null): Promise<Result> {
     const token = localStorage.getItem(TOKEN_KEY);
     if (!token) return { ok: false, error: "Not signed in." };
+    const previousAvatar = user?.profileAvatar ?? null;
+    // Optimistic, same as the Closet's costume equip: every screen reading
+    // user.profileAvatar updates the instant it's picked, and only rolls
+    // back if the request actually fails.
+    setUser((prev) => (prev ? { ...prev, profileAvatar: avatar } : prev));
     try {
       const res = await updateProfileAvatarRequest(token, avatar);
       setUser((prev) => (prev ? { ...prev, profileAvatar: res.profileAvatar } : prev));
       return { ok: true };
     } catch (err) {
+      setUser((prev) => (prev ? { ...prev, profileAvatar: previousAvatar } : prev));
       return { ok: false, error: err instanceof Error ? err.message : "Something went wrong." };
     }
   }
