@@ -130,7 +130,7 @@ export function Lobby({
 
   return (
     <div
-      className={`min-h-screen p-4 relative pb-36 sm:pb-52 ${
+      className={`min-h-screen px-4 pb-36 sm:pb-52 pt-[calc(env(safe-area-inset-top)+1rem)] relative ${
         isHighLow
           ? "bg-gradient-to-b from-sky-400 via-amber-200 to-orange-400"
           : isWolf
@@ -145,33 +145,37 @@ export function Lobby({
       {isBuckets && <BucketsBackdrop />}
       {isBaseball && <BaseballBackdrop />}
       <div className="max-w-lg mx-auto space-y-4 relative z-10">
-        <div className="flex items-center justify-between">
-          <button onClick={leaveRoom} className="text-sm text-neutral-500 hover:text-danger-500">
+        {/* Extra vertical padding (beyond what the text itself needs) widens
+         * the tap target on every one of these — plain small text links,
+         * sitting right at the top of the screen, were hard to hit
+         * precisely on a phone. */}
+        <div className="flex items-center justify-between -mx-1">
+          <button onClick={leaveRoom} className="text-sm text-neutral-500 hover:text-danger-500 py-2.5 px-1">
             Leave
           </button>
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-3">
             <button
               onClick={() => window.location.reload()}
               title="Reload if the room stops updating (e.g. after switching apps)"
-              className="text-sm text-neutral-500 hover:text-primary-600 dark:hover:text-primary-400"
+              className="text-sm text-neutral-500 hover:text-primary-600 dark:hover:text-primary-400 py-2.5 px-1"
             >
               Refresh
             </button>
             <button
               onClick={() => setShowRules(true)}
-              className="text-sm text-neutral-500 hover:text-primary-600 dark:hover:text-primary-400"
+              className="text-sm text-neutral-500 hover:text-primary-600 dark:hover:text-primary-400 py-2.5 px-1"
             >
               Rules
             </button>
             <button
               onClick={onViewProfile}
-              className="flex items-center gap-1 text-sm text-neutral-500 hover:text-primary-600 dark:hover:text-primary-400"
+              className="flex items-center gap-1 text-sm text-neutral-500 hover:text-primary-600 dark:hover:text-primary-400 py-2.5 px-1"
             >
               <User size={14} aria-hidden /> Profile
             </button>
             <button
               onClick={onViewStandings}
-              className="text-sm text-neutral-500 hover:text-primary-600 dark:hover:text-primary-400"
+              className="text-sm text-neutral-500 hover:text-primary-600 dark:hover:text-primary-400 py-2.5 px-1"
             >
               Standings
             </button>

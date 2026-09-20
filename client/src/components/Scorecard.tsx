@@ -298,9 +298,9 @@ export function Scorecard() {
           </div>
         ))}
 
-      <header className="border-b border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 px-4 py-3 sticky top-0 z-20">
-        <div className="flex items-center justify-between max-w-2xl mx-auto">
-          <button onClick={leaveRoom} className="text-sm text-neutral-500 hover:text-danger-500">
+      <header className="border-b border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 px-4 pb-3 pt-[calc(env(safe-area-inset-top)+0.75rem)] sticky top-0 z-20">
+        <div className="flex items-center justify-between max-w-2xl mx-auto -mx-1">
+          <button onClick={leaveRoom} className="text-sm text-neutral-500 hover:text-danger-500 py-2 px-1">
             Leave
           </button>
           <div className="text-sm font-semibold text-neutral-600 dark:text-neutral-300">

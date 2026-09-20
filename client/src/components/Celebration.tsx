@@ -139,7 +139,7 @@ export function Celebration({
 
   return (
     <div
-      className={`min-h-screen relative overflow-hidden flex items-center justify-center p-4 pb-36 sm:pb-52 ${
+      className={`min-h-screen relative overflow-hidden flex items-center justify-center px-4 pb-36 sm:pb-52 pt-[calc(env(safe-area-inset-top)+1rem)] ${
         isHighLow
           ? "bg-gradient-to-b from-sky-400 via-amber-200 to-orange-400"
           : isWolf
@@ -173,20 +173,24 @@ export function Celebration({
       </div>
 
       <div className="relative z-10 max-w-lg w-full text-center space-y-8">
-        <div className="flex items-center justify-between text-xs">
-          <button type="button" onClick={leaveRoom} className="text-neutral-500 hover:text-danger-400">
+        <div className="flex items-center justify-between text-sm -mx-1">
+          <button type="button" onClick={leaveRoom} className="text-neutral-500 hover:text-danger-400 py-2.5 px-1">
             Home
           </button>
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-3">
             <button
               type="button"
               onClick={() => window.location.reload()}
               title="Reload if the game stops updating (e.g. after switching apps)"
-              className="text-neutral-500 hover:text-white"
+              className="text-neutral-500 hover:text-white py-2.5 px-1"
             >
               Refresh
             </button>
-            <button type="button" onClick={onViewProfile} className="flex items-center gap-1 text-neutral-500 hover:text-white">
+            <button
+              type="button"
+              onClick={onViewProfile}
+              className="flex items-center gap-1 text-neutral-500 hover:text-white py-2.5 px-1"
+            >
               <User size={14} aria-hidden /> Profile
             </button>
           </div>
