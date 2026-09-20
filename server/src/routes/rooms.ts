@@ -12,13 +12,17 @@ export const roomsRouter = Router();
  * than showing a dead link to click). This is what makes "get back into a
  * round" work from a lost session or a brand new device: it's keyed off the
  * account via room_memberships, not off anything in this browser's
- * localStorage. */
+ * localStorage.
+ *
+ * Capped to 5 — this is a "jump back in" shortlist for Home, not a full
+ * history (that's Profile's round history / Standings), and someone who
+ * hosts a lot of rounds was otherwise seeing this list grow indefinitely. */
 roomsRouter.get("/recent", async (req, res) => {
   const user = await getUserByToken(bearerToken(req));
   if (!user) return res.status(401).json({ error: "Not signed in." });
 
   const result = await db.execute({
-    sql: `SELECT room_code, role, last_seen_at FROM room_memberships WHERE user_id = ? ORDER BY last_seen_at DESC LIMIT 20`,
+    sql: `SELECT room_code, role, last_seen_at FROM room_memberships WHERE user_id = ? ORDER BY last_seen_at DESC LIMIT 5`,
     args: [user.id],
   });
 
