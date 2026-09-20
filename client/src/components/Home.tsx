@@ -23,9 +23,16 @@ export function Home({
 }) {
   const { user, logout } = useAuth();
   const { createRoom, joinRoom, spectateRoom } = useRoom();
-  const codeFromLink = new URLSearchParams(window.location.search).get("code")?.toUpperCase() ?? "";
+  const linkParams = new URLSearchParams(window.location.search);
+  const codeFromLink = linkParams.get("code")?.toUpperCase() ?? "";
   const [mode, setMode] = useState<"create" | "join">(codeFromLink ? "join" : "create");
-  const [asSpectator, setAsSpectator] = useState(false);
+  // A "you were added to a round" email link carries ?role= so this
+  // preselects correctly when that friend was seated as a spectator (room
+  // full, or the round already past the lobby) — defaulting to "player" and
+  // making them notice/flip the toggle themselves was producing a hard
+  // "room is full" / "already started" error on the exact rounds where a
+  // spectator seat is the only one that was ever going to work.
+  const [asSpectator, setAsSpectator] = useState(linkParams.get("role") === "spectator");
   const [code, setCode] = useState(codeFromLink);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);

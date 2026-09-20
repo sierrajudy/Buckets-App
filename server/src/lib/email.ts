@@ -63,13 +63,17 @@ export async function sendRoundStartEmail(
  * nothing to accept — they're already seated, this just tells them where.
  * The link carries ?code= the same way a shared room-code link already does
  * elsewhere in the app (see Home.tsx's codeFromLink), so opening it drops
- * the room code straight into the join form. */
+ * the room code straight into the join form — plus ?role=, so Home
+ * preselects "Just watching" for someone seated as a spectator (room was
+ * full, or the round had already started past the lobby) instead of
+ * defaulting to "Join as a player" and hitting a hard error when they just
+ * click through without noticing they need to flip that toggle first. */
 export async function sendAddedToRoundEmail(
   to: string,
   name: string,
   opts: { byName: string; roomCode: string; role: "player" | "spectator" },
 ): Promise<void> {
-  const link = `${APP_URL}/?code=${opts.roomCode}`;
+  const link = `${APP_URL}/?code=${opts.roomCode}&role=${opts.role}`;
   const action = opts.role === "player" ? "play in" : "spectate";
   await sendEmail(
     to,
