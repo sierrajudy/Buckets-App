@@ -20,8 +20,26 @@ import { friendsRouter } from "./routes/friends.js";
 import { profileRouter } from "./routes/profile.js";
 import { getUserByToken } from "./lib/auth.js";
 import { registerRoomHandlers } from "./rooms/socketHandlers.js";
-import { loadRoomSnapshots } from "./lib/persistRoomSnapshot.js";
-import { restoreRoomsFromSnapshots } from "./rooms/roomStore.js";
+import { deleteRoomSnapshot, loadRoomSnapshots } from "./lib/persistRoomSnapshot.js";
+import { pruneExpiredRooms, restoreRoomsFromSnapshots } from "./rooms/roomStore.js";
+import { deleteRoomMemberships } from "./lib/roomMemberships.js";
+
+const PRUNE_INTERVAL_MS = 60 * 60 * 1000;
+
+/** Kills every open (never-finished) room older than 24 hours — see
+ * roomStore.ts's pruneExpiredRooms. Run once at startup (covers whatever
+ * expired while the process was down) and then hourly for as long as it
+ * keeps running. */
+function pruneAndCleanUp(): void {
+  const expired = pruneExpiredRooms();
+  for (const code of expired) {
+    deleteRoomSnapshot(code);
+    deleteRoomMemberships(code);
+  }
+  if (expired.length > 0) {
+    console.log(`Pruned ${expired.length} open room(s) older than 24 hours: ${expired.join(", ")}`);
+  }
+}
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -33,6 +51,8 @@ async function main() {
   if (snapshots.length > 0) {
     console.log(`Restored ${snapshots.length} room(s) from the last snapshot before this restart.`);
   }
+  pruneAndCleanUp();
+  setInterval(pruneAndCleanUp, PRUNE_INTERVAL_MS);
 
   const app = express();
   const PORT = process.env.PORT ? Number(process.env.PORT) : 3001;

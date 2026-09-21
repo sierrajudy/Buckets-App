@@ -63,6 +63,22 @@ export function saveRoomSnapshot(room: Room): void {
   pendingTimers.set(code, timer);
 }
 
+/** Removes a room's saved snapshot — called after roomStore.ts's
+ * pruneExpiredRooms drops it from memory, so a redeploy/restart doesn't
+ * just resurrect the exact room that was just killed for being stale.
+ * Also cancels any debounced save still pending for it, in case it
+ * somehow gets pruned in the same tick as its last broadcast. */
+export function deleteRoomSnapshot(code: string): void {
+  const pending = pendingTimers.get(code);
+  if (pending) {
+    clearTimeout(pending);
+    pendingTimers.delete(code);
+  }
+  db.execute({ sql: `DELETE FROM room_snapshots WHERE code = ?`, args: [code] }).catch((err) => {
+    console.error(`Failed to delete room snapshot for ${code}:`, err);
+  });
+}
+
 /** Called once at server startup, before any connections are accepted —
  * re-registers each restored room's course (if it had one) back into
  * courses.ts's cache, then returns the rooms themselves for

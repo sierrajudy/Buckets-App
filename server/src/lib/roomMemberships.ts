@@ -20,3 +20,13 @@ export function recordRoomMembership(userId: string, roomCode: string, role: Roo
     console.error("Failed to record room membership:", err);
   });
 }
+
+/** Clears every membership row for a room that's just been pruned (see
+ * roomStore.ts's pruneExpiredRooms) — otherwise a stale row keeps burning a
+ * slot in someone's "recent rounds" query (see routes/rooms.ts) forever,
+ * pointing at a room that no longer exists to click into. */
+export function deleteRoomMemberships(roomCode: string): void {
+  db.execute({ sql: `DELETE FROM room_memberships WHERE room_code = ?`, args: [roomCode] }).catch((err) => {
+    console.error(`Failed to delete room memberships for ${roomCode}:`, err);
+  });
+}

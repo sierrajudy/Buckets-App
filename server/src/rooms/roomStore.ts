@@ -66,6 +66,27 @@ export function getRoom(code: string): Room | undefined {
   return rooms.get(code.toUpperCase());
 }
 
+const OPEN_ROOM_EXPIRY_MS = 24 * 60 * 60 * 1000;
+
+/** Removes every "open" room — anything that never reached celebration
+ * (still lobby/playing/puttoff) — created more than 24 hours ago. An
+ * abandoned lobby nobody ever started, or a round nobody ever finished,
+ * would otherwise sit around forever: still in memory, and still cluttering
+ * up everyone's "get back in"/"watch a live game" lists. A round that
+ * actually finished is left alone regardless of age — that's real history,
+ * not an abandoned game. Returns the codes removed so the caller can also
+ * clear their DB snapshot/memberships (see index.ts). */
+export function pruneExpiredRooms(now: number = Date.now()): string[] {
+  const expired: string[] = [];
+  for (const [code, room] of rooms) {
+    if (room.phase !== "celebration" && now - room.createdAt > OPEN_ROOM_EXPIRY_MS) {
+      expired.push(code);
+    }
+  }
+  for (const code of expired) rooms.delete(code);
+  return expired;
+}
+
 /** Every room currently live in memory, regardless of phase — backs the
  * "watch a live game" listing (see routes/rooms.ts). Unlike room
  * memberships this isn't account-specific: any signed-in user can spectate
