@@ -42,6 +42,22 @@ function HoleRow({ hole, players }: { hole: HoleResult; players: string[] }) {
   );
 }
 
+/** A full-width divider labeling where the front/back 9 actually starts —
+ * sits above hole 1 and hole 10, not just implied by a subtotal after the
+ * fact at hole 9/18. */
+function SectionHeaderRow({ label, columns }: { label: string; columns: number }) {
+  return (
+    <tr className="bg-neutral-100 dark:bg-neutral-800">
+      <td
+        colSpan={columns}
+        className="px-3 py-1.5 text-xs font-bold uppercase tracking-wide text-neutral-500 dark:text-neutral-400"
+      >
+        {label}
+      </td>
+    </tr>
+  );
+}
+
 /** A bold, shaded subtotal row — OUT/IN/Total, same idea as a paper
  * scorecard's own subtotal boxes. */
 function SubtotalRow({
@@ -125,14 +141,16 @@ export function HoleBreakdownModal({
               </tr>
             </thead>
             <tbody>
+              {hasBackNine && <SectionHeaderRow label="Front 9" columns={2 + players.length} />}
               {frontHoles.map((hole) => (
                 <HoleRow key={hole.holeNumber} hole={hole} players={players} />
               ))}
-              {hasBackNine && <SubtotalRow label="OUT (Front 9)" holes={frontHoles} players={players} />}
+              {hasBackNine && <SubtotalRow label="OUT" holes={frontHoles} players={players} />}
+              {hasBackNine && <SectionHeaderRow label="Back 9" columns={2 + players.length} />}
               {backHoles.map((hole) => (
                 <HoleRow key={hole.holeNumber} hole={hole} players={players} />
               ))}
-              {hasBackNine && <SubtotalRow label="IN (Back 9)" holes={backHoles} players={players} />}
+              {hasBackNine && <SubtotalRow label="IN" holes={backHoles} players={players} />}
               <SubtotalRow label="Total" holes={holes} players={players} emphasize />
             </tbody>
           </table>
