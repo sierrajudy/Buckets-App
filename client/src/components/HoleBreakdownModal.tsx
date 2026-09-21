@@ -10,6 +10,71 @@ function markersFor(hole: HoleResult, name: string): string {
   return marks.join(" ");
 }
 
+function sumStrokes(holes: HoleResult[], name: string): number {
+  return holes.reduce((sum, h) => sum + (h.strokes[name] ?? 0), 0);
+}
+
+function HoleRow({ hole, players }: { hole: HoleResult; players: string[] }) {
+  return (
+    <tr className="border-b border-neutral-100 dark:border-neutral-800 last:border-0">
+      <td className="px-3 py-2.5 font-semibold whitespace-nowrap">{hole.holeNumber}</td>
+      <td className="px-3 py-2.5 text-right text-neutral-500">{hole.par}</td>
+      {players.map((name) => {
+        const strokes = hole.strokes[name] ?? 0;
+        const pts = hole.totalPoints[name] ?? 0;
+        const won = hole.holeWinners.includes(name);
+        const marks = markersFor(hole, name);
+        return (
+          <td key={name} className={`px-3 py-2 text-center ${won ? "bg-primary-50 dark:bg-primary-950/40" : ""}`}>
+            <div className="flex flex-col items-center leading-tight">
+              <span className="font-bold">{strokes || "–"}</span>
+              {strokes > 0 && (
+                <span className="text-[10px] text-primary-600 dark:text-primary-400">
+                  {pts > 0 ? `+${pts}` : "0"}
+                </span>
+              )}
+              {marks && <span className="text-xs">{marks}</span>}
+            </div>
+          </td>
+        );
+      })}
+    </tr>
+  );
+}
+
+/** A bold, shaded subtotal row — OUT/IN/Total, same idea as a paper
+ * scorecard's own subtotal boxes. */
+function SubtotalRow({
+  label,
+  holes,
+  players,
+  emphasize = false,
+}: {
+  label: string;
+  holes: HoleResult[];
+  players: string[];
+  emphasize?: boolean;
+}) {
+  return (
+    <tr
+      className={`border-b-2 font-bold ${
+        emphasize
+          ? "border-primary-200 dark:border-primary-900 bg-primary-50 dark:bg-primary-950/40"
+          : "border-neutral-300 dark:border-neutral-700 bg-neutral-50 dark:bg-neutral-800/60"
+      }`}
+    >
+      <td className="px-3 py-2 whitespace-nowrap" colSpan={2}>
+        {label}
+      </td>
+      {players.map((name) => (
+        <td key={name} className="px-3 py-2 text-center">
+          {sumStrokes(holes, name)}
+        </td>
+      ))}
+    </tr>
+  );
+}
+
 export function HoleBreakdownModal({
   course,
   players,
@@ -21,6 +86,10 @@ export function HoleBreakdownModal({
   holes: HoleResult[];
   onClose: () => void;
 }) {
+  const frontHoles = holes.filter((h) => h.holeNumber <= 9);
+  const backHoles = holes.filter((h) => h.holeNumber > 9);
+  const hasBackNine = backHoles.length > 0;
+
   return (
     <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4" onClick={onClose}>
       <div
@@ -56,34 +125,15 @@ export function HoleBreakdownModal({
               </tr>
             </thead>
             <tbody>
-              {holes.map((hole) => (
-                <tr key={hole.holeNumber} className="border-b border-neutral-100 dark:border-neutral-800 last:border-0">
-                  <td className="px-3 py-2.5 font-semibold whitespace-nowrap">{hole.holeNumber}</td>
-                  <td className="px-3 py-2.5 text-right text-neutral-500">{hole.par}</td>
-                  {players.map((name) => {
-                    const strokes = hole.strokes[name] ?? 0;
-                    const pts = hole.totalPoints[name] ?? 0;
-                    const won = hole.holeWinners.includes(name);
-                    const marks = markersFor(hole, name);
-                    return (
-                      <td
-                        key={name}
-                        className={`px-3 py-2 text-center ${won ? "bg-primary-50 dark:bg-primary-950/40" : ""}`}
-                      >
-                        <div className="flex flex-col items-center leading-tight">
-                          <span className="font-bold">{strokes || "–"}</span>
-                          {strokes > 0 && (
-                            <span className="text-[10px] text-primary-600 dark:text-primary-400">
-                              {pts > 0 ? `+${pts}` : "0"}
-                            </span>
-                          )}
-                          {marks && <span className="text-xs">{marks}</span>}
-                        </div>
-                      </td>
-                    );
-                  })}
-                </tr>
+              {frontHoles.map((hole) => (
+                <HoleRow key={hole.holeNumber} hole={hole} players={players} />
               ))}
+              {hasBackNine && <SubtotalRow label="OUT (Front 9)" holes={frontHoles} players={players} />}
+              {backHoles.map((hole) => (
+                <HoleRow key={hole.holeNumber} hole={hole} players={players} />
+              ))}
+              {hasBackNine && <SubtotalRow label="IN (Back 9)" holes={backHoles} players={players} />}
+              <SubtotalRow label="Total" holes={holes} players={players} emphasize />
             </tbody>
           </table>
         </div>
