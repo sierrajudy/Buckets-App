@@ -5,14 +5,17 @@ import { getAllRooms, getRoom } from "../rooms/roomStore.js";
 
 export const roomsRouter = Router();
 
-/** Rooms this account has been part of — as host, player, or spectator —
- * most-recently-active first, filtered down to just the ones still actually
- * live in memory right now (a room with no snapshot after a restart, or one
- * that's just genuinely long finished and gone, both fall out here rather
- * than showing a dead link to click). This is what makes "get back into a
- * round" work from a lost session or a brand new device: it's keyed off the
- * account via room_memberships, not off anything in this browser's
- * localStorage.
+/** Rooms this account can actually still get back into — as host, player,
+ * or spectator, most-recently-active first. Filtered down to just the ones
+ * still live in memory right now (a room with no snapshot after a restart,
+ * or one that's just genuinely gone, falls out here rather than showing a
+ * dead link) AND still short of "celebration" — once a round's finished
+ * there's nothing left to join or spectate, so it has no business under
+ * "get back in" regardless of how recently it happened (that round's still
+ * fully visible in Profile's round history / Standings, just not here).
+ * This is what makes "get back into a round" work from a lost session or a
+ * brand new device: it's keyed off the account via room_memberships, not
+ * off anything in this browser's localStorage.
  *
  * Capped to 5 — this is a "jump back in" shortlist for Home, not a full
  * history (that's Profile's round history / Standings), and someone who
@@ -39,7 +42,7 @@ roomsRouter.get("/recent", async (req, res) => {
   for (const raw of result.rows as unknown as Record<string, unknown>[]) {
     const code = raw.room_code as string;
     const room = getRoom(code);
-    if (!room) continue;
+    if (!room || room.phase === "celebration") continue;
     rows.push({
       code,
       role: raw.role as string,

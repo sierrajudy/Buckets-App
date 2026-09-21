@@ -38,6 +38,11 @@ export function Home({
   const [busy, setBusy] = useState(false);
   const [showRules, setShowRules] = useState(false);
   const [recentRooms, setRecentRooms] = useState<RecentRoom[]>([]);
+  // Distinguishes "haven't heard back yet" (render nothing) from "heard
+  // back, there's genuinely nothing active" (render the empty message) —
+  // without it, a briefly-empty initial render would flash "No active
+  // games" for everyone before the real list ever has a chance to load.
+  const [recentRoomsLoaded, setRecentRoomsLoaded] = useState(false);
   const [activeRooms, setActiveRooms] = useState<ActiveRoom[]>([]);
   const [rejoiningCode, setRejoiningCode] = useState<string | null>(null);
   const [confirmingSignOut, setConfirmingSignOut] = useState(false);
@@ -68,7 +73,8 @@ export function Home({
   useEffect(() => {
     fetchRecentRooms()
       .then(setRecentRooms)
-      .catch(() => setRecentRooms([]));
+      .catch(() => setRecentRooms([]))
+      .finally(() => setRecentRoomsLoaded(true));
     fetchActiveRooms()
       .then(setActiveRooms)
       .catch(() => setActiveRooms([]));
@@ -152,32 +158,36 @@ export function Home({
           </button>
         </div>
 
-        {recentRooms.length > 0 && (
+        {recentRoomsLoaded && (
           <div className="space-y-1.5">
             <p className="text-xs font-semibold uppercase tracking-wide text-neutral-400 dark:text-neutral-500">
               Get back in
             </p>
-            <div className="space-y-1.5">
-              {recentRooms.map((r) => (
-                <button
-                  key={r.code}
-                  type="button"
-                  disabled={rejoiningCode !== null}
-                  onClick={() => rejoin(r.code, r.role)}
-                  className="w-full rounded-lg border border-neutral-200 dark:border-neutral-700 px-3 py-2 text-left hover:bg-neutral-50 dark:hover:bg-neutral-800 disabled:opacity-50"
-                >
-                  <div className="flex items-center justify-between gap-2">
-                    <span className="font-mono font-semibold tracking-widest text-sm">{r.code}</span>
-                    <span className="shrink-0 text-xs font-medium text-neutral-500 dark:text-neutral-400">
-                      {rejoiningCode === r.code ? "…" : PHASE_LABEL[r.phase] ?? r.phase}
-                    </span>
-                  </div>
-                  <div className="text-xs text-neutral-500 dark:text-neutral-400 truncate mt-0.5">
-                    {r.course ?? "Round"} · {r.players.join(", ")}
-                  </div>
-                </button>
-              ))}
-            </div>
+            {recentRooms.length === 0 ? (
+              <p className="text-sm text-neutral-400 dark:text-neutral-500 italic">No active games right now.</p>
+            ) : (
+              <div className="space-y-1.5">
+                {recentRooms.map((r) => (
+                  <button
+                    key={r.code}
+                    type="button"
+                    disabled={rejoiningCode !== null}
+                    onClick={() => rejoin(r.code, r.role)}
+                    className="w-full rounded-lg border border-neutral-200 dark:border-neutral-700 px-3 py-2 text-left hover:bg-neutral-50 dark:hover:bg-neutral-800 disabled:opacity-50"
+                  >
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="font-mono font-semibold tracking-widest text-sm">{r.code}</span>
+                      <span className="shrink-0 text-xs font-medium text-neutral-500 dark:text-neutral-400">
+                        {rejoiningCode === r.code ? "…" : PHASE_LABEL[r.phase] ?? r.phase}
+                      </span>
+                    </div>
+                    <div className="text-xs text-neutral-500 dark:text-neutral-400 truncate mt-0.5">
+                      {r.course ?? "Round"} · {r.players.join(", ")}
+                    </div>
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
         )}
 
